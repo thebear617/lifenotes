@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>commonnotes · 常识笔记</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top-bar">
+    <button class="menu-toggle" id="menuToggle" aria-label="切换导航">☰</button>
+    <div class="top-bar-left">
+      <span class="top-eyebrow" id="topEyebrow">commonnotes</span>
+      <h1 class="top-title" id="topTitle">常识笔记</h1>
+    </div>
+    <nav class="board-switcher" id="boardSwitcher" aria-label="板块切换"></nav>
+  </header>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="章节导航">
+      <ul class="nav-tree" id="navTree"></ul>
+    </nav>
+    <main class="main" id="main">
+      <div class="welcome" id="welcome">
+        <h2>commonnotes · 常识笔记</h2>
+        <p class="welcome-desc">个人常识笔记的知识索引。</p>
+        <p class="welcome-hint">← 从顶部板块切换器或下方总览开始浏览</p>
+      </div>
+      <div class="content-area" id="contentArea" hidden></div>
+    </main>
+  </div>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+  <script src="js/boards-index.js"></script>
+  <script src="js/boards/food.js"></script>
+  <script src="js/boards/ai.js"></script>
+  <script src="js/boards/auto.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
