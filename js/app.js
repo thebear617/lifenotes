@@ -233,6 +233,94 @@
     });
   }
 
+  /* ===== 领域地图：分类 / 时间轴 两视图 ===== */
+  function renderMapPage(page) {
+    const records = page.records || [];
+    let html = `<div class="page-section">`;
+    html += `<div class="breadcrumb"><a href="#${currentBoard}" class="breadcrumb-home">🏠 首页</a> <span class="breadcrumb-sep">/</span> <span>${page.title}</span></div>`;
+    html += `<h2 class="page-title">${page.title}</h2>`;
+    if (page.desc) html += `<p class="page-desc">${page.desc}</p>`;
+    html += `<div class="view-tabs">
+      <button class="view-tab active" data-view="category">分类视图</button>
+      <button class="view-tab" data-view="timeline">时间轴视图</button>
+    </div>`;
+    html += `<div class="view-container" id="viewContainer"></div>`;
+    html += `</div>`;
+    contentArea.innerHTML = html;
+
+    const homeLink = contentArea.querySelector('.breadcrumb-home');
+    if (homeLink) homeLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      window.location.hash = currentBoard;
+    });
+
+    const container = contentArea.querySelector('#viewContainer');
+    function recCardHtml(r) {
+      return `<div class="rec-card">
+        <div class="rec-head"><span class="rec-title">${r.title}</span>${r.date ? `<span class="rec-date">${r.date}</span>` : ''}</div>
+        <div class="rec-body" hidden>${r.html}</div>
+      </div>`;
+    }
+    function tlItemHtml(r) {
+      return `<div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-card">
+          <div class="rec-head"><span class="rec-date">${r.date || ''}</span><span class="rec-title">${r.title}</span><span class="rec-cat">${r.category || '未分类'}</span></div>
+          <div class="rec-body" hidden>${r.html}</div>
+        </div>
+      </div>`;
+    }
+    function bindRecCards(root) {
+      root.querySelectorAll('.rec-head').forEach(head => {
+        head.addEventListener('click', function () {
+          const body = head.parentElement.querySelector('.rec-body');
+          if (!body) return;
+          body.hidden = !body.hidden;
+          head.parentElement.classList.toggle('open', !body.hidden);
+        });
+      });
+    }
+    function renderCategory() {
+      const groups = {};
+      const order = [];
+      records.forEach(r => {
+        const c = r.category || '未分类';
+        if (!(c in groups)) { groups[c] = []; order.push(c); }
+        groups[c].push(r);
+      });
+      let h = '';
+      order.forEach(c => {
+        h += `<div class="cat-group">
+          <h3 class="cat-group-title">${c} <span class="cat-count">${groups[c].length}</span></h3>
+          <div class="rec-list">` + groups[c].map(recCardHtml).join('') + `</div>
+        </div>`;
+      });
+      container.innerHTML = h || '<p class="home-empty">暂无记录。</p>';
+      bindRecCards(container);
+    }
+    function renderTimeline() {
+      const dated = records.filter(r => r.date).sort((a, b) => b.date.localeCompare(a.date));
+      const undated = records.filter(r => !r.date);
+      let h = '';
+      if (dated.length) h += `<div class="tl">` + dated.map(tlItemHtml).join('') + `</div>`;
+      if (undated.length) {
+        h += `<h3 class="cat-group-title tl-undated-title">未标注日期 <span class="cat-count">${undated.length}</span></h3>`;
+        h += `<div class="tl tl-undated">` + undated.map(tlItemHtml).join('') + `</div>`;
+      }
+      container.innerHTML = h || '<p class="home-empty">暂无记录。</p>';
+      bindRecCards(container);
+    }
+    contentArea.querySelectorAll('.view-tab').forEach(tab => {
+      tab.addEventListener('click', function () {
+        contentArea.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        if (tab.dataset.view === 'category') renderCategory();
+        else renderTimeline();
+      });
+    });
+    renderCategory();
+  }
+
   /* ===== 内容页 ===== */
   function renderContentPage(id) {
     const data = boardData(currentBoard);
@@ -240,7 +328,7 @@
     const page = data.content[id];
     if (!page) return;
 
-    // 侧栏高亮 + 展开父分类
+    // 侧栏高亮 + 展开父分类（所有内容页通用，含领域地图）
     document.querySelectorAll('.nav-item a').forEach(el => el.classList.remove('active'));
     const link = document.querySelector(`.nav-item a[data-id="${id}"]`);
     if (link) {
@@ -255,6 +343,12 @@
     activeId = id;
     welcome.hidden = true;
     contentArea.hidden = false;
+
+    // 领域地图：分类 / 时间轴 两视图
+    if (id === 'map' && page.records && page.records.length) {
+      renderMapPage(page);
+      return;
+    }
 
     let html = `<div class="page-section">`;
     html += `<div class="breadcrumb"><a href="#${currentBoard}" class="breadcrumb-home">🏠 首页</a> <span class="breadcrumb-sep">/</span> <span>${page.title.replace(/^[^\s]+\s/, '') || page.title}</span></div>`;

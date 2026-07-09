@@ -45,11 +45,11 @@ DOMAIN_CONFIG = {
 # 不迁移的领域（即使出现在源目录里也跳过）
 EXCLUDE_DOMAINS = {"无畏契约"}
 
-# 每个领域编译进站点的页面（文件名, 页面id, 图标, 侧栏标签）
-# 注意：转录 / 术语表 / 来源池 不编译（用户要求）
-STANDARD_PAGES = [
+# 主内容页候选：优先「领域地图」，无则「QA」兜底（避免无 map 领域变空板块）
+# 注意：转录 / 术语表 / 来源池 不编译（用户要求）；QA 不再作为独立页
+MAIN_PAGE_CANDIDATES = [
     ("领域地图", "map", "🗺️", "领域地图"),
-    ("QA",       "qa",  "💡", "QA"),
+    ("QA",       "map", "💡", "笔记"),
 ]
 
 MD_EXT = ["tables", "fenced_code", "sane_lists"]
@@ -107,8 +107,8 @@ def split_segments(text):
 WIKILINK_RE = re.compile(r"\[\[([^\]|\n]+?)(?:\|([^\]\n]+?))?\]\]")
 
 
-def md_to_html(text, domain_id, page_id_map):
-    def wikirepl(mm):
+def make_wikilink_repl(domain_id, page_id_map):
+    def repl(mm):
         target = mm.group(1).strip()
         alias = (mm.group(2) or "").strip()
         fname = target.split("/")[-1]
@@ -118,16 +118,20 @@ def md_to_html(text, domain_id, page_id_map):
         if pid:
             return f'<a href="#{domain_id}/{pid}" class="wikilink">{label}</a>'
         return label  # 目标未编译进站点（转录/术语表/来源池等），渲染为纯文本
+    return repl
 
+
+def md_to_html(text, domain_id, page_id_map):
+    repl = make_wikilink_repl(domain_id, page_id_map)
     segs = split_segments(text)
     out = []
     for seg in segs:
         if seg[0] == "text":
-            body = WIKILINK_RE.sub(wikirepl, seg[1])
+            body = WIKILINK_RE.sub(repl, seg[1])
             out.append(md.markdown(body, extensions=MD_EXT))
         else:
             _, ctype, collapsed, title, inner = seg
-            inner2 = WIKILINK_RE.sub(wikirepl, inner)
+            inner2 = WIKILINK_RE.sub(repl, inner)
             inner_html = md.markdown(inner2, extensions=MD_EXT)
             summary = title if title else ctype.capitalize()
             open_attr = "" if collapsed else " open"
@@ -146,6 +150,123 @@ def md_to_html(text, domain_id, page_id_map):
     return html
 
 
+H_RE = re.compile(r"^(#{2,4})\s+(.*?)\s*$")
+CAT_RE = re.compile(r"/\s*([^/:：\n]+?)[:：]")
+DATE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})")
+
+
+def clean_callout_title(title, date, cat):
+    t = title
+    if date:
+        t = t.replace(date, "")
+    if cat:
+        t = re.sub(r"/\s*" + re.escape(cat) + r"\s*[:：]?", "", t)
+    t = re.sub(r"\s*·\s*$", "", t).strip()
+    t = t.strip(" ·-—")
+    return t or "未命名记录"
+
+
+def extract_block_title(text):
+    for line in text.split("\n"):
+        s = line.strip()
+        if s.startswith("##"):
+            return re.sub(r"^#+\s*", "", s).strip()
+    for line in text.split("\n"):
+        s = line.strip()
+        if s and not s.startswith("#") and not s.startswith(">") \
+           and not s.startswith("|") and not s.startswith("-") and not s.startswith("`"):
+            return s[:40]
+    return "未命名"
+
+
+def parse_map_records(body, domain_id, page_id_map):
+    """把领域地图正文解析成结构化记录列表（分类视图 / 时间轴视图共用）。
+
+    每条记录 = callout 折叠块，或按 H2/H3 切分的连续文本块。
+    - category：callout 标题里的 /小分类: 优先；否则所属 ### 小标题；都没有归「未分类」
+    - date：块内首个 YYYY-MM-DD；无则 null（时间轴归末尾「未标注日期」组）
+    """
+    repl = make_wikilink_repl(domain_id, page_id_map)
+    lines = body.split("\n")
+    n = len(lines)
+    records = []
+    cur_h2 = None
+    cur_h3 = None
+    buf = []
+    cal = None
+
+    def flush_text():
+        nonlocal buf
+        if not buf:
+            return
+        text = "\n".join(buf).strip()
+        buf = []
+        if not text:
+            return
+        cat = cur_h3 or "未分类"
+        dm = DATE_RE.search(text)
+        date = dm.group(1) if dm else None
+        title = extract_block_title(text)
+        html = md.markdown(WIKILINK_RE.sub(repl, text), extensions=MD_EXT)
+        records.append({"date": date, "category": cat, "title": title, "html": html})
+
+    def flush_callout():
+        nonlocal cal
+        if not cal:
+            return
+        ctype, collapsed, ctitle, inner = cal
+        cal = None
+        dm = DATE_RE.search(ctitle)
+        date = dm.group(1) if dm else None
+        cm = CAT_RE.search(ctitle)
+        cat = cm.group(1).strip() if cm else (cur_h3 or "未分类")
+        title = clean_callout_title(ctitle, date, cm.group(1).strip() if cm else None)
+        inner_text = "\n".join(inner)
+        inner_html = md.markdown(WIKILINK_RE.sub(repl, inner_text), extensions=MD_EXT)
+        open_attr = "" if collapsed else " open"
+        html = (f'<details class="callout callout-{ctype}"{open_attr}>'
+                f'<summary>{title}</summary>'
+                f'<div class="callout-body">{inner_html}</div></details>')
+        records.append({"date": date, "category": cat, "title": title, "html": html})
+
+    i = 0
+    while i < n:
+        line = lines[i]
+        m = CALLOUT_RE.match(line)
+        if m:
+            flush_text()
+            flush_callout()
+            ctype = m.group(1).lower()
+            collapsed = m.group(2) is not None
+            ctitle = m.group(3).strip()
+            cal = (ctype, collapsed, ctitle, [])
+            i += 1
+            continue
+        if cal is not None and line.startswith(">"):
+            cal[3].append(line[1:].lstrip(" "))
+            i += 1
+            continue
+        hm = H_RE.match(line)
+        if hm:
+            flush_text()
+            flush_callout()
+            level = len(hm.group(1))
+            htext = hm.group(2).strip()
+            if level == 2:
+                cur_h2 = htext
+                cur_h3 = None
+            elif level == 3:
+                cur_h3 = htext
+            buf = [line]
+            i += 1
+            continue
+        buf.append(line)
+        i += 1
+    flush_text()
+    flush_callout()
+    return records
+
+
 def first_paragraph(text):
     for line in text.split("\n"):
         s = line.strip()
@@ -161,18 +282,24 @@ def build_board(folder_name, folder_path):
     did = cfg["id"]
     content, nav, grid = {}, [], []
 
-    # 标准页面（领域地图 + QA；转录/术语表/来源池 不编译进站点）
+    # 主内容页：优先「领域地图」，无则用「QA」兜底（标签「笔记」）
     page_id_map = {}
-    for fname, pid, icon, label in STANDARD_PAGES:
+    chosen = None
+    for fname, pid, icon, label in MAIN_PAGE_CANDIDATES:
         fpath = os.path.join(folder_path, fname + ".md")
         if os.path.isfile(fpath):
-            raw = open(fpath, encoding="utf-8").read()
-            fm, body = split_frontmatter(raw)
-            html = md_to_html(body, did, page_id_map)
-            content[pid] = {"title": label, "body": html}
-            nav.append({"id": pid, "icon": icon, "label": label})
-            grid.append({"id": pid, "icon": icon, "title": label,
-                         "desc": (first_paragraph(body) or cfg["desc"])[:40]})
+            chosen = (fpath, pid, icon, label)
+            break
+    if chosen:
+        fpath, pid, icon, label = chosen
+        raw = open(fpath, encoding="utf-8").read()
+        fm, body = split_frontmatter(raw)
+        html = md_to_html(body, did, page_id_map)
+        records = parse_map_records(body, did, page_id_map)
+        content[pid] = {"title": label, "body": html, "records": records}
+        nav.append({"id": pid, "icon": icon, "label": label})
+        grid.append({"id": pid, "icon": icon, "title": label,
+                     "desc": (first_paragraph(body) or cfg["desc"])[:40]})
 
     home = {"title": cfg["name"], "desc": cfg["desc"], "gridCards": grid}
     board_obj = {"home": home, "navTree": nav, "content": content}

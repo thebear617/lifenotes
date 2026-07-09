@@ -1040,3 +1040,118 @@ button {
 /* ===== 任务清单 ===== */
 li.task { list-style: none; }
 li.task input { margin-right: .45rem; vertical-align: middle; }
+
+/* ===== 领域地图：分类 / 时间轴 视图 ===== */
+.view-tabs {
+  display: flex;
+  gap: .3rem;
+  margin: 1.2rem 0 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.view-tab {
+  border: none;
+  background: none;
+  padding: .55rem .9rem;
+  font-size: .92rem;
+  font-weight: 700;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  border-radius: 6px 6px 0 0;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.view-tab:hover { color: var(--accent); background: var(--accent-bg); }
+.view-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.cat-group { margin-bottom: 1.6rem; }
+.cat-group-title {
+  font-size: .82rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: .7rem;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.cat-count {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--surface-soft);
+  border-radius: 20px;
+  padding: .05rem .5rem;
+}
+.rec-list { display: flex; flex-direction: column; gap: .5rem; }
+
+.rec-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.rec-head {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .7rem .9rem;
+  cursor: pointer;
+  user-select: none;
+}
+.rec-head:hover { background: var(--accent-bg); }
+.rec-title { font-size: .95rem; font-weight: 700; color: var(--text); flex: 1; }
+.rec-date {
+  font-size: .76rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: 6px;
+  padding: .05rem .45rem;
+  white-space: nowrap;
+}
+.rec-card.open .rec-head { border-bottom: 1px solid var(--line); }
+.rec-body { padding: .2rem .9rem .9rem; font-size: .9rem; line-height: 1.7; }
+.rec-body[hidden] { display: none; }
+
+/* 时间轴 */
+.tl { position: relative; padding-left: 1.4rem; margin-bottom: .5rem; }
+.tl::before {
+  content: "";
+  position: absolute;
+  left: .4rem; top: .4rem; bottom: .4rem;
+  width: 2px;
+  background: var(--accent-border);
+}
+.tl-item { position: relative; margin-bottom: .6rem; }
+.tl-dot {
+  position: absolute;
+  left: -1.08rem; top: .85rem;
+  width: .65rem; height: .65rem;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 2px var(--accent-border);
+}
+.tl-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.rec-cat {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--surface-soft);
+  border-radius: 20px;
+  padding: .05rem .5rem;
+  white-space: nowrap;
+}
+.tl-undated-title { margin-top: 1.4rem; }
