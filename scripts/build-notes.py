@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-build-notes.py — 把「知识观察型笔记」(Obsidian markdown) 编译成 commonnotes 站点数据。
+build-notes.py — 把「知识观察型笔记」(Obsidian markdown) 编译成 lifenotes 站点数据。
 
 源：SRC_DIR（默认指向 Obsidian 笔记库里的「知识观察型笔记」目录）
 输出：js/boards/<id>.js  +  js/boards-index.js  +  index.html
@@ -20,7 +20,7 @@ import json
 import markdown as md
 import yaml
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # commonnotes/
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # lifenotes/
 SRC_DIR = "/Users/mokaiche/Documents/notes/03-Resources/知识观察型笔记"
 OUT_JS = os.path.join(ROOT, "js")
 BOARDS_OUT = os.path.join(OUT_JS, "boards")
@@ -35,12 +35,14 @@ DOMAIN_CONFIG = {
     "汽车":   {"id": "auto", "name": "汽车",   "icon": "🚗", "desc": "车型 / 品牌 / 产业科普",          "accent": "#0ca678"},
 }
 
-# 每个领域的标准四件套（文件名, 页面id, 图标, 侧栏标签）
+# 不迁移的领域（即使出现在源目录里也跳过）
+EXCLUDE_DOMAINS = {"无畏契约"}
+
+# 每个领域编译进站点的页面（文件名, 页面id, 图标, 侧栏标签）
+# 注意：转录 / 术语表 / 来源池 不编译（用户要求）
 STANDARD_PAGES = [
-    ("领域地图", "map",     "🗺️", "领域地图"),
-    ("术语表",   "glossary", "📖", "术语表"),
-    ("QA",       "qa",       "💡", "QA"),
-    ("来源池",   "sources",  "🔗", "来源池"),
+    ("领域地图", "map", "🗺️", "领域地图"),
+    ("QA",       "qa",  "💡", "QA"),
 ]
 
 MD_EXT = ["tables", "fenced_code", "sane_lists"]
@@ -108,7 +110,7 @@ def md_to_html(text, domain_id, page_id_map):
         label = alias or fname
         if pid:
             return f'<a href="#{domain_id}/{pid}" class="wikilink">{label}</a>'
-        return f'<span class="wikilink-missing" title="未找到：{target}">{label}</span>'
+        return label  # 目标未编译进站点（转录/术语表/来源池等），渲染为纯文本
 
     segs = split_segments(text)
     out = []
@@ -152,18 +154,8 @@ def build_board(folder_name, folder_path):
     did = cfg["id"]
     content, nav, grid = {}, [], []
 
-    # 先扫描转录，建立 wiki-link 映射（领域地图/来源池 里也会引用转录）
-    tdir = os.path.join(folder_path, "转录")
+    # 标准页面（领域地图 + QA；转录/术语表/来源池 不编译进站点）
     page_id_map = {}
-    tpaths = []
-    if os.path.isdir(tdir):
-        for tf in sorted(os.listdir(tdir)):
-            if tf.endswith(".md"):
-                slug = slugify_filename(tf)
-                page_id_map[slug] = "t-" + slug
-                tpaths.append((tf, slug))
-
-    # 标准四件套
     for fname, pid, icon, label in STANDARD_PAGES:
         fpath = os.path.join(folder_path, fname + ".md")
         if os.path.isfile(fpath):
@@ -174,31 +166,6 @@ def build_board(folder_name, folder_path):
             nav.append({"id": pid, "icon": icon, "label": label})
             grid.append({"id": pid, "icon": icon, "title": label,
                          "desc": (first_paragraph(body) or cfg["desc"])[:40]})
-
-    # 转录稿
-    children = []
-    for tf, slug in tpaths:
-        pid = "t-" + slug
-        raw = open(os.path.join(tdir, tf), encoding="utf-8").read()
-        fm, body = split_frontmatter(raw)
-        html = md_to_html(body, did, page_id_map)
-        meta = ""
-        if fm.get("video_url"):
-            bv = fm.get("bvid", "")
-            src = fm.get("source_type", "视频")
-            meta += (f'<div class="source-meta">📺 来源（{src}）：'
-                     f'<a href="{fm["video_url"]}" target="_blank" rel="noopener">'
-                     f'{bv or fm["video_url"]}</a>')
-            if fm.get("created_at"):
-                meta += f' · 转录于 {fm["created_at"]}'
-            meta += '</div>'
-        content[pid] = {"title": slug, "body": meta + html}
-        children.append({"id": pid, "label": slug})
-
-    if children:
-        nav.append({"id": "transcripts", "icon": "🎬", "label": "转录", "children": children})
-        grid.append({"id": children[0]["id"], "icon": "🎬",
-                     "title": f"转录（{len(children)}）", "desc": "视频转录稿"})
 
     home = {"title": cfg["name"], "desc": cfg["desc"], "gridCards": grid}
     board_obj = {"home": home, "navTree": nav, "content": content}
@@ -220,14 +187,14 @@ INDEX_TEMPLATE = """<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>commonnotes · 常识笔记</title>
+  <title>常识笔记</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="top-bar">
     <button class="menu-toggle" id="menuToggle" aria-label="切换导航">☰</button>
     <div class="top-bar-left">
-      <span class="top-eyebrow" id="topEyebrow">commonnotes</span>
+      <span class="top-eyebrow" id="topEyebrow">lifenotes</span>
       <h1 class="top-title" id="topTitle">常识笔记</h1>
     </div>
     <nav class="board-switcher" id="boardSwitcher" aria-label="板块切换"></nav>
@@ -238,8 +205,8 @@ INDEX_TEMPLATE = """<!DOCTYPE html>
     </nav>
     <main class="main" id="main">
       <div class="welcome" id="welcome">
-        <h2>commonnotes · 常识笔记</h2>
-        <p class="welcome-desc">个人常识笔记的知识索引。</p>
+        <h2>常识笔记</h2>
+        <p class="welcome-desc">常识笔记的知识索引。</p>
         <p class="welcome-hint">← 从顶部板块切换器或下方总览开始浏览</p>
       </div>
       <div class="content-area" id="contentArea" hidden></div>
@@ -280,12 +247,18 @@ def main():
         domains = PILOT_DOMAINS
     else:
         domains = [d for d in sorted(os.listdir(SRC_DIR))
-                   if os.path.isdir(os.path.join(SRC_DIR, d)) and not d.startswith(".")]
+                   if os.path.isdir(os.path.join(SRC_DIR, d))
+                   and not d.startswith(".")
+                   and not d.startswith("00-")
+                   and d not in EXCLUDE_DOMAINS]
     boards = []
     for d in domains:
         dp = os.path.join(SRC_DIR, d)
         if not os.path.isdir(dp):
             print("跳过（不存在）：", d)
+            continue
+        if d in EXCLUDE_DOMAINS:
+            print("跳过（排除）：", d)
             continue
         if d not in DOMAIN_CONFIG:
             print("跳过（未配置）：", d)
