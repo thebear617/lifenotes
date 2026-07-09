@@ -20,7 +20,7 @@
   function boardData(id) { return BOARD_DATA[id]; }
 
   function updateTopBar(board) {
-    topEyebrow.textContent = 'commonnotes';
+    topEyebrow.textContent = 'lifenotes';
     topTitle.textContent = board ? board.name : '常识笔记';
     // 高亮当前板块
     if (switcher) {
@@ -65,7 +65,7 @@
 
     let html = `<div class="dash">
       <div class="dash-hero">
-        <span class="dash-eyebrow">COMMONNOTES</span>
+        <span class="dash-eyebrow">LIFENOTES</span>
         <h2 class="dash-title">常识笔记</h2>
         <p class="dash-desc">个人常识笔记的知识索引。从下方选择一个领域，或直接用顶栏切换器开始浏览。</p>
       </div>
@@ -129,6 +129,8 @@
         </a>`;
       });
       html += `</div></section>`;
+    } else {
+      html += `<p class="home-empty">该领域暂无可浏览的页面。补充「领域地图」或「QA」后重跑构建脚本，内容会自动出现在这里。</p>`;
     }
 
     if (home.quickRef && home.quickRef.length) {

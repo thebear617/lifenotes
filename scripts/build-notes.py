@@ -25,14 +25,21 @@ SRC_DIR = "/Users/mokaiche/Documents/notes/03-Resources/知识观察型笔记"
 OUT_JS = os.path.join(ROOT, "js")
 BOARDS_OUT = os.path.join(OUT_JS, "boards")
 
-# 试点：只处理这三个领域；全量迁移时设为 None（处理源目录下所有领域文件夹）
-PILOT_DOMAINS = ["美食", "AI产业", "汽车"]
+# None = 全量迁移（处理源目录下除 EXCLUDE_DOMAINS 外的所有领域文件夹）
+PILOT_DOMAINS = None
 
 # 领域展示配置（id 用 ascii，name/icon/desc/accent 自定义）
+# 注：历史 / 社会 当前源里没有「领域地图」「QA」页，编译后内容为空（板块仍保留，符合全量迁移）
 DOMAIN_CONFIG = {
-    "美食":   {"id": "food", "name": "美食",   "icon": "🍜", "desc": "煮饭做菜心得与好吃发现",        "accent": "#e8590c"},
-    "AI产业": {"id": "ai",   "name": "AI产业", "icon": "🤖", "desc": "AI 产业链上下游事实与判断",      "accent": "#7048e8"},
-    "汽车":   {"id": "auto", "name": "汽车",   "icon": "🚗", "desc": "车型 / 品牌 / 产业科普",          "accent": "#0ca678"},
+    "美食":       {"id": "food",     "name": "美食",       "icon": "🍜", "desc": "煮饭做菜心得与好吃发现",            "accent": "#e8590c"},
+    "AI产业":     {"id": "ai",       "name": "AI产业",     "icon": "🤖", "desc": "AI 产业链上下游事实与判断",          "accent": "#7048e8"},
+    "汽车":       {"id": "auto",     "name": "汽车",       "icon": "🚗", "desc": "车型 / 品牌 / 产业科普",              "accent": "#0ca678"},
+    "宠物":       {"id": "pet",      "name": "宠物",       "icon": "🐾", "desc": "猫狗等宠物养护与常识",                "accent": "#e64980"},
+    "生活":       {"id": "life",     "name": "生活",       "icon": "🧺", "desc": "过日子用得上的生活常识",              "accent": "#f08c00"},
+    "社会":       {"id": "society",  "name": "社会",       "icon": "🌐", "desc": "社会现象与公共议题的常识梳理",        "accent": "#1c7ed6"},
+    "金融-经济":  {"id": "finance",  "name": "金融-经济",  "icon": "💰", "desc": "理财与宏观经济的常识梳理",            "accent": "#2f9e44"},
+    "动植物":     {"id": "biology",  "name": "动植物",     "icon": "🌿", "desc": "动物与植物的基础科普",                "accent": "#0b7285"},
+    "历史":       {"id": "history",  "name": "历史",       "icon": "🏛️", "desc": "历史脉络与人物事件的常识",            "accent": "#9c36b5"},
 }
 
 # 不迁移的领域（即使出现在源目录里也跳过）
