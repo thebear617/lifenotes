@@ -202,7 +202,7 @@
           const childLi = document.createElement('li');
           childLi.className = 'nav-item';
           const a = document.createElement('a');
-          a.href = '#';
+          a.href = '#' + currentBoard + '/' + child.id;
           a.dataset.id = child.id;
           a.textContent = child.label;
           childLi.appendChild(a);
@@ -221,7 +221,7 @@
         const li = document.createElement('li');
         li.className = 'nav-item';
         const a = document.createElement('a');
-        a.href = '#';
+        a.href = '#' + currentBoard + '/' + item.id;
         a.dataset.id = item.id;
         a.innerHTML = `
           <span class="nav-icon">${item.icon || ''}</span>
