@@ -2,12 +2,8 @@
   'use strict';
 
   /* ===== DOM refs ===== */
-  const navTree      = document.getElementById('navTree');
   const contentArea  = document.getElementById('contentArea');
   const welcome      = document.getElementById('welcome');
-  const sidebar      = document.getElementById('sidebar');
-  const menuToggle   = document.getElementById('menuToggle');
-  const backdrop     = document.getElementById('sidebarBackdrop');
   const switcher     = document.getElementById('boardSwitcher');
   const topEyebrow   = document.getElementById('topEyebrow');
   const topTitle     = document.getElementById('topTitle');
@@ -55,10 +51,6 @@
   function renderDashboard() {
     currentBoard = null;
     activeId = null;
-    document.body.classList.add('on-dashboard');   // 隐藏侧边栏，内容居中
-    closeSidebar();
-    document.querySelectorAll('.nav-item a').forEach(el => el.classList.remove('active'));
-    navTree.innerHTML = '';
     welcome.hidden = false;
     contentArea.hidden = true;
     updateTopBar(null);
@@ -94,9 +86,7 @@
     const data = boardData(id);
     if (!data) return;
     currentBoard = id;
-    document.body.classList.remove('on-dashboard');   // 进入板块：恢复侧边栏
     const board = BOARDS.find(b => b.id === id);
-    renderNav(data.navTree);
     updateTopBar(board);
   }
 
@@ -106,7 +96,6 @@
     if (!data) return;
     if (currentBoard !== id) enterBoard(id);
     activeId = null;
-    document.querySelectorAll('.nav-item a').forEach(el => el.classList.remove('active'));
     welcome.hidden = false;
     contentArea.hidden = true;
 
@@ -178,68 +167,6 @@
         e.preventDefault();
         window.location.hash = id + '/' + this.dataset.page;
       });
-    });
-  }
-
-  /* ===== 侧边栏 ===== */
-  function renderNav(navTreeData) {
-    navTree.innerHTML = '';
-    navTreeData.forEach(item => {
-      if (item.type === 'divider') {
-        const div = document.createElement('li');
-        div.className = 'nav-divider';
-        navTree.appendChild(div);
-        return;
-      }
-
-      if (item.children) {
-        const li = document.createElement('li');
-        li.className = 'nav-item';
-        const toggle = document.createElement('button');
-        toggle.className = 'nav-toggle';
-        toggle.dataset.target = item.id;
-        toggle.innerHTML = `
-          <span class="nav-icon">${item.icon || ''}</span>
-          <span class="nav-label">${item.label}</span>
-          <span class="nav-arrow">▶</span>
-        `;
-        li.appendChild(toggle);
-
-        const ul = document.createElement('ul');
-        ul.className = 'nav-children';
-        ul.id = 'child-' + item.id;
-        item.children.forEach(child => {
-          const childLi = document.createElement('li');
-          childLi.className = 'nav-item';
-          const a = document.createElement('a');
-          a.href = '#' + currentBoard + '/' + child.id;
-          a.dataset.id = child.id;
-          a.textContent = child.label;
-          childLi.appendChild(a);
-          ul.appendChild(childLi);
-        });
-        li.appendChild(ul);
-        navTree.appendChild(li);
-
-        toggle.addEventListener('click', function (e) {
-          e.stopPropagation();
-          const targetUl = document.getElementById('child-' + this.dataset.target);
-          const isOpen = targetUl.classList.toggle('open');
-          this.classList.toggle('open', isOpen);
-        });
-      } else {
-        const li = document.createElement('li');
-        li.className = 'nav-item';
-        const a = document.createElement('a');
-        a.href = '#' + currentBoard + '/' + item.id;
-        a.dataset.id = item.id;
-        a.innerHTML = `
-          <span class="nav-icon">${item.icon || ''}</span>
-          <span class="nav-label">${item.label}</span>
-        `;
-        li.appendChild(a);
-        navTree.appendChild(li);
-      }
     });
   }
 
@@ -340,25 +267,6 @@
     render();
   }
 
-  /* ===== 领域地图页（contentArea 内渲染两视图） ===== */
-  function renderMapPage(page) {
-    const records = page.records || [];
-    contentArea.innerHTML = `<div class="page-section">
-      <div class="breadcrumb"><a href="#${currentBoard}" class="breadcrumb-home">🏠 首页</a> <span class="breadcrumb-sep">/</span> <span>${page.title}</span></div>
-      <h2 class="page-title">${page.title}</h2>
-      ${page.desc ? `<p class="page-desc">${page.desc}</p>` : ''}
-      <div class="map-records" id="mapRecords"></div>
-    </div>`;
-
-    const homeLink = contentArea.querySelector('.breadcrumb-home');
-    if (homeLink) homeLink.addEventListener('click', function (e) {
-      e.preventDefault();
-      window.location.hash = currentBoard;
-    });
-
-    mountRecordsView(contentArea.querySelector('#mapRecords'), records);
-  }
-
   /* ===== 内容页 ===== */
   function renderContentPage(id) {
     const data = boardData(currentBoard);
@@ -366,27 +274,9 @@
     const page = data.content[id];
     if (!page) return;
 
-    // 侧栏高亮 + 展开父分类（所有内容页通用，含领域地图）
-    document.querySelectorAll('.nav-item a').forEach(el => el.classList.remove('active'));
-    const link = document.querySelector(`.nav-item a[data-id="${id}"]`);
-    if (link) {
-      link.classList.add('active');
-      const parentUl = link.closest('.nav-children');
-      if (parentUl && !parentUl.classList.contains('open')) {
-        parentUl.classList.add('open');
-        const toggle = parentUl.closest('.nav-item')?.querySelector('.nav-toggle');
-        if (toggle) toggle.classList.add('open');
-      }
-    }
     activeId = id;
     welcome.hidden = true;
     contentArea.hidden = false;
-
-    // 领域地图：分类 / 时间轴 两视图
-    if (id === 'map' && page.records && page.records.length) {
-      renderMapPage(page);
-      return;
-    }
 
     let html = `<div class="page-section">`;
     html += `<div class="breadcrumb"><a href="#${currentBoard}" class="breadcrumb-home">🏠 首页</a> <span class="breadcrumb-sep">/</span> <span>${page.title.replace(/^[^\s]+\s/, '') || page.title}</span></div>`;
@@ -446,8 +336,6 @@
         window.location.hash = currentBoard;
       });
     }
-
-    closeSidebar();
   }
 
   /* ===== 板块切换器 ===== */
@@ -478,18 +366,6 @@
       });
     });
   }
-
-  /* ===== Sidebar open/close ===== */
-  function openSidebar() { sidebar.classList.add('open'); backdrop.hidden = false; }
-  function closeSidebar() { sidebar.classList.remove('open'); backdrop.hidden = true; }
-
-  menuToggle.addEventListener('click', function () {
-    if (sidebar.classList.contains('open')) closeSidebar(); else openSidebar();
-  });
-  backdrop.addEventListener('click', closeSidebar);
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') closeSidebar();
-  });
 
   /* ===== 顶栏点击：eyebrow→总览，title→板块首页 ===== */
   document.querySelector('.top-bar-left').addEventListener('click', function (e) {
