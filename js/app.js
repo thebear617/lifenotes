@@ -191,9 +191,15 @@
       if (!q) return true;
       return (r.title || '').toLowerCase().includes(q);
     }
+    function titleHtml(r) {
+      if (r.link) {
+        return `<a href="${r.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="rec-link">${r.title}</a>`;
+      }
+      return `<span class="rec-title">${r.title}</span>`;
+    }
     function recCardHtml(r) {
       return `<div class="rec-card">
-        <div class="rec-head"><span class="rec-title">${r.title}</span>${r.date ? `<span class="rec-date">${r.date}</span>` : ''}</div>
+        <div class="rec-head">${titleHtml(r)}${r.date ? `<span class="rec-date">${r.date}</span>` : ''}</div>
         <div class="rec-body doc-body" hidden>${r.html}</div>
       </div>`;
     }
@@ -201,7 +207,7 @@
       return `<div class="tl-item">
         <div class="tl-dot"></div>
         <div class="tl-card">
-          <div class="rec-head"><span class="rec-date">${r.date || ''}</span><span class="rec-title">${r.title}</span><span class="rec-cat">${r.category || '未分类'}</span></div>
+          <div class="rec-head"><span class="rec-date">${r.date || ''}</span>${titleHtml(r)}<span class="rec-cat">${r.category || '未分类'}</span></div>
           <div class="rec-body doc-body" hidden>${r.html}</div>
         </div>
       </div>`;

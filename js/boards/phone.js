@@ -28,13 +28,15 @@ window.BOARD_DATA["phone"] = {
      "date": "2026-05-12",
      "category": "使用技巧",
      "title": "夏天 iPhone 发烫的 3 个设置检查项",
-     "html": "<p><strong>来源</strong>：B站视频《到夏天iPhone就太烫了？教大家个快速降温方法！》\n<strong>链接</strong>：https://www.bilibili.com/video/BV1AaoXBhEwT/</p>\n<p><strong>核心判断</strong>：降温思路不是物理散热，而是减少后台刷新、分析上传和弱 Wi-Fi 下的蜂窝补偿，从而降低后台活动与联网耗电。</p>\n<p><strong>操作路径</strong>：\n- <code>设置</code> → <code>通用</code> → <code>后台 App 刷新</code> → 关闭\n- <code>设置</code> → <code>隐私与安全性</code> → <code>分析与改进</code> → 关闭 <code>共享 iPhone 分析</code>\n- <code>设置</code> → <code>蜂窝网络</code> → 滑到底部 → 关闭 <code>无线局域网助理</code></p>\n<p><strong>适用场景</strong>：日常待机、刷视频、聊天时发热或掉电偏快；不希望 App 在后台频繁刷新；不希望弱 Wi-Fi 时自动用蜂窝补流量。</p>\n<p><strong>边界</strong>：非万能方案。重度游戏、长时间拍视频、导航、无线充电、边充边玩、太阳直晒等场景依然会明显升温。已出现高温警告时应暂停使用并放到阴凉处自然降温。关闭后台刷新后部分 App 内容更新会变慢；关闭无线局域网助理后弱 Wi-Fi 体验可能变差。</p>"
+     "html": "<p><strong>来源</strong>：B站视频《到夏天iPhone就太烫了？教大家个快速降温方法！》\n</p>\n<p><strong>核心判断</strong>：降温思路不是物理散热，而是减少后台刷新、分析上传和弱 Wi-Fi 下的蜂窝补偿，从而降低后台活动与联网耗电。</p>\n<p><strong>操作路径</strong>：\n- <code>设置</code> → <code>通用</code> → <code>后台 App 刷新</code> → 关闭\n- <code>设置</code> → <code>隐私与安全性</code> → <code>分析与改进</code> → 关闭 <code>共享 iPhone 分析</code>\n- <code>设置</code> → <code>蜂窝网络</code> → 滑到底部 → 关闭 <code>无线局域网助理</code></p>\n<p><strong>适用场景</strong>：日常待机、刷视频、聊天时发热或掉电偏快；不希望 App 在后台频繁刷新；不希望弱 Wi-Fi 时自动用蜂窝补流量。</p>\n<p><strong>边界</strong>：非万能方案。重度游戏、长时间拍视频、导航、无线充电、边充边玩、太阳直晒等场景依然会明显升温。已出现高温警告时应暂停使用并放到阴凉处自然降温。关闭后台刷新后部分 App 内容更新会变慢；关闭无线局域网助理后弱 Wi-Fi 体验可能变差。</p>",
+     "link": "https://www.bilibili.com/video/BV1AaoXBhEwT"
     },
     {
      "date": "2026-05-12",
      "category": "使用技巧",
      "title": "手机系统时间慢了会导致抢票失败",
-     "html": "<p><strong>来源</strong>：B站视频《我一直抢不到票，原来是因为这样！》\n<strong>链接</strong>：https://www.bilibili.com/video/BV1J9oSBUEPj/</p>\n<p><strong>核心判断</strong>：抢票失败不一定是因为信号或性能差，系统时间不准确是常见但容易被忽视的原因。售票系统依赖精确时间戳验证请求顺序，偏差哪怕 0.1 秒都可能错过放票瞬间。</p>\n<p><strong>判断方法</strong>：浏览器访问 Time.is（https://time.is/），查看手机系统时间与标准时间的差值。</p>\n<p><strong>修复（强制重新同步 NTP）</strong>：\n1. 关闭\"自动设置时间\"\n2. 手动把时间调快或调慢几分钟\n3. 重新开启\"自动设置时间\"（强制拉取完整 NTP 时间）\n4. 仍不生效则重启手机后重复</p>\n<p><strong>各品牌路径</strong>：\n| 品牌 | 路径 |\n|---|---|\n| 华为/荣耀 | 设置 → 系统和更新 → 日期和时间 → 自动获取时间 |\n| iPhone | 设置 → 通用 → 日期与时间 → 自动设置 |\n| 小米 | 设置 → 更多设置 → 日期和时间 → 自动同步时间 |\n| OPPO | 设置 → 系统管理 → 日期和时间 → 自动获取时间 |\n| vivo | 设置 → 系统管理 → 日期和时间 → 自动同步时间 |\n| 三星 | 设置 → 常规管理 → 日期和时间 → 自动获取时间 |</p>\n<p><strong>抢票前额外建议</strong>：提前 1 分钟打开页面刷新；重启手机清后台缓存；只保留抢票和支付 App。</p>\n<p><strong>边界</strong>：部分抢票系统还有人机验证、账号等级等额外门槛，时间同步只是排查方向之一。</p>"
+     "html": "<p><strong>来源</strong>：B站视频《我一直抢不到票，原来是因为这样！》\n</p>\n<p><strong>核心判断</strong>：抢票失败不一定是因为信号或性能差，系统时间不准确是常见但容易被忽视的原因。售票系统依赖精确时间戳验证请求顺序，偏差哪怕 0.1 秒都可能错过放票瞬间。</p>\n<p><strong>判断方法</strong>：浏览器访问 Time.is（https://time.is/），查看手机系统时间与标准时间的差值。</p>\n<p><strong>修复（强制重新同步 NTP）</strong>：\n1. 关闭\"自动设置时间\"\n2. 手动把时间调快或调慢几分钟\n3. 重新开启\"自动设置时间\"（强制拉取完整 NTP 时间）\n4. 仍不生效则重启手机后重复</p>\n<p><strong>各品牌路径</strong>：\n| 品牌 | 路径 |\n|---|---|\n| 华为/荣耀 | 设置 → 系统和更新 → 日期和时间 → 自动获取时间 |\n| iPhone | 设置 → 通用 → 日期与时间 → 自动设置 |\n| 小米 | 设置 → 更多设置 → 日期和时间 → 自动同步时间 |\n| OPPO | 设置 → 系统管理 → 日期和时间 → 自动获取时间 |\n| vivo | 设置 → 系统管理 → 日期和时间 → 自动同步时间 |\n| 三星 | 设置 → 常规管理 → 日期和时间 → 自动获取时间 |</p>\n<p><strong>抢票前额外建议</strong>：提前 1 分钟打开页面刷新；重启手机清后台缓存；只保留抢票和支付 App。</p>\n<p><strong>边界</strong>：部分抢票系统还有人机验证、账号等级等额外门槛，时间同步只是排查方向之一。</p>",
+     "link": "https://www.bilibili.com/video/BV1J9oSBUEPj"
     },
     {
      "date": "2026-05-13",

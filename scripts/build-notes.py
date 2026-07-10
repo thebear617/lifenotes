@@ -222,6 +222,46 @@ def parse_map_records(body, domain_id, page_id_map):
         return is_domain_intro(html) or is_structural_skeleton(title, html)
     # ---------- 过滤结束 ----------
 
+    # ---------- 源链接提取 ----------
+    BILIBILI_RE = re.compile(r"https?://www\.bilibili\.com/video/BV[\w]+")
+    WEIBO_RE = re.compile(r"https?://m\.weibo\.cn/[^\"<\s]+")
+    XHS_RE = re.compile(r"https?://www\.xiaohongshu\.com/[^\"<\s]+")
+
+    def extract_source_link(html):
+        """从记录 HTML 中提取第一个来源链接（B站/微博/小红书优先）。"""
+        for pattern in [BILIBILI_RE, WEIBO_RE, XHS_RE]:
+            m = pattern.search(html)
+            if m:
+                return m.group(0)
+        return None
+
+    # 源码引用清洗模式（标题已是超链接，正文不需要重复展示裸 URL 和 BV 号）
+    SOURCE_CITATION_RE = [
+        (re.compile(r"<strong>链接</strong>[：:]\s*https?://[^\s<]+/?\s*"), ""),            # **链接**：URL
+        (re.compile(r"；原视频[：:]\s*<a[^>]*>.*?</a>"), ""),                             # ；原视频：<a>Bilibili</a>
+        (re.compile(r"；<a[^>]*>原视频</a>"), ""),                                        # ；<a>原视频</a>
+        (re.compile(r"；<a[^>]*>Bilibili</a>"), ""),                                      # ；<a>Bilibili</a>
+        (re.compile(r'<a href="https?://www\.bilibili\.com/video/(?:BV[\w]+|av\d+)/?[^"]*">([^<]*)</a>'), r"\1"),  # 裸 B站 <a> → 纯文本
+        (re.compile(r"https?://(?:www\.)?bilibili\.com/video/(?:BV[\w]+|av\d+)/?[^\s<]*"), ""),                     # 裸 B站 URL 文本
+    ]
+
+    def strip_source_citations(html):
+        for pat, repl in SOURCE_CITATION_RE:
+            html = pat.sub(repl, html)
+        return html
+
+    def make_record(date, category, title, html):
+        link = extract_source_link(html)
+        if link:
+            html = strip_source_citations(html)
+            # 标题末尾的 " · BVxxxxx" 不再需要（标题本身就是链接）
+            title = re.sub(r"\s*[·•]\s*BV[\w]+(?:_p\d+)?\s*$", "", title).strip()
+        rec = {"date": date, "category": category, "title": title, "html": html}
+        if link:
+            rec["link"] = link
+        return rec
+    # ---------- 链接提取结束 ----------
+
     def flush_text():
         nonlocal buf
         if not buf:
@@ -236,7 +276,7 @@ def parse_map_records(body, domain_id, page_id_map):
         title = extract_block_title(text)
         html = md.markdown(WIKILINK_RE.sub(repl, text), extensions=MD_EXT)
         if not should_skip(title, html):
-            records.append({"date": date, "category": cat, "title": title, "html": html})
+            records.append(make_record(date, cat, title, html))
 
     def flush_callout():
         nonlocal cal
@@ -253,7 +293,7 @@ def parse_map_records(body, domain_id, page_id_map):
         # 记录卡片(.rec-card)头部已显示标题，内部 callout 那层带框/折叠的壳是冗余的，
         # 直接平铺 callout 正文（markdown 内容），不套任何 callout 壳。
         html = md.markdown(WIKILINK_RE.sub(repl, inner_text), extensions=MD_EXT)
-        records.append({"date": date, "category": cat, "title": title, "html": html})
+        records.append(make_record(date, cat, title, html))
 
     i = 0
     while i < n:

@@ -925,6 +925,8 @@ li.task input { margin-right: .45rem; vertical-align: middle; }
 }
 .rec-head:hover { background: var(--accent-bg); }
 .rec-title { font-size: .95rem; font-weight: 700; color: var(--text); flex: 1; }
+.rec-link { font-size: .95rem; font-weight: 700; color: var(--accent, #c2410c); flex: 1; text-decoration: none; }
+.rec-link:hover { text-decoration: underline; }
 .rec-date {
   font-size: .76rem;
   font-weight: 700;
