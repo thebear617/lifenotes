@@ -223,10 +223,11 @@ def parse_map_records(body, domain_id, page_id_map):
         title = clean_callout_title(ctitle, date, cm.group(1).strip() if cm else None)
         inner_text = "\n".join(inner)
         inner_html = md.markdown(WIKILINK_RE.sub(repl, inner_text), extensions=MD_EXT)
-        open_attr = "" if collapsed else " open"
-        html = (f'<details class="callout callout-{ctype}"{open_attr}>'
-                f'<summary>{title}</summary>'
-                f'<div class="callout-body">{inner_html}</div></details>')
+        # 静态 callout：记录卡片(rec-card)本身已是折叠层，内部 callout 取消折叠，
+        # 只保留单层折叠（标题栏 + 正文），避免「卡片里套折叠卡片」的冗余。
+        html = (f'<div class="callout callout-{ctype}">'
+                f'<div class="callout-title">{title}</div>'
+                f'<div class="callout-body">{inner_html}</div></div>')
         records.append({"date": date, "category": cat, "title": title, "html": html})
 
     i = 0
