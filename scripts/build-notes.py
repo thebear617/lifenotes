@@ -40,6 +40,8 @@ DOMAIN_CONFIG = {
     "金融-经济":  {"id": "finance",  "name": "金融-经济",  "icon": "💰", "desc": "理财与宏观经济的常识梳理",            "accent": "#2f9e44"},
     "动植物":     {"id": "biology",  "name": "动植物",     "icon": "🌿", "desc": "动物与植物的基础科普",                "accent": "#0b7285"},
     "历史":       {"id": "history",  "name": "历史",       "icon": "🏛️", "desc": "历史脉络与人物事件的常识",            "accent": "#9c36b5"},
+    "手机":       {"id": "phone",    "name": "手机",       "icon": "📱", "desc": "手机品牌/系统/使用技巧/产业科普",    "accent": "#228be6"},
+    "酒店":       {"id": "hotel",    "name": "酒店",       "icon": "🏨", "desc": "连锁酒店/住宿消费/商业模式科普",      "accent": "#ae3ec9"},
 }
 
 # 不迁移的领域（即使出现在源目录里也跳过）
