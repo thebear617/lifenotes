@@ -26,18 +26,6 @@ window.BOARD_DATA["food"] = {
    "records": [
     {
      "date": null,
-     "category": "未分类",
-     "title": "这个领域专门记录煮饭做菜心得，以及发现的好吃美食。",
-     "html": "<h1>美食领域地图</h1>\n<p>这个领域专门记录煮饭做菜心得，以及发现的好吃美食。</p>"
-    },
-    {
-     "date": null,
-     "category": "未分类",
-     "title": "想吃清单",
-     "html": "<h2>想吃清单</h2>"
-    },
-    {
-     "date": null,
      "category": "烤肉类",
      "title": "烤肉类",
      "html": "<h3>烤肉类</h3>\n<ul>\n<li>白娃烤肉</li>\n<li>胜胜烤肉</li>\n<li>1佳烤肉</li>\n<li>老崔烤鱼（医药小区店）— 蔡家巷32号，22年老牌炭火烤鱼，人均¥69</li>\n<li>地铁6号线：西电科大南校区·未来之瞳→长乐门站，再步行约1.8km到店，全程~73分钟</li>\n</ul>"
@@ -56,21 +44,9 @@ window.BOARD_DATA["food"] = {
     },
     {
      "date": null,
-     "category": "未分类",
-     "title": "已记录做法",
-     "html": "<h2>已记录做法</h2>"
-    },
-    {
-     "date": null,
      "category": "美食",
      "title": "个人未来规划  去浜寿司吃「拌饭寿司」· 00:28",
      "html": "<h2>来源</h2>\n<p>小红书刷到的一个野路子吃法，原帖主说「一吃一个得道成仙」</p>\n<h2>适用场景</h2>\n<p>去浜寿司（回转寿司连锁）不知道吃什么的时候</p>\n<h2>核心思路</h2>\n<p>把所有高级食材拌成盖浇饭，用回转寿司的价格吃割烹配置</p>\n<h2>点单清单</h2>\n<table>\n<thead>\n<tr>\n<th>品类</th>\n<th>具体</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>主食</td>\n<td>宝宝碗（米饭）1份</td>\n</tr>\n<tr>\n<td>高级 topping</td>\n<td>鹅肝 1份、芝士肥牛 1份</td>\n</tr>\n<tr>\n<td>寿司 topping</td>\n<td>三文鱼山军舰 1份、甜虾包 1份、金枪鱼泥军舰 1份</td>\n</tr>\n<tr>\n<td>点睛</td>\n<td>温泉蛋 1份</td>\n</tr>\n</tbody>\n</table>\n<p>可选加料：甜姜、芥末</p>\n<h2>步骤</h2>\n<ol>\n<li><strong>取米饭</strong> — 让店员给你一份宝宝碗米饭，铺在底层，不要海苔</li>\n<li><strong>拌温泉蛋</strong> — 把温泉蛋和米饭充分搅拌，加酱油</li>\n<li><strong>加所有食材</strong> — 把鹅肝、芝士肥牛、三文鱼、甜虾、金枪鱼泥全部加进去</li>\n<li><strong>刮鹅肝酱</strong> — 把鹅肝的酱全部刮进去，一滴不剩（这是灵魂）</li>\n<li><strong>充分混合剁碎</strong> — 搅拌剁碎混合均匀</li>\n<li><strong>加甜姜和芥末</strong> — 根据自己口味调整</li>\n<li><strong>开吃</strong></li>\n</ol>\n<h2>注意事项</h2>\n<ul>\n<li>鹅肝酱是灵魂，务必全部刮进去</li>\n<li>如果不够吃可以再加一份鹅肝或加碗米饭</li>\n<li>拌的时候可以用勺子把大块食材剁碎，更容易混合</li>\n</ul>"
-    },
-    {
-     "date": null,
-     "category": "未分类",
-     "title": "视频来源沉淀",
-     "html": "<h2>视频来源沉淀</h2>"
     },
     {
      "date": "2026-06-05",

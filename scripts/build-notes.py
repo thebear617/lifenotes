@@ -180,6 +180,8 @@ def parse_map_records(body, domain_id, page_id_map):
     每条记录 = callout 折叠块，或按 H2/H3 切分的连续文本块。
     - category：callout 标题里的 /小分类: 优先；否则所属 ### 小标题；都没有归「未分类」
     - date：块内首个 YYYY-MM-DD；无则 null（时间轴归末尾「未标注日期」组）
+
+    过滤：跳过领域描述(intro)、文档结构标题(骨架)、待补TODO 等无记录价值的条目。
     """
     repl = make_wikilink_repl(domain_id, page_id_map)
     lines = body.split("\n")
@@ -189,6 +191,34 @@ def parse_map_records(body, domain_id, page_id_map):
     cur_h3 = None
     buf = []
     cal = None
+
+    # ---------- 记录过滤 ----------
+    # 文档骨架标题：这些 H2/H3 是笔记的结构元素，不是知识记录
+    STRUCTURAL_SKIP_TITLES = {
+        "核心问题", "长期关注对象", "常用来源", "总览",
+        "来源沉淀", "领域边界", "写入原则", "待补",
+        "想吃清单", "已记录做法", "视频来源沉淀",
+        "新能源车行业结构", "智能驾驶与辅助驾驶",
+        "野生动物科普", "野生植物科普", "海洋生物科普", "入侵物种",
+    }
+
+    def is_domain_intro(html):
+        """H1 领域标题 + 描述段落（如「这个领域用于记录…」）"""
+        return "<h1>" in html and "领域地图" in html
+
+    def is_structural_skeleton(title, html):
+        """文档结构标题：已知骨架标题，或 html 只有标题标签、没有任何正文。"""
+        if title in STRUCTURAL_SKIP_TITLES:
+            return True
+        if title.startswith("子主题"):
+            return True
+        # 去掉第一个标题标签（h1-h4），检查是否还有剩余内容
+        remainder = re.sub(r"<h[1-4][^>]*>.*?</h[1-4]>", "", html, count=1).strip()
+        return len(re.sub(r"\s+", "", remainder)) == 0
+
+    def should_skip(title, html):
+        return is_domain_intro(html) or is_structural_skeleton(title, html)
+    # ---------- 过滤结束 ----------
 
     def flush_text():
         nonlocal buf
@@ -203,7 +233,8 @@ def parse_map_records(body, domain_id, page_id_map):
         date = dm.group(1) if dm else None
         title = extract_block_title(text)
         html = md.markdown(WIKILINK_RE.sub(repl, text), extensions=MD_EXT)
-        records.append({"date": date, "category": cat, "title": title, "html": html})
+        if not should_skip(title, html):
+            records.append({"date": date, "category": cat, "title": title, "html": html})
 
     def flush_callout():
         nonlocal cal
