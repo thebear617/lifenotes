@@ -832,42 +832,16 @@ button {
   border-left: 3px solid var(--line); padding: .3rem 0 .3rem 1rem; color: var(--muted); margin: .6rem 0;
 }
 
-/* ===== Obsidian callout ===== */
-.callout {
-  border: 1px solid var(--line); border-left: 4px solid var(--accent);
-  border-radius: 8px; background: var(--surface); margin: .9rem 0; overflow: hidden;
+/* ===== Obsidian callout：已取消带框/折叠壳，平铺为小标题 ===== */
+/* 源笔记里的 callout 标题在记录详情里平铺为 .note-h（记录卡片头部已显示标题；
+   内容页 body 里用 h4.note-h 作小标题）。不再生成 .callout 折叠盒。 */
+.note-h {
+  margin: 1rem 0 .4rem;
+  font-size: .98rem;
+  font-weight: 800;
+  color: var(--accent);
 }
-/* callout 标题：summary（折叠态）/ .callout-title（静态态）共用 */
-.callout > summary,
-.callout > .callout-title {
-  padding: .6rem .9rem; font-weight: 800; color: var(--dark);
-  list-style: none; display: flex; align-items: center; gap: .5rem; user-select: none;
-}
-.callout > summary { cursor: pointer; }
-.callout > summary::-webkit-details-marker { display: none; }
-.callout > summary::before { content: "\25B8"; transition: transform .2s; color: var(--muted); }
-.callout[open] > summary::before { transform: rotate(90deg); }
-.callout .callout-body { padding: .2rem .9rem .9rem; }
-/* 首/尾子元素 margin 归零，避免 summary/标题 与正文间出现多余间隙（参考 valorant 渲染经验） */
-.callout .callout-body > :first-child { margin-top: 0; }
-.callout .callout-body > :last-child { margin-bottom: 0; }
-/* 列表项内的段落不额外加间距（避免 <li><p> 撑大行距） */
-.callout li > p { margin: 0; }
-.callout-note, .callout-info { border-left-color: var(--blue); }
-.callout-note > summary, .callout-info > summary,
-.callout-note > .callout-title, .callout-info > .callout-title { color: var(--blue); }
-.callout-question { border-left-color: var(--amber); }
-.callout-question > summary, .callout-question > .callout-title { color: var(--amber); }
-.callout-tip, .callout-success { border-left-color: var(--green); }
-.callout-tip > summary, .callout-success > summary,
-.callout-tip > .callout-title, .callout-success > .callout-title { color: var(--green); }
-.callout-warning, .callout-danger, .callout-failure, .callout-bug { border-left-color: var(--red); }
-.callout-warning > summary, .callout-danger > summary, .callout-failure > summary, .callout-bug > summary,
-.callout-warning > .callout-title, .callout-danger > .callout-title, .callout-failure > .callout-title, .callout-bug > .callout-title { color: var(--red); }
-.callout-example { border-left-color: var(--accent); }
-.callout-abstract, .callout-summary { border-left-color: #8b5cf6; }
-.callout-abstract > summary, .callout-summary > summary,
-.callout-abstract > .callout-title, .callout-summary > .callout-title { color: #8b5cf6; }
+.note-h:first-child { margin-top: 0; }
 
 /* ===== wiki 内链 ===== */
 .wikilink { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }

@@ -134,13 +134,8 @@ def md_to_html(text, domain_id, page_id_map):
             inner2 = WIKILINK_RE.sub(repl, inner)
             inner_html = md.markdown(inner2, extensions=MD_EXT)
             summary = title if title else ctype.capitalize()
-            open_attr = "" if collapsed else " open"
-            out.append(
-                f'<details class="callout callout-{ctype}"{open_attr}>'
-                f'<summary>{summary}</summary>'
-                f'<div class="callout-body">{inner_html}</div>'
-                f'</details>'
-            )
+            # 平铺 callout：标题作小标题，正文接在下面，不套折叠/带框的 callout 壳
+            out.append(f'<h4 class="note-h">{summary}</h4>\n{inner_html}')
     html = "\n".join(out)
     # 任务清单 - [ ] / - [x]
     html = re.sub(r"<li>\[ \] (.*?)</li>",
@@ -214,7 +209,7 @@ def parse_map_records(body, domain_id, page_id_map):
         nonlocal cal
         if not cal:
             return
-        ctype, collapsed, ctitle, inner = cal
+        _, _, ctitle, inner = cal
         cal = None
         dm = DATE_RE.search(ctitle)
         date = dm.group(1) if dm else None
@@ -222,12 +217,9 @@ def parse_map_records(body, domain_id, page_id_map):
         cat = cm.group(1).strip() if cm else (cur_h3 or "未分类")
         title = clean_callout_title(ctitle, date, cm.group(1).strip() if cm else None)
         inner_text = "\n".join(inner)
-        inner_html = md.markdown(WIKILINK_RE.sub(repl, inner_text), extensions=MD_EXT)
-        # 静态 callout：记录卡片(rec-card)本身已是折叠层，内部 callout 取消折叠，
-        # 只保留单层折叠（标题栏 + 正文），避免「卡片里套折叠卡片」的冗余。
-        html = (f'<div class="callout callout-{ctype}">'
-                f'<div class="callout-title">{title}</div>'
-                f'<div class="callout-body">{inner_html}</div></div>')
+        # 记录卡片(.rec-card)头部已显示标题，内部 callout 那层带框/折叠的壳是冗余的，
+        # 直接平铺 callout 正文（markdown 内容），不套任何 callout 壳。
+        html = md.markdown(WIKILINK_RE.sub(repl, inner_text), extensions=MD_EXT)
         records.append({"date": date, "category": cat, "title": title, "html": html})
 
     i = 0
