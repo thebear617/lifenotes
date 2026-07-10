@@ -845,6 +845,11 @@ button {
 .callout > summary::before { content: "\25B8"; transition: transform .2s; color: var(--muted); }
 .callout[open] > summary::before { transform: rotate(90deg); }
 .callout .callout-body { padding: .2rem .9rem .9rem; }
+/* 首/尾子元素 margin 归零，避免 summary 与正文间出现多余间隙（参考 valorant 渲染经验） */
+.callout .callout-body > :first-child { margin-top: 0; }
+.callout .callout-body > :last-child { margin-bottom: 0; }
+/* 列表项内的段落不额外加间距（避免 <li><p> 撑大行距） */
+.callout li > p { margin: 0; }
 .callout-note, .callout-info { border-left-color: var(--blue); }
 .callout-note > summary, .callout-info > summary { color: var(--blue); }
 .callout-question { border-left-color: var(--amber); }

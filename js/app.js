@@ -194,7 +194,7 @@
     function recCardHtml(r) {
       return `<div class="rec-card">
         <div class="rec-head"><span class="rec-title">${r.title}</span>${r.date ? `<span class="rec-date">${r.date}</span>` : ''}</div>
-        <div class="rec-body" hidden>${r.html}</div>
+        <div class="rec-body doc-body" hidden>${r.html}</div>
       </div>`;
     }
     function tlItemHtml(r) {
@@ -202,7 +202,7 @@
         <div class="tl-dot"></div>
         <div class="tl-card">
           <div class="rec-head"><span class="rec-date">${r.date || ''}</span><span class="rec-title">${r.title}</span><span class="rec-cat">${r.category || '未分类'}</span></div>
-          <div class="rec-body" hidden>${r.html}</div>
+          <div class="rec-body doc-body" hidden>${r.html}</div>
         </div>
       </div>`;
     }

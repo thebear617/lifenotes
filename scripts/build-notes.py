@@ -326,7 +326,6 @@ INDEX_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
   <header class="top-bar">
-    <button class="menu-toggle" id="menuToggle" aria-label="切换导航">☰</button>
     <div class="top-bar-left">
       <span class="top-eyebrow" id="topEyebrow">lifenotes</span>
       <h1 class="top-title" id="topTitle">常识笔记</h1>
@@ -334,9 +333,6 @@ INDEX_TEMPLATE = """<!DOCTYPE html>
     <nav class="board-switcher" id="boardSwitcher" aria-label="板块切换"></nav>
   </header>
   <div class="layout">
-    <nav class="sidebar" id="sidebar" aria-label="章节导航">
-      <ul class="nav-tree" id="navTree"></ul>
-    </nav>
     <main class="main" id="main">
       <div class="welcome" id="welcome">
         <h2>常识笔记</h2>
@@ -346,7 +342,6 @@ INDEX_TEMPLATE = """<!DOCTYPE html>
       <div class="content-area" id="contentArea" hidden></div>
     </main>
   </div>
-  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
 
   <script src="js/boards-index.js"></script>
 <!--BOARDS-->
