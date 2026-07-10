@@ -117,7 +117,13 @@
       <p class="home-hero-desc">${home.desc || ''}</p>
     </div>`;
 
-    if (home.gridCards && home.gridCards.length) {
+    const page = data.content && data.content.map;
+    const records = page && page.records ? page.records : [];
+
+    if (records.length) {
+      // 笔记中心式：领域首页直接展示记录，默认分类视图，按钮切时间轴（含搜索）
+      html += `<div class="home-records" id="homeRecords"></div>`;
+    } else if (home.gridCards && home.gridCards.length) {
       html += `<section class="home-section">
         <h3 class="home-section-title">快速入口</h3>
         <div class="home-grid">`;
@@ -162,6 +168,10 @@
     }
 
     welcome.innerHTML = html;
+
+    if (records.length) {
+      mountRecordsView(welcome.querySelector('#homeRecords'), records);
+    }
 
     welcome.querySelectorAll('.home-card, .updates-item').forEach(el => {
       el.addEventListener('click', function (e) {
@@ -233,28 +243,27 @@
     });
   }
 
-  /* ===== 领域地图：分类 / 时间轴 两视图 ===== */
-  function renderMapPage(page) {
-    const records = page.records || [];
-    let html = `<div class="page-section">`;
-    html += `<div class="breadcrumb"><a href="#${currentBoard}" class="breadcrumb-home">🏠 首页</a> <span class="breadcrumb-sep">/</span> <span>${page.title}</span></div>`;
-    html += `<h2 class="page-title">${page.title}</h2>`;
-    if (page.desc) html += `<p class="page-desc">${page.desc}</p>`;
-    html += `<div class="view-tabs">
-      <button class="view-tab active" data-view="category">分类视图</button>
-      <button class="view-tab" data-view="timeline">时间轴视图</button>
-    </div>`;
-    html += `<div class="view-container" id="viewContainer"></div>`;
-    html += `</div>`;
-    contentArea.innerHTML = html;
+  /* ===== 领域地图：分类 / 时间轴 两视图（可挂载到任意容器） ===== */
+  function mountRecordsView(container, records) {
+    container.innerHTML = `
+      <div class="note-toolbar">
+        <input type="search" class="note-search" placeholder="搜索记录标题…" />
+        <div class="view-tabs">
+          <button class="view-tab active" data-view="category">分类视图</button>
+          <button class="view-tab" data-view="timeline">时间轴视图</button>
+        </div>
+      </div>
+      <div class="view-container" id="viewContainer"></div>`;
 
-    const homeLink = contentArea.querySelector('.breadcrumb-home');
-    if (homeLink) homeLink.addEventListener('click', function (e) {
-      e.preventDefault();
-      window.location.hash = currentBoard;
-    });
+    const vc = container.querySelector('#viewContainer');
+    const search = container.querySelector('.note-search');
+    let view = 'category';
+    let q = '';
 
-    const container = contentArea.querySelector('#viewContainer');
+    function pass(r) {
+      if (!q) return true;
+      return (r.title || '').toLowerCase().includes(q);
+    }
     function recCardHtml(r) {
       return `<div class="rec-card">
         <div class="rec-head"><span class="rec-title">${r.title}</span>${r.date ? `<span class="rec-date">${r.date}</span>` : ''}</div>
@@ -281,9 +290,10 @@
       });
     }
     function renderCategory() {
+      const rs = records.filter(pass);
       const groups = {};
       const order = [];
-      records.forEach(r => {
+      rs.forEach(r => {
         const c = r.category || '未分类';
         if (!(c in groups)) { groups[c] = []; order.push(c); }
         groups[c].push(r);
@@ -295,30 +305,58 @@
           <div class="rec-list">` + groups[c].map(recCardHtml).join('') + `</div>
         </div>`;
       });
-      container.innerHTML = h || '<p class="home-empty">暂无记录。</p>';
-      bindRecCards(container);
+      vc.innerHTML = h || '<p class="home-empty">没有匹配的记录。</p>';
+      bindRecCards(vc);
     }
     function renderTimeline() {
-      const dated = records.filter(r => r.date).sort((a, b) => b.date.localeCompare(a.date));
-      const undated = records.filter(r => !r.date);
+      const rs = records.filter(pass);
+      const dated = rs.filter(r => r.date).sort((a, b) => b.date.localeCompare(a.date));
+      const undated = rs.filter(r => !r.date);
       let h = '';
       if (dated.length) h += `<div class="tl">` + dated.map(tlItemHtml).join('') + `</div>`;
       if (undated.length) {
         h += `<h3 class="cat-group-title tl-undated-title">未标注日期 <span class="cat-count">${undated.length}</span></h3>`;
         h += `<div class="tl tl-undated">` + undated.map(tlItemHtml).join('') + `</div>`;
       }
-      container.innerHTML = h || '<p class="home-empty">暂无记录。</p>';
-      bindRecCards(container);
+      vc.innerHTML = h || '<p class="home-empty">没有匹配的记录。</p>';
+      bindRecCards(vc);
     }
-    contentArea.querySelectorAll('.view-tab').forEach(tab => {
+    function render() {
+      if (view === 'category') renderCategory();
+      else renderTimeline();
+    }
+    container.querySelectorAll('.view-tab').forEach(tab => {
       tab.addEventListener('click', function () {
-        contentArea.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+        container.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        if (tab.dataset.view === 'category') renderCategory();
-        else renderTimeline();
+        view = tab.dataset.view;
+        render();
       });
     });
-    renderCategory();
+    search.addEventListener('input', function () {
+      q = this.value.trim().toLowerCase();
+      render();
+    });
+    render();
+  }
+
+  /* ===== 领域地图页（contentArea 内渲染两视图） ===== */
+  function renderMapPage(page) {
+    const records = page.records || [];
+    contentArea.innerHTML = `<div class="page-section">
+      <div class="breadcrumb"><a href="#${currentBoard}" class="breadcrumb-home">🏠 首页</a> <span class="breadcrumb-sep">/</span> <span>${page.title}</span></div>
+      <h2 class="page-title">${page.title}</h2>
+      ${page.desc ? `<p class="page-desc">${page.desc}</p>` : ''}
+      <div class="map-records" id="mapRecords"></div>
+    </div>`;
+
+    const homeLink = contentArea.querySelector('.breadcrumb-home');
+    if (homeLink) homeLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      window.location.hash = currentBoard;
+    });
+
+    mountRecordsView(contentArea.querySelector('#mapRecords'), records);
   }
 
   /* ===== 内容页 ===== */
