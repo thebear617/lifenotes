@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-build-notes.py — 把「知识观察型笔记」(Obsidian markdown) 编译成 lifenotes 站点数据。
+build-notes.py — 把 lifenotes/content 中的 Markdown 编译成站点数据。
 
-源：SRC_DIR（默认指向 Obsidian 笔记库里的「知识观察型笔记」目录）
+源：仓库内 content/（Life Notes 唯一事实源）
 输出：js/boards/<id>.js  +  js/boards-index.js  +  index.html
 
 用法：
@@ -11,8 +11,8 @@ build-notes.py — 把「知识观察型笔记」(Obsidian markdown) 编译成 l
 依赖（仅构建期，隔离 venv）：markdown, PyYAML
     pip install markdown PyYAML
 
-设计：源笔记留在 Obsidian 库（单源），本脚本把 markdown 编译成纯 HTML 站点数据后提交；
-站点零运行时依赖。改完笔记后重跑本脚本即可刷新。
+设计：Markdown 数据与网站代码保存在同一独立仓库，本脚本把 content/ 编译成纯 HTML
+站点数据后提交；站点零运行时依赖。改完 content/ 后重跑本脚本即可刷新。
 """
 import os
 import re
@@ -21,11 +21,11 @@ import markdown as md
 import yaml
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # lifenotes/
-SRC_DIR = "/Users/mokaiche/Documents/notes/03-Resources/知识观察型笔记"
+SRC_DIR = os.path.join(ROOT, "content")
 OUT_JS = os.path.join(ROOT, "js")
 BOARDS_OUT = os.path.join(OUT_JS, "boards")
 
-# None = 全量迁移（处理源目录下除 EXCLUDE_DOMAINS 外的所有领域文件夹）
+# None = 全量构建（处理 content/ 下除内部目录和 EXCLUDE_DOMAINS 外的领域文件夹）
 PILOT_DOMAINS = None
 
 # 领域展示配置（id 用 ascii，name/icon/desc/accent 自定义）
@@ -386,6 +386,7 @@ INDEX_TEMPLATE = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <meta name="version" content="v0.4.0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>常识笔记</title>
   <link rel="stylesheet" href="css/style.css">
@@ -425,7 +426,7 @@ def write_index(boards):
 
 
 def write_boards_index(boards):
-    lines = ["/* 自动生成，请勿手改；改源笔记后重跑 scripts/build-notes.py */", "const BOARDS = ["]
+    lines = ["/* 自动生成，请勿手改；改 content/ 后重跑 scripts/build-notes.py */", "const BOARDS = ["]
     for i, b in enumerate(boards):
         comma = "," if i < len(boards) - 1 else ""
         lines.append("  " + json.dumps(
@@ -444,6 +445,7 @@ def main():
         domains = [d for d in sorted(os.listdir(SRC_DIR))
                    if os.path.isdir(os.path.join(SRC_DIR, d))
                    and not d.startswith(".")
+                   and not d.startswith("_")
                    and not d.startswith("00-")
                    and d not in EXCLUDE_DOMAINS]
     boards = []

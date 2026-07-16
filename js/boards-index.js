@@ -1,4 +1,4 @@
-/* 自动生成，请勿手改；改源笔记后重跑 scripts/build-notes.py */
+/* 自动生成，请勿手改；改 content/ 后重跑 scripts/build-notes.py */
 const BOARDS = [
   {"id": "ai", "name": "AI产业", "icon": "🤖", "desc": "AI 产业链上下游事实与判断", "accent": "#7048e8"},
   {"id": "biology", "name": "动植物", "icon": "🌿", "desc": "动物与植物的基础科普", "accent": "#0b7285"},

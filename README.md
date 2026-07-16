@@ -1,6 +1,8 @@
 # lifenotes · 常识笔记
 
-> 个人常识笔记站：把 Obsidian 里的「知识观察型笔记」编译成一个可浏览的多领域知识站。
+> 独立的个人常识资料库与静态网站：把仓库内 Markdown 编译成可浏览的多领域知识站。
+
+当前版本：`v0.4.0`
 
 在线地址（部署后）：https://thebear617.github.io/lifenotes/ （仅 GitHub Pages）
 
@@ -8,9 +10,9 @@
 
 一个**多领域的个人常识笔记站**。首页是领域总览仪表盘，每个领域是一块独立的知识域（如「美食」「AI产业」「汽车」）。
 
-笔记本身仍以 **Obsidian markdown** 形式留在你的笔记库（单源），本仓库只存「编译后的站点数据」。
+本仓库同时保存 Markdown 数据源与编译后的站点数据，`content/` 是 Life Notes 的唯一事实源，不依赖其他笔记库。
 
-> 编译进站点的页面只有 **领域地图** 与 **QA** 两篇。源笔记里的「术语表 / 来源池 / 转录」保留在 Obsidian，不编译进站点（其中指向它们的 wiki 内链会渲染为纯文本）。
+> 每个领域优先编译 `领域地图.md`，不存在时用 `QA.md` 兜底；`术语表 / 来源池 / 转录` 作为本地资料保留但不直接发布。指向未编译页面的 wiki 内链会渲染为纯文本。
 
 ## 信息架构
 
@@ -29,6 +31,12 @@ lifenotes 首页（领域总览仪表盘）
 ## 文件结构
 
 ```
+├── content/                 # Life Notes 唯一 Markdown 数据源
+│   ├── _inbox/
+│   │   └── video-transcripts/ # 新视频转写入口（不直接编译）
+│   ├── AI产业/
+│   ├── 汽车/
+│   └── ...                  # 各领域的领域地图 / QA / 术语表 / 来源池 / 转录
 ├── index.html              # 入口（顶栏 / 切换器容器 / 侧栏 / 内容区），由构建脚本生成
 ├── css/
 │   └── style.css           # 所有样式（暖橙品牌色 + 侧栏 + 仪表盘 + callout + wikilink）
@@ -43,15 +51,15 @@ lifenotes 首页（领域总览仪表盘）
     └── build-notes.py      # 构建脚本：markdown → 站点数据
 ```
 
-> `index.html`、`boards-index.js`、`js/boards/*.js` 均由 `build-notes.py` 生成，**不要手改**；改源笔记后重跑脚本即可。
+> `index.html`、`boards-index.js`、`js/boards/*.js` 均由 `build-notes.py` 生成，**不要手改**；修改 `content/` 后重跑脚本即可。
 
 ## 构建
 
-源笔记目录（默认）：`/Users/mokaiche/Documents/notes/03-Resources/知识观察型笔记`
+数据源目录：仓库内 `content/`。
 
 ```bash
-# 依赖（仅构建期，隔离 venv；站点本身零运行时依赖）
-pip install markdown PyYAML
+# 依赖（仅构建期，建议使用隔离 venv；站点本身零运行时依赖）
+pip install -r requirements.txt
 
 # 编译
 python3 scripts/build-notes.py
@@ -59,18 +67,29 @@ python3 scripts/build-notes.py
 
 构建脚本会：
 1. 遍历源目录下各**领域文件夹**（跳过 `00-` 开头的看板类目录、以及 `EXCLUDE_DOMAINS` 中列出的领域如「无畏契约」）
-2. 把存在的 `领域地图.md` 与 `QA.md` 各编译成一页
+2. 优先把领域的 `领域地图.md` 编译为主页面，不存在时用 `QA.md` 兜底
 3. 处理 Obsidian 语法：YAML frontmatter、**callout**（`> [!note]-` 等 → 可折叠卡片）、**wiki 内链**（`[[转录/xxx]]` 等指向未编译页面的链接 → 纯文本）、表格、任务清单 `- [x]`
-4. 输出 `js/boards/<id>.js` + 重写 `js/boards-index.js` + 重写 `index.html`
+4. 忽略 `_inbox/` 等内部目录
+5. 输出 `js/boards/<id>.js` + 重写 `js/boards-index.js` + 重写 `index.html`
+
+## 视频进入 Life Notes
+
+共享转写 skill 位于 `../.workbuddy/skills/bili-audio-transcribe/`。默认把新视频的 `SRT`、`TXT` 和 Markdown 转写写入：
+
+```text
+content/_inbox/video-transcripts/
+```
+
+整理流程：从 inbox 阅读转写稿，判断领域，将原始资料归档到对应领域的 `转录/`，把提炼后的正式记录写入该领域的 `领域地图.md`，最后运行构建脚本。`_inbox/` 不会直接出现在网站中。
 
 ## 如何新增一个领域
 
 1. 在 `scripts/build-notes.py` 的 `DOMAIN_CONFIG` 加一行（含 `id` / `name` / `icon` / `desc` / `accent`）
-2. 在源目录建好该领域文件夹（至少包含 `领域地图.md` 与 `QA.md`）
+2. 在 `content/` 下建立领域文件夹（至少包含 `领域地图.md`；也可先用 `QA.md` 兜底）
 3. 重跑 `python3 scripts/build-notes.py`
 4. 提交生成的 `js/` 与 `index.html`
 
-> 全量迁移时，把脚本里的 `PILOT_DOMAINS` 设为 `None` 即可处理源目录下所有领域文件夹（前提都已在 `DOMAIN_CONFIG` 配置；`EXCLUDE_DOMAINS` 里的领域会被跳过）。
+> `PILOT_DOMAINS = None` 时处理 `content/` 下所有已配置领域；`_` 开头的内部目录和 `EXCLUDE_DOMAINS` 中的领域会被跳过。
 
 ## 设计语言
 
