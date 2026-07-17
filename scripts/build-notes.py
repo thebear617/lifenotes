@@ -54,6 +54,11 @@ MAIN_PAGE_CANDIDATES = [
     ("QA",       "map", "💡", "笔记"),
 ]
 
+# 特定领域的分类展示顺序；未列出的分类保持源文顺序。
+CATEGORY_ORDER = {
+    "life": ["清洁", "体态矫正", "急救及健康", "用电常识"],
+}
+
 MD_EXT = ["tables", "fenced_code", "sane_lists"]
 
 
@@ -197,7 +202,7 @@ def parse_map_records(body, domain_id, page_id_map):
     # ---------- 记录过滤 ----------
     # 文档骨架标题：这些 H2/H3 是笔记的结构元素，不是知识记录
     STRUCTURAL_SKIP_TITLES = {
-        "核心问题", "长期关注对象", "常用来源", "总览",
+        "核心问题", "长期关注对象", "常用来源", "总览", "边界",
         "来源沉淀", "领域边界", "写入原则", "待补",
         "想吃清单", "已记录做法", "视频来源沉淀",
         "新能源车行业结构", "智能驾驶与辅助驾驶",
@@ -362,6 +367,10 @@ def build_board(folder_name, folder_path):
         fm, body = split_frontmatter(raw)
         html = md_to_html(body, did, page_id_map)
         records = parse_map_records(body, did, page_id_map)
+        preferred = CATEGORY_ORDER.get(did, [])
+        if preferred:
+            rank = {category: i for i, category in enumerate(preferred)}
+            records.sort(key=lambda record: rank.get(record["category"], len(preferred)))
         content[pid] = {"title": label, "body": html, "records": records}
         nav.append({"id": pid, "icon": icon, "label": label})
         grid.append({"id": pid, "icon": icon, "title": label,
