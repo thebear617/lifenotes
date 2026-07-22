@@ -52,7 +52,11 @@ content/_inbox/video-transcripts/
 
 ## 部署
 
-这是独立 GitHub Pages 仓库。提交到 `main` 后由 GitHub Pages 发布：
+这是独立 GitHub Pages 仓库，部署流程位于 `.github/workflows/deploy.yml`。它会在 `main` 更新后执行 `npm ci`、以 `SITE_BASE=/lifenotes/` 构建 Astro，并把 `dist/` 发布到 GitHub Pages。
+
+首次切换框架后，请在 GitHub 仓库的 **Settings → Pages** 中将发布来源设为 **GitHub Actions**，不要使用旧的分支根目录发布方式。
+
+提交到 `main` 后由 GitHub Actions 发布：
 
 ```bash
 git add .
