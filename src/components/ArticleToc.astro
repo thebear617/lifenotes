@@ -1,0 +1,60 @@
+---
+const { headings = [] } = Astro.props;
+const tocHeadings = headings.filter((heading) => heading.depth >= 1 && heading.depth <= 3);
+---
+
+{tocHeadings.length > 0 && (
+  <aside class="article-toc-column" aria-label="文章目录">
+    <details class="article-toc" open>
+      <summary>本文目录</summary>
+      <nav>
+        {tocHeadings.map((heading) => (
+          <a
+            href={`#${heading.slug}`}
+            class:list={[`article-toc-link depth-${heading.depth}`, { active: heading === tocHeadings[0] }]}
+            data-heading-id={heading.slug}
+          >
+            {heading.text}
+          </a>
+        ))}
+      </nav>
+    </details>
+  </aside>
+)}
+
+{tocHeadings.length > 0 && (
+  <script>
+    const tocLinks = Array.from(document.querySelectorAll('.article-toc-link'));
+    const articleHeadings = Array.from(document.querySelectorAll('.article-body h1[id], .article-body h2[id], .article-body h3[id]'));
+
+    function setActiveHeading(id) {
+      tocLinks.forEach((link) => {
+        const active = link.dataset.headingId === id;
+        link.classList.toggle('active', active);
+        if (active) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+    }
+
+    let ticking = false;
+    function updateActiveHeading() {
+      let activeId = articleHeadings[0]?.id;
+      for (const heading of articleHeadings) {
+        if (heading.getBoundingClientRect().top <= 120) activeId = heading.id;
+        else break;
+      }
+      if (activeId) setActiveHeading(activeId);
+      ticking = false;
+    }
+
+    function requestHeadingUpdate() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(updateActiveHeading);
+    }
+
+    updateActiveHeading();
+    window.addEventListener('scroll', requestHeadingUpdate, { passive: true });
+    window.addEventListener('hashchange', requestHeadingUpdate);
+  </script>
+)}

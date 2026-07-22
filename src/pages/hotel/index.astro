@@ -3,34 +3,44 @@ import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 
 const entries = (await getCollection('hotel')).sort((a, b) => a.data.order - b.data.order);
+const visibleEntries = entries.filter((entry) => entry.data.visible).sort((a, b) => (b.data.date?.getTime() ?? Number.NEGATIVE_INFINITY) - (a.data.date?.getTime() ?? Number.NEGATIVE_INFINITY));
+const topics = [{ id: '连锁酒店', label: '连锁酒店' }];
 const base = import.meta.env.BASE_URL;
 ---
 
-<Layout title="酒店" currentBoard="hotel">
+<Layout title="酒店" currentBoard="hotel" topicFilter={true} topicItems={topics}>
   <section class="domain-page">
-    <div class="domain-hero">
-      <span class="hero-eyebrow">HOTEL</span>
-      <h1>酒店</h1>
-      <p>连锁酒店、住宿消费与酒店产业科普</p>
+    <div class="life-record-list">
+      {visibleEntries.map((entry) => (
+        <a class="record-card" data-topic-section="连锁酒店" href={`${base}hotel/${entry.slug}/`}>
+          <div class="record-card-topline"><span class="record-category">连锁酒店</span><span class="record-date">{entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}</span></div>
+          <strong>{entry.data.title}</strong>
+          <span class="record-source">来源：{entry.data.source}</span>
+          <span class="record-arrow">查看详情 →</span>
+        </a>
+      ))}
     </div>
-
-    <div class="domain-toolbar">
-      <span>酒店领域地图</span>
-      <span>{entries.length} 条记录</span>
-    </div>
-
-    <section class="record-group" aria-labelledby="category-hotel">
-      <h2 id="category-hotel">连锁酒店</h2>
-      <div class="record-grid">
-        {entries.map((entry) => (
-          <a class="record-card" href={`${base}hotel/${entry.slug}/`}>
-            <span class="record-date">{entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}</span>
-            <strong>{entry.data.title}</strong>
-            <span class="record-source">来源：{entry.data.source}</span>
-            <span class="record-arrow">查看详情 →</span>
-          </a>
-        ))}
-      </div>
-    </section>
   </section>
 </Layout>
+
+<script>
+  let filterTimer;
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-topic-filter]');
+    if (!button) return;
+    const list = document.querySelector('.life-record-list');
+    if (!list) return;
+    const selected = button.dataset.topicFilter || 'all';
+    document.querySelectorAll('[data-topic-filter]').forEach((item) => {
+      const active = item === button;
+      item.classList.toggle('active', active);
+      item.setAttribute('aria-pressed', String(active));
+    });
+    clearTimeout(filterTimer);
+    list.classList.add('is-switching');
+    filterTimer = setTimeout(() => {
+      document.querySelectorAll('[data-topic-section]').forEach((record) => record.classList.toggle('is-filtered-out', selected !== 'all' && record.dataset.topicSection !== selected));
+      requestAnimationFrame(() => list.classList.remove('is-switching'));
+    }, 160);
+  });
+</script>

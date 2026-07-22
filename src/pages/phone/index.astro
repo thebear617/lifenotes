@@ -4,39 +4,44 @@ import Layout from '../../layouts/Layout.astro';
 
 const categoryOrder = ['使用技巧', '工具'];
 const entries = (await getCollection('phone')).sort((a, b) => a.data.order - b.data.order);
-const groups = categoryOrder
-  .map((category) => ({ category, entries: entries.filter((entry) => entry.data.category === category) }))
-  .filter((group) => group.entries.length);
+const visibleEntries = entries.filter((entry) => entry.data.visible).sort((a, b) => (b.data.date?.getTime() ?? Number.NEGATIVE_INFINITY) - (a.data.date?.getTime() ?? Number.NEGATIVE_INFINITY));
+const topics = categoryOrder.filter((category) => visibleEntries.some((entry) => entry.data.category === category)).map((category) => ({ id: category, label: category }));
 const base = import.meta.env.BASE_URL;
 ---
 
-<Layout title="手机" currentBoard="phone">
+<Layout title="手机" currentBoard="phone" topicFilter={true} topicItems={topics}>
   <section class="domain-page">
-    <div class="domain-hero">
-      <span class="hero-eyebrow">PHONE</span>
-      <h1>手机</h1>
-      <p>手机品牌、系统功能、使用技巧与消费电子观察</p>
+    <div class="life-record-list">
+      {visibleEntries.map((entry) => (
+        <a class="record-card" data-topic-section={entry.data.category} href={`${base}phone/${entry.slug}/`}>
+          <div class="record-card-topline"><span class="record-category">{entry.data.category}</span><span class="record-date">{entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}</span></div>
+          <strong>{entry.data.title}</strong>
+          <span class="record-source">来源：{entry.data.source}</span>
+          <span class="record-arrow">查看详情 →</span>
+        </a>
+      ))}
     </div>
-
-    <div class="domain-toolbar">
-      <span>手机领域地图</span>
-      <span>{entries.length} 条记录</span>
-    </div>
-
-    {groups.map((group) => (
-      <section class="record-group" aria-labelledby={`category-${group.category}`}>
-        <h2 id={`category-${group.category}`}>{group.category}</h2>
-        <div class="record-grid">
-          {group.entries.map((entry) => (
-            <a class="record-card" href={`${base}phone/${entry.slug}/`}>
-              <span class="record-date">{entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}</span>
-              <strong>{entry.data.title}</strong>
-              <span class="record-source">来源：{entry.data.source}</span>
-              <span class="record-arrow">查看详情 →</span>
-            </a>
-          ))}
-        </div>
-      </section>
-    ))}
   </section>
 </Layout>
+
+<script>
+  let filterTimer;
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-topic-filter]');
+    if (!button) return;
+    const list = document.querySelector('.life-record-list');
+    if (!list) return;
+    const selected = button.dataset.topicFilter || 'all';
+    document.querySelectorAll('[data-topic-filter]').forEach((item) => {
+      const active = item === button;
+      item.classList.toggle('active', active);
+      item.setAttribute('aria-pressed', String(active));
+    });
+    clearTimeout(filterTimer);
+    list.classList.add('is-switching');
+    filterTimer = setTimeout(() => {
+      document.querySelectorAll('[data-topic-section]').forEach((record) => record.classList.toggle('is-filtered-out', selected !== 'all' && record.dataset.topicSection !== selected));
+      requestAnimationFrame(() => list.classList.remove('is-switching'));
+    }, 160);
+  });
+</script>

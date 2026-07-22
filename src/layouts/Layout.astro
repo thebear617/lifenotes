@@ -1,10 +1,12 @@
 ---
 import '../styles/global.css';
 import boards from '../data/boards.js';
+import { topicsForBoard } from '../data/topics.js';
 
-const { title = '常识笔记', currentBoard = null } = Astro.props;
+const { title = '常识笔记', currentBoard = null, topicFilter = false, topicItems = null, wide = false } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const href = (path = '') => `${base}${path}`;
+const topics = topicItems || topicsForBoard(currentBoard);
 ---
 
 <!doctype html>
@@ -37,6 +39,22 @@ const href = (path = '') => `${base}${path}`;
       </nav>
     </header>
 
-    <main class="main"><slot /></main>
+    <div class="site-shell">
+      {topicFilter && topics.length > 0 && (
+        <aside class="site-sidebar" aria-label={`${title}专题筛选`}>
+          <nav class="site-sidebar-nav">
+            <button class="site-sidebar-item active" type="button" data-topic-filter="all" aria-pressed="true">
+              <span class="site-sidebar-dot">●</span>全部内容
+            </button>
+            {topics.map((topic) => (
+              <button class="site-sidebar-item" type="button" data-topic-filter={topic.id} aria-pressed="false">
+                <span class="site-sidebar-dot">·</span>{topic.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+      )}
+      <main class:list={['main', { 'main-with-sidebar': topicFilter && topics.length > 0, 'main-wide': wide }]}><slot /></main>
+    </div>
   </body>
 </html>

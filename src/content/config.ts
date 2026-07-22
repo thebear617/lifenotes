@@ -8,6 +8,9 @@ const noteSchema = z.object({
   source: z.string().default(''),
   sourceUrl: z.string().url().optional(),
   tags: z.array(z.string()).default([]),
+  topic: z.string().optional(),
+  format: z.enum(['note', 'article']).default('note'),
+  visible: z.boolean().default(true),
 });
 
 const lifeCollection = defineCollection({

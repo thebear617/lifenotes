@@ -25,43 +25,65 @@ export async function getStaticPaths() {
 
 const { board, entries } = Astro.props;
 const base = import.meta.env.BASE_URL;
-const categories = [...new Set(entries.map((entry) => entry.data.category || '未分类'))];
+const visibleEntries = entries
+  .filter((entry) => entry.data.visible)
+  .sort((a, b) => (b.data.date?.getTime() ?? Number.NEGATIVE_INFINITY) - (a.data.date?.getTime() ?? Number.NEGATIVE_INFINITY));
+const categories = [...new Set(visibleEntries.map((entry) => entry.data.category || '未分类'))];
+const topics = categories.map((category) => ({ id: category, label: category }));
 ---
 
-<Layout title={board.name} currentBoard={board.id}>
-  <section class="board-placeholder">
-    <span class="board-placeholder-icon">{board.icon}</span>
-    <p class="hero-eyebrow">{board.name}</p>
-    <h1>{board.name}</h1>
-    <p>{board.desc}</p>
-    {entries.length ? (
-      <>
-        <div class="domain-toolbar">
-          <span>{board.name}领域地图</span>
-          <span>{entries.length} 条记录</span>
-        </div>
-        {categories.map((category) => (
-          <section class="record-group" aria-labelledby={`category-${category}`}>
-            <h2 id={`category-${category}`}>{category}</h2>
-            <div class="record-grid">
-              {entries.filter((entry) => entry.data.category === category).sort((a, b) => a.data.order - b.data.order).map((entry) => (
-                <a class="record-card" href={`${base}${board.id}/${entry.slug}/`}>
-                  <span class="record-date">{entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}</span>
-                  <strong>{entry.data.title}</strong>
-                  {entry.data.source && <span class="record-source">来源：{entry.data.source}</span>}
-                  <span class="record-arrow">查看详情 →</span>
-                </a>
-              ))}
-            </div>
-          </section>
-        ))}
-      </>
+<Layout title={board.name} currentBoard={board.id} topicFilter={true} topicItems={topics}>
+  <section class="domain-page">
+    {visibleEntries.length ? (
+      <div class="life-record-list">
+        {visibleEntries.map((entry) => {
+          const category = entry.data.category || '未分类';
+          return (
+            <a class="record-card" data-topic-section={category} href={`${base}${board.id}/${entry.slug}/`}>
+              <div class="record-card-topline">
+                <span class="record-category">{category}</span>
+                <span class="record-date">{entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}</span>
+              </div>
+              <strong>{entry.data.title}</strong>
+              {entry.data.source && <span class="record-source">来源：{entry.data.source}</span>}
+              <span class="record-arrow">查看详情 →</span>
+            </a>
+          );
+        })}
+      </div>
     ) : (
       <div class="placeholder-box">
         <strong>暂无可发布记录</strong>
         <span>该领域已接入 Astro 导航，后续有正式记录后会自动生成详情页。</span>
       </div>
     )}
-    <a class="back-link" href={base}>← 返回领域总览</a>
   </section>
 </Layout>
+
+<script>
+  let filterTimer;
+
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-topic-filter]');
+    if (!button) return;
+
+    const selected = button.dataset.topicFilter || 'all';
+    const list = document.querySelector('.life-record-list');
+    if (!list) return;
+
+    document.querySelectorAll('[data-topic-filter]').forEach((item) => {
+      const isActive = item === button;
+      item.classList.toggle('active', isActive);
+      item.setAttribute('aria-pressed', String(isActive));
+    });
+
+    clearTimeout(filterTimer);
+    list.classList.add('is-switching');
+    filterTimer = setTimeout(() => {
+      document.querySelectorAll('[data-topic-section]').forEach((record) => {
+        record.classList.toggle('is-filtered-out', selected !== 'all' && record.dataset.topicSection !== selected);
+      });
+      requestAnimationFrame(() => list.classList.remove('is-switching'));
+    }, 160);
+  });
+</script>
