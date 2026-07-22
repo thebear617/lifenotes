@@ -1,0 +1,28 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('hotel');
+  return entries.map((entry) => ({ params: { slug: entry.slug }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const base = import.meta.env.BASE_URL;
+---
+
+<Layout title="酒店" currentBoard="hotel">
+  <article class="note-detail">
+    <a class="back-link" href={`${base}hotel/`}>← 返回酒店领域</a>
+    <header class="note-header">
+      <span class="note-category">{entry.data.category}</span>
+      <h1>{entry.data.title}</h1>
+      <p class="note-meta">
+        {entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'} · 来源：{entry.data.source}
+        · <a class="source-link" href={entry.data.sourceUrl} target="_blank" rel="noreferrer">打开来源</a>
+      </p>
+    </header>
+    <div class="note-body"><Content /></div>
+  </article>
+</Layout>

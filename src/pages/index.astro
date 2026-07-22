@@ -1,0 +1,32 @@
+---
+import Layout from '../layouts/Layout.astro';
+import boards from '../data/boards.js';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<Layout>
+  <section class="welcome">
+    <div class="hero">
+      <span class="hero-eyebrow">LIFENOTES</span>
+      <h1>常识笔记</h1>
+      <p>个人常识笔记的知识索引。从下方选择一个领域开始浏览。</p>
+    </div>
+
+    <section class="board-section" aria-labelledby="board-heading">
+      <h2 id="board-heading">领域总览</h2>
+      <div class="board-grid">
+        {boards.map((board) => (
+          <a class="board-card" style={`--board-accent: ${board.accent}`} href={`${base}${board.id}/`}>
+            <span class="board-icon">{board.icon}</span>
+            <span class="board-name">{board.name}</span>
+            <span class="board-desc">{board.desc}</span>
+            <span class="board-arrow">进入浏览 →</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <p class="migration-note">Astro 外壳已建立；现有 Markdown 内容将在后续阶段逐步迁移。</p>
+  </section>
+</Layout>

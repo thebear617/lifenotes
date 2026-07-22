@@ -1,0 +1,36 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+
+const entries = (await getCollection('hotel')).sort((a, b) => a.data.order - b.data.order);
+const base = import.meta.env.BASE_URL;
+---
+
+<Layout title="酒店" currentBoard="hotel">
+  <section class="domain-page">
+    <div class="domain-hero">
+      <span class="hero-eyebrow">HOTEL</span>
+      <h1>酒店</h1>
+      <p>连锁酒店、住宿消费与酒店产业科普</p>
+    </div>
+
+    <div class="domain-toolbar">
+      <span>酒店领域地图</span>
+      <span>{entries.length} 条记录</span>
+    </div>
+
+    <section class="record-group" aria-labelledby="category-hotel">
+      <h2 id="category-hotel">连锁酒店</h2>
+      <div class="record-grid">
+        {entries.map((entry) => (
+          <a class="record-card" href={`${base}hotel/${entry.slug}/`}>
+            <span class="record-date">{entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}</span>
+            <strong>{entry.data.title}</strong>
+            <span class="record-source">来源：{entry.data.source}</span>
+            <span class="record-arrow">查看详情 →</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  </section>
+</Layout>

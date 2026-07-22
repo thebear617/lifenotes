@@ -1,0 +1,46 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection, render } from 'astro:content';
+import boards from '../../data/boards.js';
+
+export async function getStaticPaths() {
+  const formalBoardIds = ['ai', 'auto', 'biology', 'finance', 'food', 'pet'];
+  const getFormalEntries = (id) => {
+    switch (id) {
+      case 'ai': return getCollection('ai');
+      case 'auto': return getCollection('auto');
+      case 'biology': return getCollection('biology');
+      case 'finance': return getCollection('finance');
+      case 'food': return getCollection('food');
+      case 'pet': return getCollection('pet');
+      default: return [];
+    }
+  };
+  const formalPaths = (await Promise.all(formalBoardIds.map(async (id) => {
+    const board = boards.find((item) => item.id === id);
+    const entries = await getFormalEntries(id);
+    return entries.map((entry) => ({ params: { board: id, slug: entry.slug }, props: { board, entry } }));
+  }))).flat();
+  return formalPaths;
+}
+
+const { board, entry } = Astro.props;
+const { Content } = await render(entry);
+const base = import.meta.env.BASE_URL;
+---
+
+<Layout title={board.name} currentBoard={board.id}>
+  <article class="note-detail">
+    <a class="back-link" href={`${base}${board.id}/`}>← 返回{board.name}领域</a>
+    <header class="note-header">
+      <span class="note-category">{entry.data.category}</span>
+      <h1>{entry.data.title}</h1>
+      <p class="note-meta">
+        {entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}
+        {entry.data.source && ` · 来源：${entry.data.source}`}
+        {entry.data.sourceUrl && <> · <a class="source-link" href={entry.data.sourceUrl} target="_blank" rel="noreferrer">打开来源</a></>}
+      </p>
+    </header>
+    <div class="note-body"><Content /></div>
+  </article>
+</Layout>
