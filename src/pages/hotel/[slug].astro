@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import ArticleToc from '../../components/ArticleToc.astro';
+import { categoryForEntry } from '../../data/content.js';
 
 export async function getStaticPaths() {
   const entries = await getCollection('hotel');
@@ -10,6 +11,7 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
+const category = categoryForEntry(entry);
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -20,7 +22,7 @@ const base = import.meta.env.BASE_URL;
       <ArticleToc headings={headings} />
       <article class="article-detail">
         <header class="article-header">
-          <span class="article-category">{entry.data.category}</span>
+          <span class="article-category">{category}</span>
           <h1>{entry.data.title}</h1>
           <p class="article-meta">
             {entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'} · 来源：{entry.data.source}

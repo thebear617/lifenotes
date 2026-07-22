@@ -2,24 +2,17 @@
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import { topicIdForLabel } from '../../data/topics.js';
+import { categoryForEntry, compareEntriesByDateDesc } from '../../data/content.js';
 
-const categoryOrder = ['清洁', '体态矫正', '急救及健康', '用电常识', '厨房指南'];
 const entries = (await getCollection('life'))
   .filter((entry) => entry.data.visible)
-  .sort((a, b) => a.data.order - b.data.order);
-const records = categoryOrder
-  .map((category) => ({ category, entries: entries.filter((entry) => entry.data.category === category) }))
-  .filter((group) => group.entries.length)
-  .flatMap((group) => group.entries.map((entry) => ({ entry, category: group.category })))
-  .sort((a, b) => {
-    const dateA = a.entry.data.date?.getTime() ?? Number.POSITIVE_INFINITY;
-    const dateB = b.entry.data.date?.getTime() ?? Number.POSITIVE_INFINITY;
-    return dateB - dateA;
-  });
+  .sort(compareEntriesByDateDesc);
+const records = entries.map((entry) => ({ entry, category: categoryForEntry(entry) }));
+const topicItems = [...new Set(records.map((record) => record.category))].map((label) => ({ id: topicIdForLabel('life', label), label }));
 const base = import.meta.env.BASE_URL;
 ---
 
-<Layout title="生活" currentBoard="life" topicFilter={true}>
+<Layout title="生活" currentBoard="life" topicFilter={true} topicItems={topicItems}>
   <section class="domain-page">
     <div class="life-record-list">
       {records.map(({ entry, category }) => (
@@ -29,6 +22,7 @@ const base = import.meta.env.BASE_URL;
             <span class="record-date">{entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}</span>
           </div>
           <strong>{entry.data.title}</strong>
+          {entry.data.description && <span class="record-description">{entry.data.description}</span>}
           {entry.data.format === 'article' && <span class="record-summary">专题文章 · 汇总多条生活知识</span>}
           {entry.data.source && <span class="record-source">来源：{entry.data.source}</span>}
           <span class="record-arrow">查看详情 →</span>

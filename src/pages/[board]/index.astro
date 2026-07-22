@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import boards from '../../data/boards.js';
 import { getCollection } from 'astro:content';
+import { categoryForEntry, compareEntriesByDateDesc } from '../../data/content.js';
 
 export async function getStaticPaths() {
   const getFormalEntries = (id) => {
@@ -27,8 +28,8 @@ const { board, entries } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const visibleEntries = entries
   .filter((entry) => entry.data.visible)
-  .sort((a, b) => (b.data.date?.getTime() ?? Number.NEGATIVE_INFINITY) - (a.data.date?.getTime() ?? Number.NEGATIVE_INFINITY));
-const categories = [...new Set(visibleEntries.map((entry) => entry.data.category || '未分类'))];
+  .sort(compareEntriesByDateDesc);
+const categories = [...new Set(visibleEntries.map(categoryForEntry))];
 const topics = categories.map((category) => ({ id: category, label: category }));
 ---
 
@@ -37,7 +38,7 @@ const topics = categories.map((category) => ({ id: category, label: category }))
     {visibleEntries.length ? (
       <div class="life-record-list">
         {visibleEntries.map((entry) => {
-          const category = entry.data.category || '未分类';
+          const category = categoryForEntry(entry);
           return (
             <a class="record-card" data-topic-section={category} href={`${base}${board.id}/${entry.slug}/`}>
               <div class="record-card-topline">
@@ -45,6 +46,7 @@ const topics = categories.map((category) => ({ id: category, label: category }))
                 <span class="record-date">{entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}</span>
               </div>
               <strong>{entry.data.title}</strong>
+              {entry.data.description && <span class="record-description">{entry.data.description}</span>}
               {entry.data.source && <span class="record-source">来源：{entry.data.source}</span>}
               <span class="record-arrow">查看详情 →</span>
             </a>

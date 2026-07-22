@@ -1,25 +1,30 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
+import { categoryForEntry, compareEntriesByDateDesc } from '../../data/content.js';
 
 const categoryOrder = ['使用技巧', '工具'];
-const entries = (await getCollection('phone')).sort((a, b) => a.data.order - b.data.order);
-const visibleEntries = entries.filter((entry) => entry.data.visible).sort((a, b) => (b.data.date?.getTime() ?? Number.NEGATIVE_INFINITY) - (a.data.date?.getTime() ?? Number.NEGATIVE_INFINITY));
-const topics = categoryOrder.filter((category) => visibleEntries.some((entry) => entry.data.category === category)).map((category) => ({ id: category, label: category }));
+const entries = (await getCollection('phone')).filter((entry) => entry.data.visible).sort(compareEntriesByDateDesc);
+const categories = [...new Set(entries.map(categoryForEntry))];
+const topics = [...categoryOrder.filter((category) => categories.includes(category)), ...categories.filter((category) => !categoryOrder.includes(category))].map((label) => ({ id: label, label }));
 const base = import.meta.env.BASE_URL;
 ---
 
 <Layout title="手机" currentBoard="phone" topicFilter={true} topicItems={topics}>
   <section class="domain-page">
     <div class="life-record-list">
-      {visibleEntries.map((entry) => (
-        <a class="record-card" data-topic-section={entry.data.category} href={`${base}phone/${entry.slug}/`}>
-          <div class="record-card-topline"><span class="record-category">{entry.data.category}</span><span class="record-date">{entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}</span></div>
+      {entries.map((entry) => {
+        const category = categoryForEntry(entry);
+        return (
+        <a class="record-card" data-topic-section={category} href={`${base}phone/${entry.slug}/`}>
+          <div class="record-card-topline"><span class="record-category">{category}</span><span class="record-date">{entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}</span></div>
           <strong>{entry.data.title}</strong>
+          {entry.data.description && <span class="record-description">{entry.data.description}</span>}
           <span class="record-source">来源：{entry.data.source}</span>
           <span class="record-arrow">查看详情 →</span>
         </a>
-      ))}
+        );
+      })}
     </div>
   </section>
 </Layout>
