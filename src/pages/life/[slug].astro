@@ -26,10 +26,6 @@ const base = import.meta.env.BASE_URL;
           <h1>{entry.data.title}</h1>
           <p class="article-meta">
             {entry.data.date.toLocaleDateString('zh-CN')}
-            {entry.data.source && ` · 来源：${entry.data.source}`}
-            {entry.data.sourceUrl && (
-              <> · <a class="source-link" href={entry.data.sourceUrl} target="_blank" rel="noreferrer">打开来源</a></>
-            )}
           </p>
           {entry.data.tags?.length > 0 && <div class="article-tags">{entry.data.tags.map((tag) => <span>{tag}</span>)}</div>}
         </header>

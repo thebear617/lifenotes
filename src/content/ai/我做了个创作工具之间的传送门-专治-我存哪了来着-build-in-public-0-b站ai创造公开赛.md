@@ -1,10 +1,8 @@
 ---
 title: "我做了个创作工具之间的传送门，专治\"我存哪了来着?\" | Build in Public#0【B站AI创造公开赛】"
+description: "核心结论：Cora 是一款浏览器插件，专门解决 AI 创作者在多个工具间反复拖拽提示词/分镜/图片/视频资产的痛点，背后论断是「创作的本质就是上下文对齐」；后续版本会引入 Creable Agent…"
 date: 2026-06-07
-order: 5
 category: "创作工具"
-source: "迁移自旧版领域地图"
-sourceUrl: "https://www.bilibili.com/video/BV1ETEF6VEHu"
 tags: []
 ---
 
@@ -36,3 +34,7 @@ tags: []
 - "上下文对齐"是 Cora 自家论断，缺少第三方对比或效率数据
 - 团队仍在持续招聘，团队规模、付费计划、隐私策略暂未公开
 - 短链/官网 creaibo.com 长期可用性需观察
+
+## 参考资料
+
+1. [原始 B 站视频](https://www.bilibili.com/video/BV1ETEF6VEHu)

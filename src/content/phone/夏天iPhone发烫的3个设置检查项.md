@@ -1,10 +1,8 @@
 ---
 title: 夏天 iPhone 发烫的 3 个设置检查项
+description: "降温思路不是物理散热，而是减少后台刷新、分析上传和弱 Wi‑Fi 下的蜂窝补偿，从而降低后台活动与联网耗电。"
 date: 2026-05-12
-order: 1
 category: 使用技巧
-source: Bilibili
-sourceUrl: https://www.bilibili.com/video/BV1AaoXBhEwT/
 tags: [iPhone, 发热, 设置]
 ---
 
@@ -23,3 +21,7 @@ tags: [iPhone, 发热, 设置]
 适合日常待机、刷视频、聊天时发热或掉电偏快，以及不希望 App 在后台频繁刷新、弱 Wi‑Fi 时自动使用蜂窝数据的情况。
 
 这不是万能方案。重度游戏、长时间拍视频、导航、无线充电、边充边玩、太阳直晒等场景依然会明显升温。已出现高温警告时应暂停使用，放到阴凉处自然降温。关闭后台刷新后，部分 App 内容更新会变慢；关闭无线局域网助理后，弱 Wi‑Fi 体验可能变差。
+
+## 参考资料
+
+1. [原始 B 站视频](https://www.bilibili.com/video/BV1AaoXBhEwT/)

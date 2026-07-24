@@ -1,10 +1,8 @@
 ---
 title: "OpenAI开源项目Symphony-让Codex 从聊天窗口变成任务流水线"
+description: "核心结论：Symphony 是 OpenAI 开源的 Coding Agent 编排 Spec，把 Codex 从\"人盯一个个 Session\"升级为\"由任务系统（Linear/Issue Track…"
 date: 2026-06-07
-order: 4
 category: "Coding Agent 编排"
-source: "迁移自旧版领域地图"
-sourceUrl: "https://www.bilibili.com/video/BV16n576XEt5"
 tags: []
 ---
 
@@ -81,3 +79,7 @@ Unclaimed → Claimed → Running → (Retry | Cued | Released)
 - Symphony 当前是否已合并主干 PR、issue tracker 是否必须 Linear、是否支持自托管 Tracker 等关键信息视频未涉及
 - UP 主身份未在视频中显示（BV 链接含 up_id=581897590，但名称未提及）
 - Codex App Server Mode 的 API 稳定性、Elixir 实现的成熟度、Sandbox 策略等需查 OpenAI Codex 文档
+
+## 参考资料
+
+1. [原始 B 站视频](https://www.bilibili.com/video/BV16n576XEt5)

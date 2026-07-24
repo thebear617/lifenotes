@@ -1,10 +1,8 @@
 ---
 title: "10台M4 Mac mini 搭成集群（OpenClaw 前置）"
+description: "一句话结论"
 date: 2026-05-31
-order: 7
 category: "Apple Silicon 集群"
-source: "迁移自旧版领域地图"
-sourceUrl: "https://www.bilibili.com/video/BV1Eb6nBxEsG"
 tags: []
 ---
 
@@ -46,3 +44,7 @@ tags: []
 - 视频是"制造局"介绍性质，理论数据为主；实际跑 Llama 3 70B Q4 的真实吞吐、节点间 RDMA 延迟未在视频中给出
 - 380 TOPS 是 NPU 算力，与 GPU FP16 算力不能直接对比；MLX 框架对模型/算子的支持范围是关键
 - 视频本身标注"OpenClaw 前置工作"——OpenClaw 是什么、用了这套集群做什么，目前未公开
+
+## 参考资料
+
+1. [原始 B 站视频](https://www.bilibili.com/video/BV1Eb6nBxEsG)

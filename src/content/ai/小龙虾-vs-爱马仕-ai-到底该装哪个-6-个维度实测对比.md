@@ -1,10 +1,8 @@
 ---
 title: "小龙虾 vs 爱马仕 AI，到底该装哪个？6 个维度实测对比"
+description: "6 维度实测对比"
 date: 2026-06-13
-order: 3
 category: "工具对比"
-source: "迁移自旧版领域地图"
-sourceUrl: "https://www.bilibili.com/video/BV1PeoFBJE9s"
 tags: []
 ---
 
@@ -37,3 +35,7 @@ tags: []
 - 视频发布于 2026-04-19，距转录日约 2 个月，部分信息可能已过时
 - 副驾模型、钩子审计、多 Agent 协作视频仅提及未展开
 - UP 主来自"奇思妙想CYC"系列，该系列还包括安装教程、进阶操作等视频（合集共 3/16）
+
+## 参考资料
+
+1. [原始 B 站视频](https://www.bilibili.com/video/BV1PeoFBJE9s)

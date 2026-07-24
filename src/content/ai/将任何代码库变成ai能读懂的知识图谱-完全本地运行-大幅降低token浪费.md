@@ -1,10 +1,8 @@
 ---
 title: "将任何代码库变成AI能读懂的知识图谱！完全本地运行，大幅降低Token浪费"
+description: "核心结论：CodeGraph 把任何代码库转成 Agent 可实时查询的 MCP 知识图谱，替代反复 search/read/grep 调用，显著省 token；GitHub 38.1k stars，…"
 date: 2026-06-07
-order: 6
 category: "开发者工具"
-source: "迁移自旧版领域地图"
-sourceUrl: "https://www.bilibili.com/video/BV1As796BEL5"
 tags: []
 ---
 
@@ -42,3 +40,7 @@ tags: []
 - CodeGraph 当前支持的编程语言、增量更新策略、团队协作支持未提及
 - 私有部署（"完全本地运行"）是否包含模型推理本地化、还是仅图谱构建本地化，未明确
 - 与其他类似项目（aider、Sourcegraph、cursor 等）的横评未在视频中涉及
+
+## 参考资料
+
+1. [原始 B 站视频](https://www.bilibili.com/video/BV1As796BEL5)

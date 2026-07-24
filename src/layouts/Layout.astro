@@ -2,11 +2,37 @@
 import '../styles/global.css';
 import boards from '../data/boards.js';
 import { topicsForBoard } from '../data/topics.js';
+import { getCollection } from 'astro:content';
 
 const { title = '常识笔记', currentBoard = null, topicFilter = false, topicItems = null, wide = false } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const href = (path = '') => `${base}${path}`;
 const topics = topicItems || topicsForBoard(currentBoard);
+const collectionIds = new Set(['ai', 'auto', 'biology', 'finance', 'food', 'hotel', 'life', 'phone', 'pet']);
+const collectionForBoard = (id) => {
+  switch (id) {
+    case 'ai': return getCollection('ai');
+    case 'auto': return getCollection('auto');
+    case 'biology': return getCollection('biology');
+    case 'finance': return getCollection('finance');
+    case 'food': return getCollection('food');
+    case 'hotel': return getCollection('hotel');
+    case 'life': return getCollection('life');
+    case 'phone': return getCollection('phone');
+    case 'pet': return getCollection('pet');
+    default: return [];
+  }
+};
+const boardCounts = Object.fromEntries(await Promise.all(boards.map(async (board) => {
+  if (!collectionIds.has(board.id)) return [board.id, 0];
+  const entries = await collectionForBoard(board.id);
+  return [board.id, entries.filter((entry) => entry.data.visible).length];
+})));
+const orderedBoards = [...boards].sort((a, b) => {
+  const aHasEntries = boardCounts[a.id] > 0;
+  const bHasEntries = boardCounts[b.id] > 0;
+  return Number(bHasEntries) - Number(aHasEntries);
+});
 ---
 
 <!doctype html>
@@ -27,7 +53,7 @@ const topics = topicItems || topicsForBoard(currentBoard);
         <a class:list={['switcher-item', { active: currentBoard === null }]} href={href()}>
           <span class="switcher-icon">⌂</span>总览
         </a>
-        {boards.map((board) => (
+        {orderedBoards.map((board) => (
           <a
             class:list={['switcher-item', { active: currentBoard === board.id }]}
             style={`--board-accent: ${board.accent}`}

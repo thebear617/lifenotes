@@ -3,10 +3,7 @@ import { defineCollection, z } from 'astro:content';
 const noteSchema = z.object({
   title: z.string(),
   date: z.coerce.date().nullable().default(null),
-  order: z.number().optional(),
   category: z.string().optional(),
-  source: z.string().default(''),
-  sourceUrl: z.string().url().optional(),
   tags: z.array(z.string()).default([]),
   description: z.string().default(''),
   topic: z.string().optional(),

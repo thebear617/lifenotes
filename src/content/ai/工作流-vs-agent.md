@@ -1,9 +1,8 @@
 ---
 title: "工作流 vs Agent"
+description: "背景：UP 主小林提出：AI Agent 越来越强，工作流（n8n、扣子）是不是快没用了？"
 date: 2026-05-04
-order: 10
 category: "行业观察"
-source: "迁移自旧版领域地图"
 tags: []
 ---
 

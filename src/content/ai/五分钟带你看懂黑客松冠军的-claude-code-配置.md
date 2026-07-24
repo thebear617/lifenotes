@@ -1,10 +1,8 @@
 ---
 title: "五分钟带你看懂黑客松冠军的 Claude Code 配置"
+description: "仓库核心文件夹"
 date: 2026-06-13
-order: 2
 category: "开发者工具"
-source: "迁移自旧版领域地图"
-sourceUrl: "https://www.bilibili.com/video/BV1XrEZ6NEuD"
 tags: []
 ---
 
@@ -36,3 +34,7 @@ tags: []
 - "18万 Star"是视频发布时数据，可能持续增长
 - 仓库是 Claude Code 生态，与 Hermes/OpenCode 等其他 harness 的 Skill 体系有差异但思路相通
 - UP 主计划做三期系列，本期是第一篇（仓库总览），后续还有进阶指南和详细指南
+
+## 参考资料
+
+1. [原始 B 站视频](https://www.bilibili.com/video/BV1XrEZ6NEuD)
