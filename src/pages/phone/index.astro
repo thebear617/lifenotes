@@ -1,54 +1,22 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import { categoryForEntry, compareEntriesByDateDesc } from '../../data/content.js';
+import ListExplorer from '../../components/ListExplorer.astro';
+import { categoryForEntry } from '../../data/content.js';
 
-const categoryOrder = ['使用技巧', '工具'];
-const entries = (await getCollection('phone')).filter((entry) => entry.data.visible).sort(compareEntriesByDateDesc);
-const categories = [...new Set(entries.map(categoryForEntry))];
-const topics = [...categoryOrder.filter((category) => categories.includes(category)), ...categories.filter((category) => !categoryOrder.includes(category))].map((label) => ({ id: label, label }));
 const base = import.meta.env.BASE_URL;
+const entries = (await getCollection('phone')).filter((entry) => entry.data.visible);
+const items = entries.map((entry) => ({
+  slug: entry.slug,
+  title: entry.data.title,
+  description: entry.data.description,
+  date: entry.data.date,
+  category: categoryForEntry(entry),
+  tags: entry.data.tags || [],
+  href: `${base}phone/${entry.slug}/`,
+}));
 ---
 
-<Layout title="手机" currentBoard="phone" topicFilter={true} topicItems={topics}>
-  <section class="domain-page">
-    <div class="life-record-list">
-      {entries.map((entry) => {
-        const category = categoryForEntry(entry);
-        return (
-        <a class="record-card" data-topic-section={category} href={`${base}phone/${entry.slug}/`}>
-          <strong>{entry.data.title}</strong>
-          {entry.data.description && <span class="record-description">{entry.data.description}</span>}
-          <span class="record-date">{entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}</span>
-          <div class="record-tags">
-            <span class="record-category">{category}</span>
-            {entry.data.tags?.map((tag) => <span class="record-tag">{tag}</span>)}
-          </div>
-        </a>
-        );
-      })}
-    </div>
-  </section>
+<Layout title="手机" currentBoard="phone">
+  <ListExplorer entries={items} />
 </Layout>
-
-<script>
-  let filterTimer;
-  document.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-topic-filter]');
-    if (!button) return;
-    const list = document.querySelector('.life-record-list');
-    if (!list) return;
-    const selected = button.dataset.topicFilter || 'all';
-    document.querySelectorAll('[data-topic-filter]').forEach((item) => {
-      const active = item === button;
-      item.classList.toggle('active', active);
-      item.setAttribute('aria-pressed', String(active));
-    });
-    clearTimeout(filterTimer);
-    list.classList.add('is-switching');
-    filterTimer = setTimeout(() => {
-      document.querySelectorAll('[data-topic-section]').forEach((record) => record.classList.toggle('is-filtered-out', selected !== 'all' && record.dataset.topicSection !== selected));
-      requestAnimationFrame(() => list.classList.remove('is-switching'));
-    }, 160);
-  });
-</script>

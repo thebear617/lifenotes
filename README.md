@@ -42,7 +42,7 @@ Astro 会从 `src/content/` 读取 Markdown 并生成静态页面。新增内容
 
 ## 视频进入 Life Notes
 
-共享转写 skill 位于 `../.workbuddy/skills/bili-audio-transcribe/`。原始 SRT、TXT 和 Markdown 转写默认写入：
+共享转写 skill 位于 `~/.claude/skills/bili-audio-transcribe/`。原始 SRT、TXT 和 Markdown 转写默认写入：
 
 ```text
 content/_inbox/video-transcripts/

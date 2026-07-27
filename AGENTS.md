@@ -24,12 +24,12 @@
 
 处理 B 站、小红书或抖音视频的音频提取、字幕生成、转写稿整理时，先读取并遵循：
 
-`/Users/mokaiche/Documents/htmls/.workbuddy/skills/bili-audio-transcribe/SKILL.md`
+`/Users/mokaiche/.claude/skills/bili-audio-transcribe/SKILL.md`
 
-必须调用 WorkBuddy 的共享 wrapper：
+必须调用共享 wrapper：
 
 ```bash
-/Users/mokaiche/Documents/htmls/.workbuddy/skills/bili-audio-transcribe/scripts/bili-trans "<url-or-bv>" \
+/Users/mokaiche/.claude/skills/bili-audio-transcribe/scripts/bili-trans "<url-or-bv>" \
   --proxy http://127.0.0.1:7897 \
   --backend mlx \
   --model large-v3-turbo

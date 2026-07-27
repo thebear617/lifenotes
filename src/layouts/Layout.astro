@@ -1,38 +1,16 @@
 ---
 import '../styles/global.css';
 import boards from '../data/boards.js';
-import { topicsForBoard } from '../data/topics.js';
-import { getCollection } from 'astro:content';
 
-const { title = '常识笔记', currentBoard = null, topicFilter = false, topicItems = null, wide = false } = Astro.props;
-const base = import.meta.env.BASE_URL;
+interface Props {
+  title?: string;
+  currentBoard?: string | null;
+  wide?: boolean;
+}
+
+const { title = '常识笔记', currentBoard = null, wide = false } = Astro.props;
+const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.replace(/\/?$/, '/');
 const href = (path = '') => `${base}${path}`;
-const topics = topicItems || topicsForBoard(currentBoard);
-const collectionIds = new Set(['ai', 'auto', 'biology', 'finance', 'food', 'hotel', 'life', 'phone', 'pet']);
-const collectionForBoard = (id) => {
-  switch (id) {
-    case 'ai': return getCollection('ai');
-    case 'auto': return getCollection('auto');
-    case 'biology': return getCollection('biology');
-    case 'finance': return getCollection('finance');
-    case 'food': return getCollection('food');
-    case 'hotel': return getCollection('hotel');
-    case 'life': return getCollection('life');
-    case 'phone': return getCollection('phone');
-    case 'pet': return getCollection('pet');
-    default: return [];
-  }
-};
-const boardCounts = Object.fromEntries(await Promise.all(boards.map(async (board) => {
-  if (!collectionIds.has(board.id)) return [board.id, 0];
-  const entries = await collectionForBoard(board.id);
-  return [board.id, entries.filter((entry) => entry.data.visible).length];
-})));
-const orderedBoards = [...boards].sort((a, b) => {
-  const aHasEntries = boardCounts[a.id] > 0;
-  const bHasEntries = boardCounts[b.id] > 0;
-  return Number(bHasEntries) - Number(aHasEntries);
-});
 ---
 
 <!doctype html>
@@ -44,43 +22,63 @@ const orderedBoards = [...boards].sort((a, b) => {
     <title>{title} · lifenotes</title>
   </head>
   <body>
-    <header class="top-bar">
-      <a class="brand" href={href()}>
-        <span class="top-eyebrow">lifenotes</span>
-        <span class="top-title">{title}</span>
-      </a>
-      <nav class="board-switcher" aria-label="板块切换">
-        <a class:list={['switcher-item', { active: currentBoard === null }]} href={href()}>
-          <span class="switcher-icon">⌂</span>总览
-        </a>
-        {orderedBoards.map((board) => (
-          <a
-            class:list={['switcher-item', { active: currentBoard === board.id }]}
-            style={`--board-accent: ${board.accent}`}
-            href={href(`${board.id}/`)}
-          >
-            <span class="switcher-icon">{board.icon}</span>{board.name}
-          </a>
-        ))}
-      </nav>
-    </header>
+    <div class="layout">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="切换侧边栏">☰</button>
+      <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
 
-    <div class="site-shell">
-      {topicFilter && topics.length > 0 && (
-        <aside class="site-sidebar" aria-label={`${title}专题筛选`}>
-          <nav class="site-sidebar-nav">
-            <button class="site-sidebar-item active" type="button" data-topic-filter="all" aria-pressed="true">
-              <span class="site-sidebar-dot">●</span>全部内容
-            </button>
-            {topics.map((topic) => (
-              <button class="site-sidebar-item" type="button" data-topic-filter={topic.id} aria-pressed="false">
-                <span class="site-sidebar-dot">·</span>{topic.label}
-              </button>
-            ))}
-          </nav>
-        </aside>
-      )}
-      <main class:list={['main', { 'main-with-sidebar': topicFilter && topics.length > 0, 'main-wide': wide }]}><slot /></main>
+      <nav class="sidebar" id="sidebar" aria-label="主导航">
+        <div class="sidebar-brand">
+          <button class="sidebar-close" id="sidebarClose" aria-label="关闭侧边栏">✕</button>
+          <p class="sidebar-eyebrow">LifeNotes</p>
+          <h1 class="sidebar-title">常识笔记</h1>
+        </div>
+        <div class="sidebar-nav">
+          {boards.map((board) => (
+            <a
+              class:list={['sidebar-item', { active: currentBoard === board.id }]}
+              href={href(`${board.id}/`)}
+              aria-current={currentBoard === board.id ? 'page' : undefined}
+            >
+              <span class="sidebar-icon">{board.icon}</span>
+              <span>{board.name}</span>
+            </a>
+          ))}
+        </div>
+      </nav>
+
+      <div class="main-area">
+        <main class:list={['app-shell', { 'app-shell-wide': wide }]}>
+          <slot />
+        </main>
+      </div>
     </div>
+
+    <script>
+      const toggle = document.getElementById('sidebarToggle');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      const sidebar = document.getElementById('sidebar');
+      const closeBtn = document.getElementById('sidebarClose');
+
+      function openSidebar() {
+        document.body.classList.add('sidebar-open');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeSidebar() {
+        document.body.classList.remove('sidebar-open');
+        document.body.style.overflow = '';
+      }
+
+      toggle?.addEventListener('click', openSidebar);
+      backdrop?.addEventListener('click', closeSidebar);
+      closeBtn?.addEventListener('click', closeSidebar);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeSidebar();
+      });
+      document.querySelectorAll<HTMLAnchorElement>('.sidebar-item').forEach((link) => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth < 720) closeSidebar();
+        });
+      });
+    </script>
   </body>
 </html>
