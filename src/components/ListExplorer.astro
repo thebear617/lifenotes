@@ -5,7 +5,7 @@ interface ExplorerEntry {
   description?: string;
   date: Date | null;
   category: string;
-  tags: string[];
+  subcategory?: string;
   href: string;
 }
 
@@ -21,14 +21,10 @@ const visibleEntries = [...entries]
     const ta = a.date?.getTime() ?? Number.NEGATIVE_INFINITY;
     const tb = b.date?.getTime() ?? Number.NEGATIVE_INFINITY;
     return tb - ta || a.title.localeCompare(b.title, 'zh-CN');
-  })
-  .map((entry) => ({
-    ...entry,
-    tags: entry.tags || [],
-  }));
+  });
 
 const allCategories = [...new Set(visibleEntries.map((entry) => entry.category))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'zh-CN'));
-const allTags = [...new Set(visibleEntries.flatMap((entry) => entry.tags))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'zh-CN'));
+const allSubcategories = [...new Set(visibleEntries.map((entry) => entry.subcategory))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'zh-CN'));
 ---
 
 <section class="list-explorer" data-explorer>
@@ -37,7 +33,7 @@ const allTags = [...new Set(visibleEntries.flatMap((entry) => entry.tags))].filt
     <input
       type="search"
       class="list-search-input"
-      placeholder="搜索标题、描述或标签"
+      placeholder="搜索标题、描述或子分类"
       autocomplete="off"
       aria-label="搜索当前领域"
       data-list-search-input
@@ -45,7 +41,7 @@ const allTags = [...new Set(visibleEntries.flatMap((entry) => entry.tags))].filt
     <button class="list-search-clear" type="button" aria-label="清除搜索" data-list-search-clear>✕</button>
   </div>
 
-  {(allCategories.length > 0 || allTags.length > 0) && (
+  {(allCategories.length > 0 || allSubcategories.length > 0) && (
     <div class="filter-bar" data-filter-bar>
       {allCategories.length > 0 && (
         <div class="filter-row">
@@ -55,11 +51,11 @@ const allTags = [...new Set(visibleEntries.flatMap((entry) => entry.tags))].filt
           </div>
         </div>
       )}
-      {allTags.length > 0 && (
+      {allSubcategories.length > 0 && (
         <div class="filter-row">
-          <span class="filter-label">标签</span>
-          <div class="filter-tags" data-filter="tags">
-            {allTags.map((tag) => <button class="filter-tag" type="button">{tag}</button>)}
+          <span class="filter-label">子分类</span>
+          <div class="filter-tags" data-filter="subcategory">
+            {allSubcategories.map((subcategory) => <button class="filter-tag" type="button">{subcategory}</button>)}
             <button class="filter-clear" type="button" data-filter-clear>清除筛选</button>
           </div>
         </div>
@@ -76,18 +72,23 @@ const allTags = [...new Set(visibleEntries.flatMap((entry) => entry.tags))].filt
           data-title={entry.title}
           data-desc={entry.description || ''}
           data-category={entry.category}
-          data-tags={entry.tags.join(',')}
+          data-subcategory={entry.subcategory || ''}
         >
           <strong>{entry.title}</strong>
           {entry.description && <span class="record-description">{entry.description}</span>}
           <span class="record-date">{entry.date ? entry.date.toLocaleDateString('zh-CN') : '未标注日期'}</span>
           <div class="record-tags">
             <span class="record-category">{entry.category}</span>
-            {entry.tags.map((tag) => <span class="record-tag">{tag}</span>)}
+            {entry.subcategory && <span class="record-tag">{entry.subcategory}</span>}
           </div>
         </a>
       ))}
     </div>
+    <nav class="list-pagination" data-pagination aria-label="列表分页" hidden>
+      <button class="list-page-button" data-page-prev type="button">← 上一页</button>
+      <div class="list-page-numbers" data-page-numbers></div>
+      <button class="list-page-button" data-page-next type="button">下一页 →</button>
+    </nav>
   ) : (
     <div class="placeholder-box">
       <strong>暂无可发布记录</strong>
@@ -109,6 +110,13 @@ const allTags = [...new Set(visibleEntries.flatMap((entry) => entry.tags))].filt
 
     const filters: Record<string, string> = {};
     let searchTerm = '';
+    let currentPage = 1;
+    const pageSize = 8;
+
+    const pagination = root.querySelector<HTMLElement>('[data-pagination]');
+    const prevBtn = root.querySelector<HTMLButtonElement>('[data-page-prev]');
+    const nextBtn = root.querySelector<HTMLButtonElement>('[data-page-next]');
+    const pageNumbers = root.querySelector<HTMLElement>('[data-page-numbers]');
 
     root.querySelectorAll<HTMLElement>('[data-filter-bar] .filter-tag').forEach((tag) => {
       tag.addEventListener('click', () => {
@@ -122,20 +130,20 @@ const allTags = [...new Set(visibleEntries.flatMap((entry) => entry.tags))].filt
         } else {
           delete filters[filterKey];
         }
-        applyFilters();
+        applyFilters({ scrollToList: true, resetPage: true });
       });
     });
 
     filterClear?.addEventListener('click', () => {
       root.querySelectorAll('[data-filter-bar] .filter-tag.on').forEach((t) => t.classList.remove('on'));
       for (const key of Object.keys(filters)) delete filters[key];
-      applyFilters();
+      applyFilters({ scrollToList: true, resetPage: true });
     });
 
     input.addEventListener('input', () => {
       searchTerm = input.value.trim().toLowerCase();
       if (clearBtn) clearBtn.style.display = searchTerm ? '' : 'none';
-      applyFilters();
+      applyFilters({ scrollToList: true, resetPage: true });
     });
 
     clearBtn?.addEventListener('click', () => {
@@ -143,24 +151,80 @@ const allTags = [...new Set(visibleEntries.flatMap((entry) => entry.tags))].filt
       searchTerm = '';
       if (clearBtn) clearBtn.style.display = 'none';
       input.focus();
-      applyFilters();
+      applyFilters({ scrollToList: true, resetPage: true });
     });
 
-    function applyFilters() {
-      let visible = 0;
-      list.querySelectorAll<HTMLElement>('.record-card').forEach((card) => {
+    prevBtn?.addEventListener('click', () => {
+      if (currentPage <= 1) return;
+      currentPage -= 1;
+      applyFilters({ scrollToList: true });
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      currentPage += 1;
+      applyFilters({ scrollToList: true });
+    });
+
+    pageNumbers?.addEventListener('click', (event) => {
+      const target = (event.target as HTMLElement).closest<HTMLElement>('[data-page]');
+      if (!target) return;
+      const page = Number(target.dataset.page);
+      if (!page || page === currentPage) return;
+      currentPage = page;
+      applyFilters({ scrollToList: true });
+    });
+
+    function applyFilters({ scrollToList = false, resetPage = false } = {}) {
+      const cards = [...list.querySelectorAll<HTMLElement>('.record-card')];
+      const matches: HTMLElement[] = [];
+      for (const card of cards) {
         let show = true;
         if (filters.category && card.dataset.category !== filters.category) show = false;
-        if (show && filters.tags && !(card.dataset.tags || '').split(',').includes(filters.tags)) show = false;
+        if (show && filters.subcategory && card.dataset.subcategory !== filters.subcategory) show = false;
         if (show && searchTerm) {
-          const haystack = `${card.dataset.title || ''} ${card.dataset.desc || ''} ${card.dataset.tags || ''} ${card.dataset.category || ''}`.toLowerCase();
+          const haystack = `${card.dataset.title || ''} ${card.dataset.desc || ''} ${card.dataset.subcategory || ''} ${card.dataset.category || ''}`.toLowerCase();
           show = haystack.includes(searchTerm);
         }
-        card.style.display = show ? '' : 'none';
-        if (show) visible++;
-      });
-      if (emptyState) emptyState.style.display = visible ? 'none' : '';
+        if (show) matches.push(card);
+      }
+
+      const totalPages = Math.max(1, Math.ceil(matches.length / pageSize));
+      if (resetPage) currentPage = 1;
+      currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+      const startIndex = (currentPage - 1) * pageSize;
+      const pageSet = new Set(matches.slice(startIndex, startIndex + pageSize));
+
+      for (const card of cards) {
+        card.style.display = pageSet.has(card) ? '' : 'none';
+      }
+
+      if (emptyState) emptyState.style.display = matches.length ? 'none' : '';
+      renderPagination(totalPages, matches.length);
+
+      if (scrollToList) {
+        list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
+
+    function renderPagination(totalPages: number, resultCount: number) {
+      if (!pagination || !prevBtn || !nextBtn || !pageNumbers) return;
+      pagination.hidden = resultCount <= pageSize;
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = currentPage === totalPages;
+      const buttons = Array.from({ length: totalPages }, (_, index) => {
+        const page = index + 1;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `list-page-number${page === currentPage ? ' on' : ''}`;
+        button.dataset.page = String(page);
+        button.textContent = String(page);
+        if (page === currentPage) button.setAttribute('aria-current', 'page');
+        return button;
+      });
+      pageNumbers.replaceChildren(...buttons);
+    }
+
+    applyFilters();
   }
 
   document.querySelectorAll<HTMLElement>('[data-explorer]').forEach(initExplorer);

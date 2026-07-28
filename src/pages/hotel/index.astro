@@ -12,11 +12,13 @@ const items = entries.map((entry) => ({
   description: entry.data.description,
   date: entry.data.date,
   category: categoryForEntry(entry),
-  tags: entry.data.tags || [],
+  subcategory: entry.data.subcategory,
   href: `${base}hotel/${entry.slug}/`,
 }));
 ---
 
-<Layout title="酒店" currentBoard="hotel">
+<Layout title="服务业" currentBoard="hotel">
+  <h2 class="view-title">服务业</h2>
+  <p class="view-sub">酒店 · 餐饮连锁 · 物流 · 零售</p>
   <ListExplorer entries={items} />
 </Layout>

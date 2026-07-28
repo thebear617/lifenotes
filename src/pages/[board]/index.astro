@@ -12,13 +12,12 @@ export async function getStaticPaths() {
       case 'auto': return getCollection('auto');
       case 'biology': return getCollection('biology');
       case 'finance': return getCollection('finance');
-      case 'food': return getCollection('food');
-      case 'pet': return getCollection('pet');
+      case 'history': return getCollection('history');
       default: return [];
     }
   };
   return Promise.all(boards
-    .filter((board) => !['life', 'hotel', 'phone'].includes(board.id))
+    .filter((board) => !['life', 'hotel'].includes(board.id))
     .map(async (board) => ({
       params: { board: board.id },
       props: { board, entries: await getFormalEntries(board.id) },
@@ -35,11 +34,13 @@ const items = entries
     description: entry.data.description,
     date: entry.data.date,
     category: categoryForEntry(entry),
-    tags: entry.data.tags || [],
+    subcategory: entry.data.subcategory,
     href: `${base}${board.id}/${entry.slug}/`,
   }));
 ---
 
 <Layout title={board.name} currentBoard={board.id}>
+  <h2 class="view-title">{board.name}</h2>
+  <p class="view-sub">{board.subtitle}</p>
   <ListExplorer entries={items} />
 </Layout>

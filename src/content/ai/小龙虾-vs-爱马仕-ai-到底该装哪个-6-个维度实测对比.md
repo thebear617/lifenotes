@@ -3,7 +3,6 @@ title: "小龙虾 vs 爱马仕 AI，到底该装哪个？6 个维度实测对比
 description: "6 维度实测对比"
 date: 2026-06-13
 category: "工具对比"
-tags: []
 ---
 
 **来源**：小龙虾 vs 爱马仕 AI，到底该装哪个？｜6 个维度实测对比，一次讲清楚；UP：奇思妙想CYC **核心结论**：Hermes（爱马仕）相比 OpenClaw（小龙虾）在稳定性、Token 节省、Skill 自主进化上有明显优势，但缺少 Web UI；已用顺 OpenClaw 的不用换，新手或追求更智能工作流的推荐迁移到 Hermes。

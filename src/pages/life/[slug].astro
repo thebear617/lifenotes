@@ -15,9 +15,9 @@ const category = categoryForEntry(entry);
 const base = import.meta.env.BASE_URL;
 ---
 
-<Layout title="生活" currentBoard="life">
+<Layout title="生活美食" currentBoard="life">
   <section class:list={['article-page-shell', { 'has-toc': headings.length > 0 }]}>
-    <a class="back-link" href={`${base}life/`}>← 返回生活领域</a>
+    <a class="back-link" href={`${base}life/`}>← 返回生活美食</a>
     <div class="article-detail-layout">
       <ArticleToc headings={headings} />
       <article class="article-detail">
@@ -25,9 +25,8 @@ const base = import.meta.env.BASE_URL;
           <span class="article-category">{category}</span>
           <h1>{entry.data.title}</h1>
           <p class="article-meta">
-            {entry.data.date.toLocaleDateString('zh-CN')}
+            {entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}
           </p>
-          {entry.data.tags?.length > 0 && <div class="article-tags">{entry.data.tags.map((tag) => <span>{tag}</span>)}</div>}
         </header>
         <div class="article-body"><Content /></div>
       </article>
