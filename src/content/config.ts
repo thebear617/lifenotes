@@ -6,6 +6,7 @@ const noteSchema = z.object({
   category: z.string().optional(),
   subcategory: z.string().optional(),
   description: z.string().default(''),
+  slug: z.string().optional(),
   topic: z.string().optional(),
   format: z.enum(['note', 'article']).default('note'),
   visible: z.boolean().default(true),

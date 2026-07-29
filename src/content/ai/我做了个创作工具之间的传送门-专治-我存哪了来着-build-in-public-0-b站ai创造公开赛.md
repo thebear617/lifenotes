@@ -1,6 +1,7 @@
 ---
 title: "我做了个创作工具之间的传送门，专治\"我存哪了来着?\" | Build in Public#0【B站AI创造公开赛】"
 description: "核心结论：Cora 是一款浏览器插件，专门解决 AI 创作者在多个工具间反复拖拽提示词/分镜/图片/视频资产的痛点，背后论断是「创作的本质就是上下文对齐」；后续版本会引入 Creable Agent…"
+slug: cora-creation-portal
 date: 2026-06-07
 category: "创作工具"
 ---

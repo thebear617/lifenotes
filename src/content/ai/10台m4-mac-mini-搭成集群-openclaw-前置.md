@@ -1,6 +1,7 @@
 ---
 title: "10台M4 Mac mini 搭成集群（OpenClaw 前置）"
 description: "一句话结论"
+slug: m4-mac-mini-cluster
 date: 2026-05-31
 category: "Apple Silicon 集群"
 ---
