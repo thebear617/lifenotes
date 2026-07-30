@@ -1,6 +1,6 @@
 ---
 title: "AI硬件：M4 Mac mini 集群搭建"
-description: "一句话结论"
+description: "10 台 M4 Mac mini 搭成 100 核 CPU / 160GB 统一内存 / 380TOPS AI 算力的桌面集群，是分布式本地 AI 推理的平民硬件底座。"
 slug: m4-mac-mini-cluster
 date: 2026-05-31
 category: "Apple Silicon 集群"
