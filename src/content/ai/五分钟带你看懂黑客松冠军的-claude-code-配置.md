@@ -1,5 +1,5 @@
 ---
-title: "五分钟带你看懂黑客松冠军的 Claude Code 配置"
+title: "AI工具：Claude Code 黑客松冠军配置"
 description: "仓库核心文件夹"
 slug: claude-code-hackathon-config
 date: 2026-06-13

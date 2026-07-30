@@ -1,5 +1,5 @@
 ---
-title: "OpenAI开源项目Symphony-让Codex 从聊天窗口变成任务流水线"
+title: "AI编排：Symphony 与 Codex 任务流水线"
 description: "核心结论：Symphony 是 OpenAI 开源的 Coding Agent 编排 Spec，把 Codex 从\"人盯一个个 Session\"升级为\"由任务系统（Linear/Issue Track…"
 slug: openai-symphony-codex
 date: 2026-06-07

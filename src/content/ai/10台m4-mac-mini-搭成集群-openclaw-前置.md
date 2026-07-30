@@ -1,5 +1,5 @@
 ---
-title: "10台M4 Mac mini 搭成集群（OpenClaw 前置）"
+title: "AI硬件：M4 Mac mini 集群搭建"
 description: "一句话结论"
 slug: m4-mac-mini-cluster
 date: 2026-05-31

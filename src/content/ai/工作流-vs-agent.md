@@ -1,5 +1,5 @@
 ---
-title: "工作流 vs Agent"
+title: "AI产业：工作流与 Agent 的关系"
 description: "背景：UP 主小林提出：AI Agent 越来越强，工作流（n8n、扣子）是不是快没用了？"
 slug: workflow-vs-agent
 date: 2026-05-04

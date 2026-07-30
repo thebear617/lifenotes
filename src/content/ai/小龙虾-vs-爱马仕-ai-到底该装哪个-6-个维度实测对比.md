@@ -1,5 +1,5 @@
 ---
-title: "小龙虾 vs 爱马仕 AI，到底该装哪个？6 个维度实测对比"
+title: "AI工具：OpenClaw vs Hermes 对比"
 description: "6 维度实测对比"
 slug: openclaw-vs-hermes
 date: 2026-06-13
