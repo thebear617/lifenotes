@@ -2,7 +2,7 @@
 
 > 基于 Astro 的个人常识资料库与静态网站。
 
-当前版本：`v0.9.0`
+当前版本：`v0.9.3`
 
 在线地址（部署后）：<https://thebear617.github.io/lifenotes/>
 

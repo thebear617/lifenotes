@@ -1,7 +1,7 @@
 {
   "name": "lifenotes",
   "type": "module",
-  "version": "0.9.0",
+  "version": "0.9.3",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
