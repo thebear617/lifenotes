@@ -25,43 +25,37 @@ const visibleEntries = [...entries]
 
 const allCategories = [...new Set(visibleEntries.map((entry) => entry.category))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'zh-CN'));
 const allSubcategories = [...new Set(visibleEntries.map((entry) => entry.subcategory))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'zh-CN'));
+const hasFilters = allCategories.length > 0 || allSubcategories.length > 0;
 ---
 
 <section class="list-explorer" data-explorer>
-  <div class="list-search" data-list-search>
-    <span class="list-search-icon">🔍</span>
-    <input
-      type="search"
-      class="list-search-input"
-      placeholder="搜索标题、描述或子分类"
-      autocomplete="off"
-      aria-label="搜索当前领域"
-      data-list-search-input
-    />
-    <button class="list-search-clear" type="button" aria-label="清除搜索" data-list-search-clear>✕</button>
-  </div>
-
-  {(allCategories.length > 0 || allSubcategories.length > 0) && (
-    <div class="filter-bar" data-filter-bar>
-      {allCategories.length > 0 && (
-        <div class="filter-row">
-          <span class="filter-label">分类</span>
-          <div class="filter-tags" data-filter="category">
-            {allCategories.map((category) => <button class="filter-tag" type="button">{category}</button>)}
-          </div>
-        </div>
-      )}
-      {allSubcategories.length > 0 && (
-        <div class="filter-row">
-          <span class="filter-label">子分类</span>
-          <div class="filter-tags" data-filter="subcategory">
-            {allSubcategories.map((subcategory) => <button class="filter-tag" type="button">{subcategory}</button>)}
-            <button class="filter-clear" type="button" data-filter-clear>清除筛选</button>
-          </div>
-        </div>
-      )}
+  <div class="list-toolbar">
+    <div class="list-search" data-list-search>
+      <span class="list-search-icon">🔍</span>
+      <input
+        type="search"
+        class="list-search-input"
+        placeholder="搜索标题、描述或子分类"
+        autocomplete="off"
+        aria-label="搜索当前领域"
+        data-list-search-input
+      />
+      <button class="list-search-clear" type="button" aria-label="清除搜索" data-list-search-clear>✕</button>
     </div>
-  )}
+    <div class="float-actions">
+      {hasFilters && (
+        <button class="float-btn" type="button" data-float-toggle="filter" aria-label="筛选">
+          <span class="float-btn-icon">⚙</span>
+          <span class="float-btn-label">筛选</span>
+          <span class="float-btn-badge" data-filter-badge hidden>0</span>
+        </button>
+      )}
+      <button class="float-btn" type="button" data-float-toggle="sort" aria-label="排序">
+        <span class="float-btn-icon">↕</span>
+        <span class="float-btn-label">排序</span>
+      </button>
+    </div>
+  </div>
 
   {visibleEntries.length > 0 ? (
     <div class="life-record-list" data-record-list>
@@ -96,6 +90,64 @@ const allSubcategories = [...new Set(visibleEntries.map((entry) => entry.subcate
     </div>
   )}
 
+  {hasFilters && (
+    <div class="float-panel" data-float-panel="filter" hidden>
+      <div class="float-panel-header">
+        <span class="float-panel-title">筛选</span>
+        <button class="float-panel-close" type="button" data-float-close="filter" aria-label="关闭筛选">✕</button>
+      </div>
+      <div class="float-panel-body">
+        {allCategories.length > 0 && (
+          <div class="float-filter-row">
+            <span class="float-filter-label">分类</span>
+            <div class="filter-tags" data-filter="category">
+              {allCategories.map((category) => <button class="filter-tag" type="button">{category}</button>)}
+            </div>
+          </div>
+        )}
+        {allSubcategories.length > 0 && (
+          <div class="float-filter-row">
+            <span class="float-filter-label">子分类</span>
+            <div class="filter-tags" data-filter="subcategory">
+              {allSubcategories.map((subcategory) => <button class="filter-tag" type="button">{subcategory}</button>)}
+            </div>
+          </div>
+        )}
+      </div>
+      <div class="float-panel-footer">
+        <button class="float-panel-clear" type="button" data-filter-clear>清除筛选</button>
+        <button class="float-panel-apply" type="button" data-float-close="filter">完成</button>
+      </div>
+    </div>
+  )}
+
+  <div class="float-panel" data-float-panel="sort" hidden>
+    <div class="float-panel-header">
+      <span class="float-panel-title">排序</span>
+      <button class="float-panel-close" type="button" data-float-close="sort" aria-label="关闭排序">✕</button>
+    </div>
+    <div class="float-panel-body">
+      <div class="sort-options" data-sort-options>
+        <button class="sort-option on" type="button" data-sort="date-desc">
+          <span class="sort-option-icon">↓</span>
+          <span class="sort-option-label">最新优先</span>
+        </button>
+        <button class="sort-option" type="button" data-sort="date-asc">
+          <span class="sort-option-icon">↑</span>
+          <span class="sort-option-label">最早优先</span>
+        </button>
+        <button class="sort-option" type="button" data-sort="title-az">
+          <span class="sort-option-icon">A→Z</span>
+          <span class="sort-option-label">标题 A→Z</span>
+        </button>
+        <button class="sort-option" type="button" data-sort="title-za">
+          <span class="sort-option-icon">Z→A</span>
+          <span class="sort-option-label">标题 Z→A</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <section class="empty-state" data-empty-state style="display:none">没有匹配的记录</section>
 </section>
 
@@ -112,15 +164,64 @@ const allSubcategories = [...new Set(visibleEntries.map((entry) => entry.subcate
     let searchTerm = '';
     let currentPage = 1;
     const pageSize = 8;
+    let currentSort = 'date-desc';
 
     const pagination = root.querySelector<HTMLElement>('[data-pagination]');
     const prevBtn = root.querySelector<HTMLButtonElement>('[data-page-prev]');
     const nextBtn = root.querySelector<HTMLButtonElement>('[data-page-next]');
     const pageNumbers = root.querySelector<HTMLElement>('[data-page-numbers]');
 
-    root.querySelectorAll<HTMLElement>('[data-filter-bar] .filter-tag').forEach((tag) => {
+    const filterBadge = root.querySelector<HTMLElement>('[data-filter-badge]');
+
+    function updateFilterBadge() {
+      if (!filterBadge) return;
+      const count = Object.keys(filters).length;
+      filterBadge.textContent = String(count);
+      filterBadge.hidden = count === 0;
+    }
+
+    function openPanel(name: string) {
+      root.querySelectorAll<HTMLElement>('[data-float-panel]').forEach((p) => { p.hidden = true; p.classList.remove('open'); });
+      const panel = root.querySelector<HTMLElement>(`[data-float-panel="${name}"]`);
+      if (panel) { panel.hidden = false; requestAnimationFrame(() => panel.classList.add('open')); }
+      root.querySelectorAll<HTMLElement>('[data-float-toggle]').forEach((b) => b.classList.remove('active'));
+      const btn = root.querySelector<HTMLElement>(`[data-float-toggle="${name}"]`);
+      if (btn) btn.classList.add('active');
+    }
+
+    function closePanel(name: string) {
+      const panel = root.querySelector<HTMLElement>(`[data-float-panel="${name}"]`);
+      if (panel) { panel.classList.remove('open'); setTimeout(() => { panel.hidden = true; }, 200); }
+      root.querySelectorAll<HTMLElement>('[data-float-toggle]').forEach((b) => b.classList.remove('active'));
+    }
+
+    function closeAllPanels() {
+      root.querySelectorAll<HTMLElement>('[data-float-panel]').forEach((p) => { p.classList.remove('open'); p.hidden = true; });
+      root.querySelectorAll<HTMLElement>('[data-float-toggle]').forEach((b) => b.classList.remove('active'));
+    }
+
+    root.querySelectorAll<HTMLElement>('[data-float-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const name = btn.getAttribute('data-float-toggle')!;
+        const panel = root.querySelector<HTMLElement>(`[data-float-panel="${name}"]`);
+        if (panel && !panel.hidden) { closePanel(name); }
+        else { openPanel(name); }
+      });
+    });
+
+    root.querySelectorAll<HTMLElement>('[data-float-close]').forEach((btn) => {
+      btn.addEventListener('click', () => { closePanel(btn.getAttribute('data-float-close')!); });
+    });
+
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-float-panel]') || target.closest('[data-float-toggle]')) return;
+      closeAllPanels();
+    });
+
+    root.querySelectorAll<HTMLElement>('[data-filter-bar] .filter-tag, [data-float-panel="filter"] .filter-tag').forEach((tag) => {
       tag.addEventListener('click', () => {
-        const row = tag.closest('.filter-row');
+        const row = tag.closest('.float-filter-row') || tag.closest('.filter-row');
         const filterKey = row?.querySelector('.filter-tags')?.getAttribute('data-filter');
         if (!filterKey) return;
         const on = tag.classList.toggle('on');
@@ -130,14 +231,25 @@ const allSubcategories = [...new Set(visibleEntries.map((entry) => entry.subcate
         } else {
           delete filters[filterKey];
         }
+        updateFilterBadge();
         applyFilters({ scrollToList: true, resetPage: true });
       });
     });
 
     filterClear?.addEventListener('click', () => {
-      root.querySelectorAll('[data-filter-bar] .filter-tag.on').forEach((t) => t.classList.remove('on'));
+      root.querySelectorAll('.filter-tag.on').forEach((t) => t.classList.remove('on'));
       for (const key of Object.keys(filters)) delete filters[key];
+      updateFilterBadge();
       applyFilters({ scrollToList: true, resetPage: true });
+    });
+
+    root.querySelectorAll<HTMLElement>('[data-sort]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        root.querySelectorAll<HTMLElement>('[data-sort]').forEach((b) => b.classList.remove('on'));
+        btn.classList.add('on');
+        currentSort = btn.getAttribute('data-sort')!;
+        applyFilters({ scrollToList: true, resetPage: true });
+      });
     });
 
     input.addEventListener('input', () => {
@@ -174,6 +286,32 @@ const allSubcategories = [...new Set(visibleEntries.map((entry) => entry.subcate
       applyFilters({ scrollToList: true });
     });
 
+    function sortEntries(entries: HTMLElement[]): HTMLElement[] {
+      const sorted = [...entries];
+      switch (currentSort) {
+        case 'date-asc':
+          sorted.sort((a, b) => {
+            const ta = Number(a.dataset.dateTs) || 0;
+            const tb = Number(b.dataset.dateTs) || 0;
+            return ta - tb || a.dataset.title!.localeCompare(b.dataset.title!, 'zh-CN');
+          });
+          break;
+        case 'title-az':
+          sorted.sort((a, b) => a.dataset.title!.localeCompare(b.dataset.title!, 'zh-CN'));
+          break;
+        case 'title-za':
+          sorted.sort((a, b) => b.dataset.title!.localeCompare(a.dataset.title!, 'zh-CN'));
+          break;
+        default:
+          sorted.sort((a, b) => {
+            const ta = Number(a.dataset.dateTs) || 0;
+            const tb = Number(b.dataset.dateTs) || 0;
+            return tb - ta || a.dataset.title!.localeCompare(b.dataset.title!, 'zh-CN');
+          });
+      }
+      return sorted;
+    }
+
     function applyFilters({ scrollToList = false, resetPage = false } = {}) {
       const cards = [...list.querySelectorAll<HTMLElement>('.record-card')];
       const matches: HTMLElement[] = [];
@@ -188,18 +326,19 @@ const allSubcategories = [...new Set(visibleEntries.map((entry) => entry.subcate
         if (show) matches.push(card);
       }
 
-      const totalPages = Math.max(1, Math.ceil(matches.length / pageSize));
+      const sorted = sortEntries(matches);
+      const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
       if (resetPage) currentPage = 1;
       currentPage = Math.min(Math.max(currentPage, 1), totalPages);
       const startIndex = (currentPage - 1) * pageSize;
-      const pageSet = new Set(matches.slice(startIndex, startIndex + pageSize));
+      const pageSet = new Set(sorted.slice(startIndex, startIndex + pageSize));
 
       for (const card of cards) {
         card.style.display = pageSet.has(card) ? '' : 'none';
       }
 
-      if (emptyState) emptyState.style.display = matches.length ? 'none' : '';
-      renderPagination(totalPages, matches.length);
+      if (emptyState) emptyState.style.display = sorted.length ? 'none' : '';
+      renderPagination(totalPages, sorted.length);
 
       if (scrollToList) {
         list.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -223,6 +362,12 @@ const allSubcategories = [...new Set(visibleEntries.map((entry) => entry.subcate
       });
       pageNumbers.replaceChildren(...buttons);
     }
+
+    list.querySelectorAll<HTMLElement>('.record-card').forEach((card) => {
+      const dateStr = card.querySelector('.record-date')?.textContent || '';
+      const d = dateStr ? new Date(dateStr.replace(/\//g, '-')) : null;
+      card.dataset.dateTs = d ? String(d.getTime()) : '0';
+    });
 
     applyFilters();
   }
