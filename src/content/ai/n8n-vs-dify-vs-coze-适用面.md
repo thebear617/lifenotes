@@ -4,6 +4,7 @@ description: "核心差异：n8n 是\"连接一切\"的通用引擎，AI 只是�
 slug: n8n-vs-dify-vs-coze
 date: 2026-05-04
 category: "工具对比"
+subcategory: "AI工具"
 ---
 
 | 平台 | 核心定位 | GitHub Stars | 开源 | 适用面 |

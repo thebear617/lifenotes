@@ -4,6 +4,7 @@ description: "背景：UP 主小林提出：AI Agent 越来越强，工作流（
 slug: workflow-vs-agent
 date: 2026-05-04
 category: "行业观察"
+subcategory: "AI产业"
 ---
 
 **背景**：UP 主小林提出：AI Agent 越来越强，工作流（n8n、扣子）是不是快没用了？

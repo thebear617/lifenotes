@@ -4,6 +4,7 @@ description: "核心结论：Symphony 是 OpenAI 开源的 Coding Agent 编排 S
 slug: openai-symphony-codex
 date: 2026-06-07
 category: "Coding Agent 编排"
+subcategory: "AI编排"
 ---
 
 **来源**：转录/OpenAI开源项目Symphony-让Codex 从聊天窗口变成任务流水线（简介附原文链接+总结） / B 站 / UP：未明

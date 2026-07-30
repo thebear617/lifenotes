@@ -4,6 +4,7 @@ description: "核心结论：Cora 是一款浏览器插件，专门解决 AI 创
 slug: cora-creation-portal
 date: 2026-06-07
 category: "创作工具"
+subcategory: "AI工具"
 ---
 
 **来源**：\[转录/我做了个创作工具之间的传送门，专治我存哪了来着【B站AI创造公开赛】\]\]( / B 站 / UP：Cora 团队（Creaibo）

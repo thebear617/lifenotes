@@ -4,6 +4,7 @@ description: "起源：2026-06-09 凌晨讨论 OpenCode 时把 harness 解构成
 slug: harness-8-layer-architecture
 date: 2026-06-09
 category: "Agent架构"
+subcategory: "AI架构"
 ---
 
 **起源**：2026-06-09 凌晨讨论 OpenCode 时把 harness 解构成多层系统，作为后续研究 agent 架构的起点。Harness 框架不是某一家的事实标准，而是把这 8 个相对独立的层组织起来的整体观。

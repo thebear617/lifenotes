@@ -4,6 +4,7 @@ description: "一句话结论"
 slug: m4-mac-mini-cluster
 date: 2026-05-31
 category: "Apple Silicon 集群"
+subcategory: "AI硬件"
 ---
 
 **来源**：10台M4 Mac mini 搭成集群能干啥？（OpenClaw前置工作）；UP：制造局

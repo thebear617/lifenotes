@@ -4,7 +4,7 @@ description: "降温思路不是物理散热，而是减少后台刷新、分析
 slug: iphone-overheat-settings
 date: 2026-05-12
 category: "手机"
-subcategory: "使用技巧"
+subcategory: "iPhone"
 ---
 
 ## 核心判断

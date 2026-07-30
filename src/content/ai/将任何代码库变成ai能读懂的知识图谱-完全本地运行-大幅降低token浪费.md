@@ -4,6 +4,7 @@ description: "核心结论：CodeGraph 把任何代码库转成 Agent 可实时�
 slug: code-to-knowledge-graph
 date: 2026-06-07
 category: "开发者工具"
+subcategory: "AI工具"
 ---
 
 **来源**：转录/将任何代码库变成AI能读懂的知识图谱 完全本地运行大幅降低Token浪费 / B 站 / UP：于仔

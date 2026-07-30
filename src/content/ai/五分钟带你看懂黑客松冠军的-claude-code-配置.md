@@ -4,6 +4,7 @@ description: "仓库核心文件夹"
 slug: claude-code-hackathon-config
 date: 2026-06-13
 category: "开发者工具"
+subcategory: "AI工具"
 ---
 
 **来源**：五分钟带你看懂黑客松冠军的 Claude Code 配置；UP：奇思妙想CYC **核心结论**：Anthropic 官方黑客松冠军将 10 个月 Claude Code 实战配置全开源（18万+ Star），包含 48 Agent + 182 Skill + 68 Command，是目前最完整的 Claude Code 最佳实践仓库。
