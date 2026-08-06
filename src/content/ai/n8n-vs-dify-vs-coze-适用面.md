@@ -3,6 +3,7 @@ title: "AI工具：n8n vs Dify vs Coze 选型"
 description: "核心差异：n8n 是\"连接一切\"的通用引擎，AI 只是其中一个节点；Dify 以 AI 为核心，内置 RAG Pipeline；Coze 零代码最快上手但最受限。"
 slug: n8n-vs-dify-vs-coze
 date: 2026-05-04
+updated: 2026-07-30
 category: "工具对比"
 subcategory: "AI工具"
 ---

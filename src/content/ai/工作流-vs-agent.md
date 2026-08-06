@@ -3,6 +3,7 @@ title: "AI产业：工作流与 Agent 的关系"
 description: "很多被称为 Agent 的系统其实只是加了大模型的工作流；Agent 真正用于生产的仅 11%，工作流平台在吸收 Agent 能力而非被取代。"
 slug: workflow-vs-agent
 date: 2026-05-04
+updated: 2026-07-30
 category: "行业观察"
 subcategory: "AI产业"
 ---

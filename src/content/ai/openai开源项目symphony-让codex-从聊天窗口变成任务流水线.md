@@ -3,6 +3,7 @@ title: "AI编排：Symphony 与 Codex 任务流水线"
 description: "核心结论：Symphony 是 OpenAI 开源的 Coding Agent 编排 Spec，把 Codex 从\"人盯一个个 Session\"升级为\"由任务系统（Linear/Issue Track…"
 slug: openai-symphony-codex
 date: 2026-06-07
+updated: 2026-07-30
 category: "Coding Agent 编排"
 subcategory: "AI编排"
 ---

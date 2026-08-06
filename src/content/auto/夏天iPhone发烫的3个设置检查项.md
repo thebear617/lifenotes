@@ -3,6 +3,7 @@ title: "iPhone：夏天发烫的 3 个设置检查项"
 description: "降温思路不是物理散热，而是减少后台刷新、分析上传和弱 Wi‑Fi 下的蜂窝补偿，从而降低后台活动与联网耗电。"
 slug: iphone-overheat-settings
 date: 2026-05-12
+updated: 2026-07-30
 category: "手机"
 subcategory: "iPhone"
 ---

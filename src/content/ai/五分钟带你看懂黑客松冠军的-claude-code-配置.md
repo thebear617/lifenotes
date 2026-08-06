@@ -3,6 +3,7 @@ title: "AI工具：Claude Code 黑客松冠军配置"
 description: "Anthropic 黑客松冠军将 10 个月 Claude Code 实战配置全开源，包含 48 Agent + 182 Skill + 68 Command，是最完整的 Claude Code 最佳实践仓库。"
 slug: claude-code-hackathon-config
 date: 2026-06-13
+updated: 2026-07-30
 category: "开发者工具"
 subcategory: "AI工具"
 ---

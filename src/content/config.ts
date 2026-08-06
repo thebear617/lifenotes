@@ -2,7 +2,8 @@ import { defineCollection, z } from 'astro:content';
 
 const noteSchema = z.object({
   title: z.string(),
-  date: z.coerce.date().nullable().default(null),
+  date: z.coerce.date(),
+  updated: z.coerce.date(),
   category: z.string().optional(),
   subcategory: z.string().optional(),
   description: z.string().default(''),
