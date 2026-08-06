@@ -1,7 +1,7 @@
 {
   "name": "lifenotes",
   "type": "module",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "scripts": {
     "dev": "astro dev --port 4326",
     "start": "astro dev",
