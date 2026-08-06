@@ -1,0 +1,162 @@
+<script>
+  // 移植自 devnotes KnowledgeDetail.astro：脚注式悬浮框 + 图片预览/lightbox
+  const popoverTemplates = new Map(
+    Array.from(document.querySelectorAll('[data-article-popover-content]'))
+      .map(template => [template.dataset.articlePopoverContent, template]),
+  );
+  const scrollContainer = document.querySelector('.main-area');
+  document.querySelectorAll('[data-article-popover-trigger]').forEach(trigger => {
+    if (trigger.dataset.articlePopoverBound) return;
+    trigger.dataset.articlePopoverBound = 'true';
+    const template = popoverTemplates.get(trigger.dataset.articlePopoverTrigger);
+    if (!template) return;
+
+    const panel = document.createElement('div');
+    panel.className = 'article-body article-popover-panel';
+    panel.id = `article-popover-${encodeURIComponent(trigger.dataset.articlePopoverTrigger)}`;
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-hidden', 'true');
+    trigger.setAttribute('aria-controls', panel.id);
+    const content = document.createElement('div');
+    content.className = 'article-popover-content';
+    content.innerHTML = template.innerHTML;
+    panel.append(content);
+    panel.dataset.popoverKind = content.querySelector('table') ? 'table' : 'note';
+
+    const heading = document.createElement('div');
+    heading.className = 'article-popover-heading';
+    const title = document.createElement('span');
+    title.className = 'article-popover-title';
+    title.textContent = trigger.textContent.trim();
+    heading.append(title);
+    panel.prepend(heading);
+    document.body.append(panel);
+
+    let pinned = false;
+    let hideTimer;
+    const padding = 16;
+    const cancelHide = () => {
+      if (hideTimer) window.clearTimeout(hideTimer);
+    };
+    const close = () => {
+      pinned = false;
+      panel.classList.remove('is-visible');
+      panel.setAttribute('aria-hidden', 'true');
+      trigger.setAttribute('aria-expanded', 'false');
+    };
+    const scheduleHide = () => {
+      cancelHide();
+      hideTimer = window.setTimeout(() => {
+        if (!pinned) close();
+      }, 160);
+    };
+    const position = () => {
+      if (!panel.classList.contains('is-visible')) return;
+      const triggerRect = trigger.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      const left = Math.min(
+        Math.max(triggerRect.left, padding),
+        window.innerWidth - panelRect.width - padding,
+      );
+      let top = triggerRect.bottom + 10;
+      let placement = 'bottom';
+      if (top + panelRect.height > window.innerHeight - padding) {
+        top = triggerRect.top - panelRect.height - 10;
+        placement = 'top';
+      }
+      const arrowLeft = Math.min(
+        Math.max(triggerRect.left + triggerRect.width / 2 - left, 22),
+        panelRect.width - 22,
+      );
+      panel.style.left = `${left}px`;
+      panel.style.top = `${Math.max(top, padding)}px`;
+      panel.dataset.placement = placement;
+      panel.style.setProperty('--popover-arrow-left', `${arrowLeft}px`);
+    };
+    const show = () => {
+      cancelHide();
+      panel.classList.add('is-visible');
+      panel.setAttribute('aria-hidden', 'false');
+      trigger.setAttribute('aria-expanded', 'true');
+      requestAnimationFrame(position);
+    };
+
+    trigger.addEventListener('mouseenter', show);
+    trigger.addEventListener('mouseleave', scheduleHide);
+    trigger.addEventListener('focus', show);
+    trigger.addEventListener('blur', scheduleHide);
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      pinned = !pinned;
+      if (pinned) show();
+      else close();
+    });
+    panel.addEventListener('mouseenter', cancelHide);
+    panel.addEventListener('mouseleave', scheduleHide);
+    window.addEventListener('resize', position);
+    scrollContainer?.addEventListener('scroll', position, { passive: true });
+  });
+
+  // popover 面板内图片包一层 image-frame
+  document.querySelectorAll('.article-popover-content img').forEach(img => {
+    const frame = document.createElement('span');
+    frame.className = 'article-popover-image-frame';
+    frame.setAttribute('aria-label', '图片预览，点击查看大图');
+    img.replaceWith(frame);
+    frame.appendChild(img);
+  });
+
+  // 文章（含面板）内图片点击全屏 lightbox
+  document.querySelectorAll('.article-body img').forEach(img => img.addEventListener('click', () => {
+    const overlay = document.createElement('div');
+    overlay.className = 'img-lightbox';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', '图片预览');
+
+    const lightboxContent = document.createElement('div');
+    lightboxContent.className = 'img-lightbox-content';
+
+    const preview = img.cloneNode(true);
+    preview.removeAttribute('tabindex');
+    preview.removeAttribute('role');
+    preview.removeAttribute('aria-label');
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'img-lightbox-close';
+    closeButton.setAttribute('aria-label', '关闭大图');
+    closeButton.textContent = '×';
+
+    const closeLightbox = () => {
+      overlay.remove();
+      document.removeEventListener('keydown', handleEscape);
+      img.focus({ preventScroll: true });
+    };
+    const handleEscape = event => {
+      if (event.key === 'Escape') closeLightbox();
+    };
+
+    lightboxContent.append(preview, closeButton);
+    overlay.append(lightboxContent);
+    overlay.addEventListener('click', event => {
+      if (event.target === overlay) closeLightbox();
+    });
+    closeButton.addEventListener('click', closeLightbox);
+    document.addEventListener('keydown', handleEscape);
+    document.body.appendChild(overlay);
+    closeButton.focus();
+  }));
+
+  // 图片键盘可达性
+  document.querySelectorAll('.article-body img').forEach(img => {
+    img.setAttribute('tabindex', '0');
+    img.setAttribute('role', 'button');
+    img.setAttribute('aria-label', '查看大图');
+    img.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      img.click();
+    });
+  });
+</script>

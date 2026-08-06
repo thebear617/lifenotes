@@ -1,4 +1,6 @@
 import { defineConfig } from 'astro/config';
+import remarkFootnoteIndent from './src/plugins/remark-footnote-indent.mjs';
+import rehypePopover from './src/plugins/rehype-popover.mjs';
 
 export default defineConfig({
   // GitHub Pages 部署时使用 SITE_BASE=/lifenotes/；本地开发可保持默认根路径。
@@ -6,5 +8,9 @@ export default defineConfig({
   vite: { server: { strictPort: true } },
   build: {
     format: 'directory',
+  },
+  markdown: {
+    remarkPlugins: [remarkFootnoteIndent],
+    rehypePlugins: [rehypePopover],
   },
 });

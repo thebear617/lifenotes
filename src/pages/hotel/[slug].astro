@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import ArticleToc from '../../components/ArticleToc.astro';
+import ArticlePopover from '../../components/ArticlePopover.astro';
 import { categoryForEntry } from '../../data/content.js';
 
 export async function getStaticPaths() {
@@ -30,6 +31,7 @@ const base = import.meta.env.BASE_URL;
         </header>
         <div class="article-body"><Content /></div>
       </article>
+      <ArticlePopover />
     </div>
   </section>
 </Layout>
