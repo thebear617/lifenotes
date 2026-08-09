@@ -1,3 +1,4 @@
+import { unified } from '@astrojs/markdown-remark';
 import { defineConfig } from 'astro/config';
 import remarkFootnoteIndent from './src/plugins/remark-footnote-indent.mjs';
 import rehypePopover from './src/plugins/rehype-popover.mjs';
@@ -10,7 +11,9 @@ export default defineConfig({
     format: 'directory',
   },
   markdown: {
-    remarkPlugins: [remarkFootnoteIndent],
-    rehypePlugins: [rehypePopover],
+    processor: unified({
+      remarkPlugins: [remarkFootnoteIndent],
+      rehypePlugins: [rehypePopover],
+    }),
   },
 });

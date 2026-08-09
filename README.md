@@ -1,18 +1,19 @@
 # lifenotes · 常识笔记
 
-> 基于 Astro 的个人常识资料库与静态网站。
+> 基于 Astro 7 的个人常识资料库与静态网站。
 
-当前版本：`v0.9.3`
+当前版本：`v0.10.0`
 
 在线地址（部署后）：<https://thebear617.github.io/lifenotes/>
 
 ## 内容与结构
 
-正式发布内容位于 `src/content/`，按领域拆分为 Content Collections；`content/_inbox/video-transcripts/` 保存尚未整理的视频转写，不会直接发布。
+正式发布内容位于 `src/content/`，按领域拆分为 Content Layer 集合；`content/_inbox/video-transcripts/` 保存尚未整理的视频转写，不会直接发布。
 
 ```text
 src/
-├── content/          # 正式 Markdown 内容
+├── content.config.ts  # Content Layer 内容集合配置
+├── content/           # 正式 Markdown 内容
 ├── data/boards.js    # 领域导航配置
 ├── layouts/          # 页面布局
 ├── pages/            # 首页、领域页、详情页
@@ -38,7 +39,7 @@ GitHub Pages 子路径构建：
 SITE_BASE=/lifenotes/ npm run build
 ```
 
-Astro 会从 `src/content/` 读取 Markdown 并生成静态页面。新增内容时，在对应领域目录添加 Markdown 文件，填写 `title`、`order`、`category` 等 frontmatter，然后重新构建即可。
+Astro 通过 `src/content.config.ts` 中的 `glob` loader 读取 `src/content/` 的 Markdown 并生成静态页面。新增内容时，在对应领域目录添加 Markdown 文件，填写 `title`、`date`、`updated`、`category` 等 frontmatter；重命名已有文章时保留显式 `slug`，以维持旧地址。
 
 ## 视频进入 Life Notes
 

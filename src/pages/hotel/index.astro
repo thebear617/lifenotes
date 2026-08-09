@@ -7,13 +7,13 @@ import { categoryForEntry } from '../../data/content.js';
 const base = import.meta.env.BASE_URL;
 const entries = (await getCollection('hotel')).filter((entry) => entry.data.visible);
 const items = entries.map((entry) => ({
-  slug: entry.slug,
+  slug: entry.data.slug || entry.id,
   title: entry.data.title,
   description: entry.data.description,
   date: entry.data.date,
   category: categoryForEntry(entry),
   subcategory: entry.data.subcategory,
-  href: `${base}hotel/${entry.slug}/`,
+  href: `${base}hotel/${entry.data.slug || entry.id}/`,
 }));
 ---
 

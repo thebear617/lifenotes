@@ -4,7 +4,7 @@
 
 `lifenotes` 是基于 Astro 的独立常识资料库与静态网站。内容集合和站点代码全部保存在本仓库，不依赖 Obsidian 或其他笔记库。
 
-- 正式内容源：`src/content/`
+- 正式内容源：`src/content/`；集合配置：`src/content.config.ts`
 - 补充资料入口：`content/_inbox/video-transcripts/`
 - 构建命令：`npm run build`
 - 本地开发：`npm run dev`
@@ -12,7 +12,7 @@
 
 ## 文件边界
 
-- `src/content/<领域>/`：Astro Content Collections 的正式发布内容。
+- `src/content/<领域>/`：Astro Content Layer 的正式发布内容。
 - `content/<领域>/`：历史资料与原始整理源；新增正式网页内容应优先写入 `src/content/`。
 - `content/_inbox/video-transcripts/`：新视频的待整理转写，不直接编译。
 - `src/pages/`：首页、领域页和详情页路由。
@@ -22,7 +22,7 @@
 
 ## Frontmatter 规范
 
-每篇 `src/content/<领域>/*.md` 的 frontmatter **必须**包含 `date` 和 `updated` 两个字段。`src/content/config.ts` 中的 `noteSchema` 将它们定义为 `z.coerce.date()` 必填项，缺失任一字段会导致 `npm run build` 直接失败。
+每篇 `src/content/<领域>/*.md` 的 frontmatter **必须**包含 `date` 和 `updated` 两个字段。`src/content.config.ts` 中的 `noteSchema` 将它们定义为 `z.coerce.date()` 必填项，缺失任一字段会导致 `npm run build` 直接失败。
 
 | 字段 | 含义 | 格式 | 示例 |
 |------|------|------|------|
@@ -31,7 +31,7 @@
 
 - 内容更新后需**手动同步** `updated` 为当天日期。
 - 推荐字段顺序：`title` → `description` → `category` → `subcategory` → `date` → `updated`（可选 `slug`）。
-- schema 定义位置：`src/content/config.ts`。
+- schema 定义位置：`src/content.config.ts`。
 
 示例 frontmatter：
 

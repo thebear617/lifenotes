@@ -21,7 +21,7 @@ export async function getStaticPaths() {
   const formalPaths = (await Promise.all(formalBoardIds.map(async (id) => {
     const board = boards.find((item) => item.id === id);
     const entries = await getFormalEntries(id);
-    return entries.map((entry) => ({ params: { board: id, slug: entry.slug }, props: { board, entry } }));
+    return entries.map((entry) => ({ params: { board: id, slug: entry.data.slug || entry.id }, props: { board, entry } }));
   }))).flat();
   return formalPaths;
 }
