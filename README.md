@@ -41,6 +41,18 @@ SITE_BASE=/lifenotes/ npm run build
 
 Astro 通过 `src/content.config.ts` 中的 `glob` loader 读取 `src/content/` 的 Markdown 并生成静态页面。新增内容时，在对应领域目录添加 Markdown 文件，填写 `title`、`date`、`updated`、`category` 等 frontmatter；重命名已有文章时保留显式 `slug`，以维持旧地址。
 
+## 本地 CMS
+
+项目提供一个仅供本地开发使用的 CMS，用于管理 `src/content/` 中的正式笔记。启动开发服务器后访问：
+
+```bash
+npm run dev
+```
+
+然后打开 <http://localhost:4326/admin/>。本地 CMS 支持编辑已有文章、新建文章、预览 Markdown，以及保存文章；点击保存后，内容会直接写入 `src/content/`，可继续通过 Astro 开发服务器查看效果。
+
+本地 CMS 仅在 Astro 开发服务器中可用，生产构建会移除 `/admin`，不会将管理页面发布到站点。不要把开发服务器或 `/admin/` 暴露到公网。
+
 ## 视频进入 Life Notes
 
 共享转写 skill 位于 `~/.claude/skills/bili-audio-transcribe/`。原始 SRT、TXT 和 Markdown 转写默认写入：

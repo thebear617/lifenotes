@@ -16,9 +16,18 @@
 - `content/<领域>/`：历史资料与原始整理源；新增正式网页内容应优先写入 `src/content/`。
 - `content/_inbox/video-transcripts/`：新视频的待整理转写，不直接编译。
 - `src/pages/`：首页、领域页和详情页路由。
+- `src/admin/local-cms.mjs`：本地 CMS 的 Astro/Vite 开发服务器中间件，负责读取、校验并写入 `src/content/` Markdown。
+- `src/pages/admin.astro`：本地 CMS 管理页面，提供文章编辑、新建、Markdown 预览和保存界面。
 - `src/styles/global.css`：全站样式。
 - `src/data/boards.js`：领域导航配置。
 - 每次 Git 操作都在 `lifenotes/` 内执行；提交使用中文 `type: 描述`。
+
+## 本地 CMS 约束
+
+- 使用 `npm run dev` 启动后，仅通过 <http://localhost:4326/admin/> 访问本地 CMS；支持编辑已有文章、新建文章、预览 Markdown 和保存。
+- 保存操作由 `src/admin/local-cms.mjs` 直接写入 `src/content/`，仍须遵守正式内容的目录、frontmatter 和日期规范。
+- 本地 CMS 只应运行在开发环境。`src/pages/admin.astro` 必须保持开发环境判断，生产构建会移除 `/admin`；不要把开发服务器或管理入口暴露到公网。
+- 不要为方便线上访问而增加 CMS 的公网接口、认证绕过或其他部署配置。
 
 ## Frontmatter 规范
 
