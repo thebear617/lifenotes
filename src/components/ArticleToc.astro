@@ -1,6 +1,18 @@
 ---
 const { headings = [] } = Astro.props;
 const tocHeadings = headings.filter((heading) => heading.depth >= 1 && heading.depth <= 3);
+const tocSections = [];
+let currentTocGroup;
+for (const heading of tocHeadings) {
+  if (heading.depth === 2) {
+    currentTocGroup = { type: 'group', heading, children: [] };
+    tocSections.push(currentTocGroup);
+  } else if (heading.depth === 3 && currentTocGroup) {
+    currentTocGroup.children.push(heading);
+  } else {
+    tocSections.push({ type: 'standalone', heading });
+  }
+}
 ---
 
 {tocHeadings.length > 0 && (
@@ -8,13 +20,26 @@ const tocHeadings = headings.filter((heading) => heading.depth >= 1 && heading.d
     <details class="article-toc" open>
       <summary>本文目录</summary>
       <nav>
-        {tocHeadings.map((heading) => (
-          <a
-            href={`#${heading.slug}`}
-            class:list={[`article-toc-link depth-${heading.depth}`, { active: heading === tocHeadings[0] }]}
-            data-heading-id={heading.slug}
-          >
-            {heading.text}
+        {tocSections.map((section) => section.type === 'group' ? (
+          <section class="article-toc-group" data-expanded="true">
+            <div class="article-toc-group-header">
+              <a href={`#${section.heading.slug}`} class="article-toc-link depth-2" data-heading-id={section.heading.slug}>
+                {section.heading.text}
+              </a>
+            </div>
+            <div class="article-toc-sublist">
+              <div>
+                {section.children.map((heading) => (
+                  <a href={`#${heading.slug}`} class:list={[`article-toc-link depth-${heading.depth}`]} data-heading-id={heading.slug}>
+                    {heading.text}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : (
+          <a href={`#${section.heading.slug}`} class:list={[`article-toc-link depth-${section.heading.depth}`]} data-heading-id={section.heading.slug}>
+            {section.heading.text}
           </a>
         ))}
       </nav>
@@ -26,6 +51,16 @@ const tocHeadings = headings.filter((heading) => heading.depth >= 1 && heading.d
   <script>
     const tocLinks = Array.from(document.querySelectorAll('.article-toc-link'));
     const articleHeadings = Array.from(document.querySelectorAll('.article-body h1[id], .article-body h2[id], .article-body h3[id]'));
+    const tocGroups = Array.from(document.querySelectorAll('.article-toc-group'));
+    const headingGroups = new Map();
+    tocGroups.forEach((group) => group.querySelectorAll('.article-toc-link').forEach((link) => headingGroups.set(link.dataset.headingId, group)));
+
+    function syncExpandedGroups(activeId) {
+      const activeGroup = headingGroups.get(activeId);
+      tocGroups.forEach((group) => {
+        group.dataset.expanded = String(group === activeGroup);
+      });
+    }
 
     function setActiveHeading(id) {
       tocLinks.forEach((link) => {
@@ -34,6 +69,9 @@ const tocHeadings = headings.filter((heading) => heading.depth >= 1 && heading.d
         if (active) link.setAttribute('aria-current', 'location');
         else link.removeAttribute('aria-current');
       });
+      const activeGroup = headingGroups.get(id);
+      activeGroup?.querySelector('.article-toc-link.depth-2')?.classList.add('active');
+      syncExpandedGroups(id);
     }
 
     let ticking = false;

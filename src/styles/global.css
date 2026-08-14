@@ -288,7 +288,7 @@ a { color: inherit; }
 .note-body th, .note-body td { padding: .55rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
 .note-body th { background: #fff7ed; color: var(--dark); }
 
-.article-page-shell { max-width: 1080px; margin: 0 auto; padding: 1.25rem 2rem 3rem; }
+.article-page-shell { max-width: 1120px; margin: 0 auto; padding: 1.25rem 2rem 3rem; }
 .article-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; }
 .article-detail-layout > script { display: none; }
 .article-page-shell.has-toc .article-detail-layout { grid-template-columns: minmax(0, 820px) 220px; align-items: start; }
@@ -302,10 +302,13 @@ a { color: inherit; }
 .article-toc-link { padding: .32rem .55rem; border-left: 2px solid var(--line); color: var(--muted); font-size: .76rem; line-height: 1.45; text-decoration: none; transition: border-color .15s, color .15s, background .15s; }
 .article-toc-link.depth-1 { padding-left: .2rem; font-size: .8rem; font-weight: 700; }
 .article-toc-link.depth-3 { padding-left: 1.15rem; font-size: .72rem; }
+.article-toc-sublist { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .2s ease; }
+.article-toc-sublist > div { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.article-toc-group[data-expanded="false"] .article-toc-sublist { grid-template-rows: 0fr; }
 .article-toc-link:hover { border-left-color: #7077a1; color: var(--text); background: #f4f1ec; }
 .article-toc-link.active { border-left-color: #f6b17a; color: #9a5b2e; background: #fff4e8; font-weight: 800; }
 .article-detail { grid-column: 1; grid-row: 1; min-width: 0; padding: .5rem 0 3rem; }
-.article-page-shell:not(.has-toc) .article-detail { grid-column: 1; max-width: 820px; margin: 0 auto; }
+.article-page-shell:not(.has-toc) .article-detail { grid-column: 1; width: 100%; max-width: 820px; margin: 0 auto; }
 .article-header { margin: 1rem 0 1.5rem; padding-bottom: 1.1rem; border-bottom: 1px solid var(--line); }
 .article-category { color: var(--accent); font-size: .78rem; font-weight: 900; letter-spacing: .06em; }
 .article-header h1 { margin: .35rem 0 .5rem; color: var(--dark); font-size: 1.8rem; line-height: 1.35; }
