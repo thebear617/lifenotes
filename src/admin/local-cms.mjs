@@ -1,9 +1,17 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { createMarkdownProcessor } from '@astrojs/markdown-remark';
+import remarkFootnoteIndent from '../plugins/remark-footnote-indent.mjs';
+import rehypePopover from '../plugins/rehype-popover.mjs';
+import rehypeSourcePosition from '../plugins/rehype-source-position.mjs';
 
 const ROOT = path.resolve(process.cwd(), 'src/content');
 const BOARDS = ['life', 'hotel', 'ai', 'auto', 'biology', 'finance', 'history'];
 const FIELDS = ['title', 'description', 'category', 'subcategory', 'date', 'updated', 'slug', 'topic', 'format', 'visible'];
+const markdownProcessor = createMarkdownProcessor({
+  remarkPlugins: [remarkFootnoteIndent],
+  rehypePlugins: [rehypePopover, rehypeSourcePosition],
+});
 
 function safePath(value) {
   if (typeof value !== 'string' || !value.endsWith('.md')) return null;
@@ -118,6 +126,12 @@ export default function localCms() {
           if (request.method === 'GET' && url.pathname === '/articles') {
             const articles = (await Promise.all(BOARDS.map((board) => walk(board)))).flat();
             return json(response, 200, { articles: articles.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN')) });
+          }
+          if (request.method === 'POST' && url.pathname === '/preview') {
+            const data = await readBody(request);
+            const processor = await markdownProcessor;
+            const rendered = await processor.render(String(data.body || ''));
+            return json(response, 200, { html: rendered.code });
           }
           const articlePath = url.searchParams.get('path');
           if (request.method === 'GET' && url.pathname === '/article' && safePath(articlePath)) {

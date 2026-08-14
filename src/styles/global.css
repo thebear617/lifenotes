@@ -320,6 +320,7 @@ a { color: inherit; }
 .article-body h3 { margin: 1.15rem 0 .45rem; font-size: 1rem; }
 .article-body p { margin: .65rem 0; }
 .article-body ul, .article-body ol { margin: .45rem 0; padding-left: 1.35rem; }
+.article-body ul.contains-task-list { padding-left: 0; list-style: none; }
 .article-body li + li { margin-top: .35rem; }
 .article-body blockquote { margin: .8rem 0; padding: .6rem .9rem; border-left: 3px solid #f6b17a; background: #fff4e8; color: #5b5149; }
 .article-body table { display: block; width: 100%; margin: .9rem 0; overflow-x: auto; border-collapse: collapse; font-size: .86rem; }
