@@ -152,6 +152,153 @@ const isDev = import.meta.env.DEV;
     .search-wrap svg { position: absolute; left: 11px; width: 16px; height: 16px; color: #6b7280; pointer-events: none; }
     .search-wrap .search-icon-right { right: 10px; left: auto; }
     .search-wrap input { padding-right: 34px; padding-left: 34px; }
+    .library-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .library-controls .search-wrap { min-width: 0; margin-bottom: 0; }
+    .library-actions { display: flex; gap: 6px; }
+    .library-action-wrap { position: relative; }
+    .library-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-height: 36px;
+      padding: 0 8px;
+      color: #5b6676;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .library-action svg { width: 14px; height: 14px; flex: 0 0 auto; }
+    .library-action.active { border-color: #e9a27c; color: #9a3412; background: #fff4eb; }
+    .library-action[aria-expanded="true"] { border-color: #e9a27c; color: #9a3412; background: #fff4eb; }
+    .control-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 999px;
+      color: #fff;
+      background: #c2410c;
+      font-size: 10px;
+      line-height: 1;
+    }
+    .library-popover {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      z-index: 8;
+      width: 190px;
+      padding: 10px;
+      border: 1px solid #e7ded5;
+      border-radius: 9px;
+      background: #fff;
+      box-shadow: 0 8px 22px rgba(82, 54, 31, .14);
+    }
+    .library-popover[hidden] { display: none; }
+    .library-popover-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; color: #172033; font-size: 12px; }
+    .library-popover-heading button { padding: 0; border: 0; color: #9a3412; background: transparent; font-size: 11px; font-weight: 600; }
+    .library-popover-heading button:hover { border: 0; background: transparent; text-decoration: underline; }
+    .sort-options { display: grid; gap: 4px; }
+    .sort-option { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 32px; padding: 0 8px; border: 1px solid transparent; border-radius: 6px; color: #334155; background: transparent; font-size: 11px; text-align: left; }
+    .sort-option small { color: #9aa0aa; font-size: 10px; font-weight: 600; }
+    .sort-option:hover { border-color: #edc5af; color: #9a3412; background: #fffaf6; }
+    .sort-option.on { color: #9a3412; background: #fff4eb; }
+    .filter-fields { display: grid; gap: 8px; }
+    .filter-field { display: grid; gap: 4px; color: #687285; font-size: 10px; font-weight: 700; }
+    .filter-field select { min-height: 32px; padding: 5px 8px; font-size: 11px; }
+    .filter-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: rgba(23, 32, 51, .2);
+      backdrop-filter: blur(2px);
+    }
+    .filter-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      z-index: 21;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      width: min(92vw, 440px);
+      max-height: min(92vh, 640px);
+      overflow: visible;
+      transform: translate(-50%, -50%);
+      border: 1px solid #e7ded5;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 18px 50px rgba(43, 31, 21, .2);
+    }
+    .filter-modal[hidden], .filter-backdrop[hidden] { display: none; }
+    .filter-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 22px 16px; border-bottom: 1px solid #eee7e0; }
+    .filter-modal-header h3 { margin: 0; color: #172033; font-size: 17px; letter-spacing: -.02em; }
+    .filter-modal-header p { margin: 5px 0 0; color: #8992a1; font-size: 11px; line-height: 1.5; }
+    .filter-modal-close { display: grid; width: 28px; height: 28px; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #7b8491; background: transparent; font-size: 20px; line-height: 1; }
+    .filter-modal-close:hover { border: 0; color: #9a3412; background: #fff4eb; }
+    .filter-modal-body { overflow: visible; padding: 18px 22px 20px; }
+    .filter-modal-body .filter-fields { gap: 14px; }
+    .filter-modal-body .filter-field { gap: 6px; color: #334155; font-size: 11px; }
+    .custom-select { position: relative; min-width: 0; }
+    .custom-select-native { position: absolute; width: 1px; height: 1px; min-height: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; }
+    .custom-select-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      min-height: 40px;
+      padding: 8px 10px;
+      border: 1px solid #e1d9d1;
+      border-radius: 8px;
+      color: #172033;
+      background: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: left;
+    }
+    .custom-select-trigger:hover { border-color: #d97745; color: #172033; background: #fffaf6; }
+    .custom-select-trigger:disabled { border-color: #e8e2dc; color: #a7adb6; background: #f7f5f2; cursor: not-allowed; }
+    .custom-select-trigger svg { width: 16px; height: 16px; flex: 0 0 auto; color: #a0a7b1; transition: transform .15s ease, color .15s ease; }
+    .custom-select.open .custom-select-trigger { border-color: #d97745; box-shadow: inset 0 0 0 1px #d97745; }
+    .custom-select.open .custom-select-trigger svg { color: #c2410c; transform: rotate(180deg); }
+    .custom-select-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      left: 0;
+      z-index: 30;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 5px;
+      border: 1px solid #e7ded5;
+      border-radius: 9px;
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(82, 54, 31, .16);
+    }
+    .custom-select-menu[hidden] { display: none; }
+    .custom-select-option {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      min-height: 34px;
+      padding: 0 9px;
+      border: 0;
+      border-radius: 6px;
+      color: #334155;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: left;
+    }
+    .custom-select-option::before { width: 16px; flex: 0 0 16px; color: #c2410c; content: ""; font-size: 14px; font-weight: 800; }
+    .custom-select-option:hover { border: 0; color: #9a3412; background: #fff4eb; }
+    .custom-select-option.is-selected { color: #9a3412; background: #fff4eb; }
+    .custom-select-option.is-selected::before { content: "✓"; }
+    .filter-modal-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 22px; border-top: 1px solid #eee7e0; background: #fffdfb; }
+    .filter-modal-footer .filter-clear-button { padding: 0; border: 0; color: #687285; background: transparent; font-size: 12px; font-weight: 600; }
+    .filter-modal-footer .filter-clear-button:hover { border: 0; color: #9a3412; background: transparent; text-decoration: underline; }
+    .filter-modal-footer .filter-done-button { min-height: 36px; padding: 0 16px; border-color: #c2410c; color: #fff; background: #c2410c; }
+    .filter-modal-footer .filter-done-button:hover { border-color: #9a3412; color: #fff; background: #9a3412; }
     .toolbar { gap: 8px; margin-bottom: 16px; }
     .toolbar button:first-child { flex: 1 1 auto; }
 
@@ -338,6 +485,9 @@ const isDev = import.meta.env.DEV;
       .editor-footer-left { gap: 8px; }
       .editor-footer-right { display: none; }
       .preview { padding-right: 15px; }
+      .library-controls { grid-template-columns: 1fr; }
+      .library-actions { justify-content: stretch; }
+      .library-action-wrap, .library-action { flex: 1; }
     }
   </style>
   <div class="admin">
@@ -361,11 +511,54 @@ const isDev = import.meta.env.DEV;
     <div class="workspace">
       <aside class="panel sidebar-panel">
         <div class="panel-heading"><h2>文章库</h2><span class="count" id="article-count">共 0 篇文章</span></div>
-        <label class="search-wrap" aria-label="筛选文章">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5" stroke-linecap="round"/></svg>
-          <input id="filter" placeholder="筛选标题…" />
-          <svg class="search-icon-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5" stroke-linecap="round"/></svg>
-        </label>
+        <div class="library-controls">
+          <label class="search-wrap" aria-label="搜索文章">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5" stroke-linecap="round"/></svg>
+            <input id="filter" placeholder="筛选标题…" />
+            <svg class="search-icon-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5" stroke-linecap="round"/></svg>
+          </label>
+          <div class="library-actions">
+            <div class="library-action-wrap">
+              <button class="library-action" id="sort-toggle" type="button" aria-expanded="false" aria-controls="sort-menu" title="排序文章">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 5v14M8 5l-3 3M8 5l3 3M16 19V5m0 14 3-3m-3 3-3-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>排序</span>
+              </button>
+              <div class="library-popover" id="sort-menu" hidden>
+                <div class="library-popover-heading"><strong>排序方式</strong></div>
+                <div class="sort-options" role="menu" aria-label="文章排序方式">
+                  <button class="sort-option on" data-sort="title-asc" type="button" role="menuitemradio" aria-checked="true"><span>标题</span><small>A → Z</small></button>
+                  <button class="sort-option" data-sort="title-desc" type="button" role="menuitemradio" aria-checked="false"><span>标题</span><small>Z → A</small></button>
+                  <button class="sort-option" data-sort="updated-desc" type="button" role="menuitemradio" aria-checked="false"><span>最近更新</span><small>新 → 旧</small></button>
+                  <button class="sort-option" data-sort="date-desc" type="button" role="menuitemradio" aria-checked="false"><span>发布日期</span><small>新 → 旧</small></button>
+                </div>
+              </div>
+            </div>
+            <div class="library-action-wrap">
+              <button class="library-action" id="filter-toggle" type="button" aria-expanded="false" aria-controls="filter-menu" title="筛选文章">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M7 12h10m-7 6h4" stroke-linecap="round"/></svg>
+                <span>筛选</span><span class="control-badge" id="filter-badge" hidden>0</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="filter-backdrop" id="filter-backdrop" hidden></div>
+        <section class="filter-modal" id="filter-menu" hidden role="dialog" aria-modal="true" aria-labelledby="filter-modal-title">
+          <header class="filter-modal-header">
+            <div><h3 id="filter-modal-title">筛选文章</h3><p>先选择领域，再逐级缩小分类范围。</p></div>
+            <button class="filter-modal-close" id="filter-close" type="button" aria-label="关闭筛选">×</button>
+          </header>
+          <div class="filter-modal-body">
+            <div class="filter-fields">
+              <div class="filter-field"><span>领域</span><div class="custom-select" data-custom-select="filter-board"><select class="custom-select-native" id="filter-board" aria-hidden="true" tabindex="-1"><option value="">全部领域</option><option value="life">生活美食</option><option value="hotel">服务业</option><option value="ai">AI 产业</option><option value="auto">数码出行</option><option value="biology">动植物</option><option value="finance">金融经济</option><option value="history">社会人文</option></select><button class="custom-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="领域"><span class="custom-select-label">全部领域</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="custom-select-menu" role="listbox" hidden></div></div></div>
+              <div class="filter-field"><span>分类</span><div class="custom-select" data-custom-select="filter-category"><select class="custom-select-native" id="filter-category" aria-hidden="true" tabindex="-1" disabled><option value="">请先选择领域</option></select><button class="custom-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="分类" disabled><span class="custom-select-label">请先选择领域</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="custom-select-menu" role="listbox" hidden></div></div></div>
+              <div class="filter-field"><span>子分类</span><div class="custom-select" data-custom-select="filter-subcategory"><select class="custom-select-native" id="filter-subcategory" aria-hidden="true" tabindex="-1" disabled><option value="">请先选择分类</option></select><button class="custom-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="子分类" disabled><span class="custom-select-label">请先选择分类</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="custom-select-menu" role="listbox" hidden></div></div></div>
+            </div>
+          </div>
+          <footer class="filter-modal-footer">
+            <button class="filter-clear-button" id="clear-library-filters" type="button">清除筛选条件</button>
+            <button class="filter-done-button" id="filter-done" type="button">完成</button>
+          </footer>
+        </section>
         <div class="toolbar">
           <button id="new" type="button"><span aria-hidden="true">＋</span> 新建文章</button>
           <button id="refresh" type="button"><span aria-hidden="true">⟳</span> 刷新</button>
@@ -465,11 +658,82 @@ const isDev = import.meta.env.DEV;
     let isProgrammaticEdit = false;
     let selectedPreviewNode = null;
     let syncHighlightTimer = null;
+    let sortKey = 'title-asc';
     const editorHistoryLimit = 100;
     const fields = ['title', 'description', 'category', 'subcategory', 'topic', 'date', 'updated', 'slug', 'format', 'visible'];
+    const sortLabels = {
+      'title-asc': '标题 A → Z',
+      'title-desc': '标题 Z → A',
+      'updated-desc': '最近更新',
+      'date-desc': '发布日期',
+    };
     const escapeHtml = (text) => String(text ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const setStatus = (message, kind = 'neutral') => { $('status').textContent = message; $('status').className = `save-state ${kind}`; };
     const markDirty = () => { isDirty = true; if (!$('status').classList.contains('error')) setStatus('有未保存修改', 'saving'); };
+    function customSelectRoot(id) {
+      return document.querySelector(`[data-custom-select="${id}"]`);
+    }
+    function closeCustomSelects(except = null) {
+      document.querySelectorAll('.custom-select.open').forEach((root) => {
+        if (root === except) return;
+        root.classList.remove('open');
+        root.querySelector('.custom-select-menu').hidden = true;
+        root.querySelector('.custom-select-trigger').setAttribute('aria-expanded', 'false');
+      });
+    }
+    function syncCustomSelect(id) {
+      const select = $(id);
+      const root = customSelectRoot(id);
+      if (!select || !root) return;
+      const trigger = root.querySelector('.custom-select-trigger');
+      const label = root.querySelector('.custom-select-label');
+      const menu = root.querySelector('.custom-select-menu');
+      const selected = Array.from(select.options).find((option) => option.value === select.value) || select.options[0];
+      label.textContent = selected?.textContent || '';
+      trigger.disabled = select.disabled;
+      if (select.disabled) {
+        root.classList.remove('open');
+        menu.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+      menu.innerHTML = '';
+      Array.from(select.options).forEach((option) => {
+        const item = document.createElement('button');
+        item.className = `custom-select-option${option.value === select.value ? ' is-selected' : ''}`;
+        item.type = 'button';
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', String(option.value === select.value));
+        item.textContent = option.textContent;
+        item.onclick = (event) => {
+          event.stopPropagation();
+          if (select.disabled) return;
+          select.value = option.value;
+          syncCustomSelect(id);
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          closeCustomSelects();
+        };
+        menu.append(item);
+      });
+    }
+    function initializeCustomSelects() {
+      document.querySelectorAll('[data-custom-select]').forEach((root) => {
+        const id = root.dataset.customSelect;
+        const select = $(id);
+        const trigger = root.querySelector('.custom-select-trigger');
+        const menu = root.querySelector('.custom-select-menu');
+        trigger.onclick = (event) => {
+          event.stopPropagation();
+          if (select.disabled) return;
+          const shouldOpen = menu.hidden;
+          closeCustomSelects(root);
+          menu.hidden = !shouldOpen;
+          root.classList.toggle('open', shouldOpen);
+          trigger.setAttribute('aria-expanded', String(shouldOpen));
+        };
+        menu.onclick = (event) => event.stopPropagation();
+        syncCustomSelect(id);
+      });
+    }
     function updateEditorMeta() {
       const body = $('body');
       const beforeCursor = body.value.slice(0, body.selectionStart);
@@ -761,12 +1025,82 @@ const isDev = import.meta.env.DEV;
       editorState = next;
       handleBodyChange();
     }
+    function articleBoard(article) {
+      return String(article.path || '').split('/')[0];
+    }
+    function compareText(left, right) {
+      return String(left || '').localeCompare(String(right || ''), 'zh-CN');
+    }
+    function compareDate(left, right) {
+      return String(left || '').localeCompare(String(right || ''));
+    }
+    function compareArticles(left, right) {
+      if (sortKey === 'title-desc') return compareText(right.title, left.title);
+      if (sortKey === 'updated-desc') {
+        return compareDate(right.updated || right.date, left.updated || left.date)
+          || compareDate(right.date, left.date)
+          || compareText(left.title, right.title);
+      }
+      if (sortKey === 'date-desc') {
+        return compareDate(right.date, left.date)
+          || compareDate(right.updated, left.updated)
+          || compareText(left.title, right.title);
+      }
+      return compareText(left.title, right.title);
+    }
+    function uniqueArticleValues(field, predicate = () => true) {
+      return [...new Set(articles.filter(predicate).map((article) => String(article[field] || '').trim()).filter(Boolean))]
+        .sort((left, right) => compareText(left, right));
+    }
+    function populateFilterSelect(id, emptyLabel, values, { disabled = false, value } = {}) {
+      const select = $(id);
+      const current = value ?? select.value;
+      select.innerHTML = '';
+      const emptyOption = document.createElement('option');
+      emptyOption.value = '';
+      emptyOption.textContent = emptyLabel;
+      select.append(emptyOption);
+      values.forEach((value) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        select.append(option);
+      });
+      select.disabled = disabled;
+      select.value = values.includes(current) ? current : '';
+      syncCustomSelect(id);
+    }
+    function refreshFilterOptions() {
+      const board = $('filter-board').value;
+      syncCustomSelect('filter-board');
+      const currentCategory = $('filter-category').value;
+      const categoryValues = uniqueArticleValues('category', (article) => !board || articleBoard(article) === board);
+      const category = categoryValues.includes(currentCategory) ? currentCategory : '';
+      populateFilterSelect('filter-category', board ? '全部分类' : '请先选择领域', categoryValues, { disabled: !board, value: category });
+
+      const currentSubcategory = $('filter-subcategory').value;
+      const subcategoryValues = uniqueArticleValues('subcategory', (article) => (
+        Boolean(board)
+        && articleBoard(article) === board
+        && Boolean(category)
+        && article.category === category
+      ));
+      populateFilterSelect('filter-subcategory', category ? '全部子分类' : '请先选择分类', subcategoryValues, { disabled: !category, value: currentSubcategory });
+    }
+    function updateFilterBadge() {
+      const count = ['filter-board', 'filter-category', 'filter-subcategory'].filter((id) => $(id).value).length;
+      $('filter-badge').hidden = count === 0;
+      $('filter-badge').textContent = String(count);
+      $('filter-toggle').classList.toggle('active', count > 0);
+    }
     async function loadList() {
       try {
         const res = await fetch('/admin/api/articles');
         const data = await res.json();
         articles = data.articles || [];
         $('article-count').textContent = `共 ${articles.length} 篇文章`;
+        refreshFilterOptions();
+        updateFilterBadge();
         renderList();
       } catch (error) {
         $('article-count').textContent = '读取失败';
@@ -774,8 +1108,16 @@ const isDev = import.meta.env.DEV;
       }
     }
     function renderList() {
-      const query = $('filter').value.toLowerCase();
-      const visibleArticles = articles.filter((article) => String(article.title || '').toLowerCase().includes(query));
+      const query = $('filter').value.trim().toLocaleLowerCase('zh-CN');
+      const board = $('filter-board').value;
+      const category = $('filter-category').value;
+      const subcategory = $('filter-subcategory').value;
+      const visibleArticles = articles
+        .filter((article) => !query || String(article.title || '').toLocaleLowerCase('zh-CN').includes(query))
+        .filter((article) => !board || articleBoard(article) === board)
+        .filter((article) => !category || article.category === category)
+        .filter((article) => !subcategory || article.subcategory === subcategory)
+        .sort(compareArticles);
       $('list').innerHTML = visibleArticles.map((article) => {
         const meta = [article.category, article.subcategory].filter(Boolean).join(' · ');
         const active = article.path === selectedPath ? ' active' : '';
@@ -815,6 +1157,85 @@ const isDev = import.meta.env.DEV;
     $('new').onclick = () => { selectedPath = ''; fill(); renderList(); setStatus('新建模式', 'neutral'); $('title').focus(); };
     $('refresh').onclick = loadList;
     $('filter').oninput = renderList;
+    document.querySelectorAll('.sort-option').forEach((button) => {
+      button.onclick = () => {
+        sortKey = button.dataset.sort;
+        document.querySelectorAll('.sort-option').forEach((option) => {
+          const selected = option === button;
+          option.classList.toggle('on', selected);
+          option.setAttribute('aria-checked', String(selected));
+        });
+        $('sort-toggle').title = `当前排序：${sortLabels[sortKey]}`;
+        renderList();
+        closeLibraryMenus();
+      };
+    });
+    $('filter-board').onchange = () => {
+      $('filter-category').value = '';
+      $('filter-subcategory').value = '';
+      refreshFilterOptions();
+      updateFilterBadge();
+      renderList();
+    };
+    $('filter-category').onchange = () => {
+      $('filter-subcategory').value = '';
+      refreshFilterOptions();
+      updateFilterBadge();
+      renderList();
+    };
+    $('filter-subcategory').onchange = () => {
+      updateFilterBadge();
+      renderList();
+    };
+    $('clear-library-filters').onclick = () => {
+      $('filter-board').value = '';
+      refreshFilterOptions();
+      updateFilterBadge();
+      renderList();
+    };
+    const libraryMenus = [
+      { trigger: $('sort-toggle'), menu: $('sort-menu') },
+    ];
+    function closeLibraryMenus() {
+      libraryMenus.forEach(({ trigger, menu }) => {
+        menu.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
+      });
+    }
+    libraryMenus.forEach(({ trigger, menu }) => {
+      trigger.onclick = (event) => {
+        event.stopPropagation();
+        const shouldOpen = menu.hidden;
+        closeLibraryMenus();
+        menu.hidden = !shouldOpen;
+        trigger.setAttribute('aria-expanded', String(shouldOpen));
+      };
+      menu.onclick = (event) => event.stopPropagation();
+    });
+    function closeFilterModal() {
+      closeCustomSelects();
+      $('filter-menu').hidden = true;
+      $('filter-backdrop').hidden = true;
+      $('filter-toggle').setAttribute('aria-expanded', 'false');
+    }
+    function openFilterModal() {
+      closeLibraryMenus();
+      $('filter-menu').hidden = false;
+      $('filter-backdrop').hidden = false;
+      $('filter-toggle').setAttribute('aria-expanded', 'true');
+      customSelectRoot('filter-board')?.querySelector('.custom-select-trigger')?.focus();
+    }
+    $('filter-toggle').onclick = openFilterModal;
+    $('filter-close').onclick = closeFilterModal;
+    $('filter-done').onclick = closeFilterModal;
+    $('filter-backdrop').onclick = closeFilterModal;
+    document.addEventListener('click', closeLibraryMenus);
+    document.addEventListener('click', () => closeCustomSelects());
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      closeLibraryMenus();
+      closeFilterModal();
+    });
     document.querySelectorAll('.editor-tool').forEach((button) => { button.onclick = () => applyToolbarAction(button.dataset.action); });
     $('sync-to-preview').onclick = syncSourceToPreview;
     $('sync-to-source').onclick = syncPreviewToSource;
@@ -833,6 +1254,7 @@ const isDev = import.meta.env.DEV;
     $('body').oninput = handleBodyInput;
     document.addEventListener('keydown', handleHistoryShortcut);
     ['click', 'keyup', 'select'].forEach((eventName) => { $('body').addEventListener(eventName, updateEditorMeta); });
+    initializeCustomSelects();
     fill();
     loadList();
   </script>
