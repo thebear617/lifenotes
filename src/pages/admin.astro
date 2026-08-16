@@ -528,9 +528,9 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
               <div class="library-popover" id="sort-menu" hidden>
                 <div class="library-popover-heading"><strong>排序方式</strong></div>
                 <div class="sort-options" role="menu" aria-label="文章排序方式">
-                  <button class="sort-option on" data-sort="title-asc" type="button" role="menuitemradio" aria-checked="true"><span>标题</span><small>A → Z</small></button>
+                  <button class="sort-option" data-sort="title-asc" type="button" role="menuitemradio" aria-checked="false"><span>标题</span><small>A → Z</small></button>
                   <button class="sort-option" data-sort="title-desc" type="button" role="menuitemradio" aria-checked="false"><span>标题</span><small>Z → A</small></button>
-                  <button class="sort-option" data-sort="updated-desc" type="button" role="menuitemradio" aria-checked="false"><span>最近更新</span><small>新 → 旧</small></button>
+                  <button class="sort-option on" data-sort="updated-desc" type="button" role="menuitemradio" aria-checked="true"><span>最近更新</span><small>新 → 旧</small></button>
                   <button class="sort-option" data-sort="date-desc" type="button" role="menuitemradio" aria-checked="false"><span>发布日期</span><small>新 → 旧</small></button>
                 </div>
               </div>
@@ -660,7 +660,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     let isProgrammaticEdit = false;
     let selectedPreviewNode = null;
     let syncHighlightTimer = null;
-    let sortKey = 'title-asc';
+    let sortKey = 'updated-desc';
     const editorHistoryLimit = 100;
     const fields = ['title', 'description', 'category', 'subcategory', 'topic', 'date', 'updated', 'slug', 'format', 'visible'];
     const sortLabels = {
