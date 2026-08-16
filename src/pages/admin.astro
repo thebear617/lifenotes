@@ -1,10 +1,12 @@
 ---
 // The local CMS is intentionally available only from Astro's dev server.
 const isDev = import.meta.env.DEV;
+const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.replace(/\/?$/, '/');
 ---
 
 {isDev ? <>
   <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href={`${base}favicon.png`} />
   <title>常识笔记后台</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
