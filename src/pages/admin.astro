@@ -417,7 +417,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     .field-label > textarea { display: block; width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
     .required { color: #c2410c; }
     .metadata-description { min-height: 74px; }
-    .editor-workspace { --editor-content-gap: 28px; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; border: 1px solid #eee7e0; border-radius: 8px; overflow: hidden; }
+    .editor-workspace { --editor-content-gap: 28px; --editor-caret-space: 10.5em; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; border: 1px solid #eee7e0; border-radius: 8px; overflow: hidden; }
     .editor-sync-controls { position: absolute; top: 50%; left: 50%; z-index: 3; display: grid; gap: 3px; transform: translate(-50%, -50%); padding: 4px; border: 1px solid #e7ded5; border-radius: 999px; background: #fff; box-shadow: 0 4px 12px rgba(82, 54, 31, .12); }
     .editor-sync-button { display: grid; width: 25px; height: 25px; min-width: 25px; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #647084; background: transparent; font-size: 16px; line-height: 1; }
     .editor-sync-button:hover { border: 0; color: #c2410c; background: #fff0e6; }
@@ -432,7 +432,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     .editor-tool:hover { border: 0; color: #9a3412; background: #fff0e6; }
     .editor-tool-divider { width: 1px; height: 20px; flex: 0 0 auto; margin: 0 5px; background: #e8e0d8; }
     .editor-pane { display: block; min-width: 0; min-height: 0; overflow: hidden; background: #fff; }
-    textarea#body { display: block; width: 100%; max-width: 100%; min-width: 0; min-height: 0; height: 100%; resize: none; border: 0; border-radius: 0; padding: 15px var(--editor-content-gap) 15px 15px; overflow-x: hidden; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; color: #283449; font: 13px/1.75 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    textarea#body { display: block; width: 100%; max-width: 100%; min-width: 0; min-height: 0; height: 100%; resize: none; border: 0; border-radius: 0; padding: 15px var(--editor-content-gap) calc(15px + var(--editor-caret-space)) 15px; overflow-x: hidden; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; color: #283449; font: 13px/1.75 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .editor-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; padding: 0 12px; border-top: 1px solid #eee7e0; color: #87909c; font-size: 11px; }
     .editor-footer-left, .editor-footer-right { display: flex; align-items: center; gap: 14px; min-width: 0; }
     .editor-footer-right { color: #75806f; white-space: nowrap; }
