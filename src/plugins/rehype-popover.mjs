@@ -15,6 +15,17 @@ function isBackref(node) {
   return isElement(node, 'a') && hasProperty(node, 'dataFootnoteBackref');
 }
 
+function withoutBackrefs(node) {
+  if (!node?.children) return node;
+
+  return {
+    ...node,
+    children: node.children
+      .filter(child => !isBackref(child))
+      .map(withoutBackrefs),
+  };
+}
+
 function findFootnoteSection(tree) {
   let section;
 
@@ -42,7 +53,7 @@ function collectDefinitions(section) {
     if (!encodedId) return;
 
     const id = decodeURIComponent(encodedId);
-    definitions.set(id, item.children.filter(child => !isBackref(child)));
+    definitions.set(id, item.children.filter(child => !isBackref(child)).map(withoutBackrefs));
   });
 
   return definitions;

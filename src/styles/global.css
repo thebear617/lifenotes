@@ -320,10 +320,16 @@ a { color: inherit; }
 .article-body h3 { margin: 1.15rem 0 .45rem; font-size: 1rem; }
 .article-body p { margin: .65rem 0; }
 .article-body ul, .article-body ol { margin: .45rem 0; padding-left: 1.35rem; }
+.article-body ol { list-style-type: decimal; }
+.article-body ol ol { list-style-type: lower-alpha; }
+.article-body ol ol ol { list-style-type: lower-roman; }
+.article-body ol ol ol ol { list-style-type: decimal; }
 .article-body ul.contains-task-list { padding-left: 0; list-style: none; }
 .article-body li + li { margin-top: .35rem; }
 .article-body blockquote { margin: .8rem 0; padding: .6rem .9rem; border-left: 3px solid #f6b17a; background: #fff4e8; color: #5b5149; }
-.article-body table { display: block; width: 100%; margin: .9rem 0; overflow-x: auto; border-collapse: collapse; font-size: .86rem; }
+.article-body .table-scroll { max-width: 100%; margin: .9rem 0; overflow-x: auto; }
+.article-body .table-scroll table { margin: 0; }
+.article-body table { width: 100%; min-width: max-content; border-collapse: collapse; font-size: .86rem; }
 .article-body th, .article-body td { padding: .55rem .65rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
 .article-body th { background: #f4f1ec; color: var(--dark); }
 .article-body a { color: var(--accent); }

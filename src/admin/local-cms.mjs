@@ -1,16 +1,24 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createMarkdownProcessor } from '@astrojs/markdown-remark';
+import remarkMath from 'remark-math';
 import remarkFootnoteIndent from '../plugins/remark-footnote-indent.mjs';
+import rehypeKatex from 'rehype-katex';
+import rehypeMark from '../plugins/rehype-mark.mjs';
 import rehypePopover from '../plugins/rehype-popover.mjs';
+import rehypeTableWrap from '../plugins/rehype-table-wrap.mjs';
 import rehypeSourcePosition from '../plugins/rehype-source-position.mjs';
+import footnoteReferenceWithLabel from '../plugins/footnote-reference-with-label.mjs';
 
 const ROOT = path.resolve(process.cwd(), 'src/content');
 const BOARDS = ['life', 'hotel', 'ai', 'auto', 'biology', 'finance', 'history'];
 const FIELDS = ['title', 'description', 'category', 'subcategory', 'date', 'updated', 'slug', 'topic', 'format', 'visible'];
 const markdownProcessor = createMarkdownProcessor({
-  remarkPlugins: [remarkFootnoteIndent],
-  rehypePlugins: [rehypePopover, rehypeSourcePosition],
+  remarkPlugins: [remarkFootnoteIndent, remarkMath],
+  rehypePlugins: [rehypeKatex, rehypeMark, rehypeTableWrap, rehypePopover, rehypeSourcePosition],
+  remarkRehype: {
+    handlers: { footnoteReference: footnoteReferenceWithLabel },
+  },
 });
 
 function safePath(value) {
