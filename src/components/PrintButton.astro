@@ -1,0 +1,12 @@
+<button class="print-button" type="button" data-print-page aria-label="打印或导出当前笔记为 PDF" title="打印设置中请关闭“页眉和页脚”">
+  <span aria-hidden="true">⇩</span>
+  <span>打印 / 导出 PDF</span>
+</button>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-print-page]').forEach((button) => {
+    if (button.dataset.printBound) return;
+    button.dataset.printBound = 'true';
+    button.addEventListener('click', () => window.print());
+  });
+</script>
