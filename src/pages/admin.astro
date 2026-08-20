@@ -702,6 +702,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     let previewFootnoteCleanup = () => {};
     let activePreviewFootnoteClose = null;
     let sortKey = 'updated-desc';
+    const EDITOR_SESSION_KEY = 'lifenotes-admin-editor-state-v1';
     const editorHistoryLimit = 100;
     const fields = ['title', 'description', 'category', 'subcategory', 'topic', 'date', 'updated', 'slug', 'format', 'visible'];
     const sortLabels = {
@@ -713,6 +714,38 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     const escapeHtml = (text) => String(text ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const setStatus = (message, kind = 'neutral') => { $('status').textContent = message; $('status').className = `save-state ${kind}`; };
     const markDirty = () => { isDirty = true; if (!$('status').classList.contains('error')) setStatus('有未保存修改', 'saving'); };
+    function rememberEditorSession() {
+      if (!selectedPath) return;
+      const body = $('body');
+      const snapshot = {
+        selectedPath,
+        selectionStart: body.selectionStart,
+        selectionEnd: body.selectionEnd,
+        scrollTop: body.scrollTop,
+      };
+      try { sessionStorage.setItem(EDITOR_SESSION_KEY, JSON.stringify(snapshot)); } catch { /* sessionStorage may be unavailable in a restricted browser context. */ }
+    }
+
+    function readEditorSession() {
+      try {
+        const raw = sessionStorage.getItem(EDITOR_SESSION_KEY);
+        if (!raw) return null;
+        const snapshot = JSON.parse(raw);
+        return snapshot && typeof snapshot === 'object' ? snapshot : null;
+      } catch { return null; }
+    }
+
+    function restoreEditorPosition(snapshot) {
+      if (!snapshot) return;
+      const body = $('body');
+      const max = body.value.length;
+      const start = Math.min(Math.max(Number(snapshot.selectionStart) || 0, 0), max);
+      const end = Math.min(Math.max(Number(snapshot.selectionEnd) || start, start), max);
+      body.focus({ preventScroll: true });
+      body.setSelectionRange(start, end);
+      body.scrollTop = Math.min(Math.max(Number(snapshot.scrollTop) || 0, 0), body.scrollHeight);
+    }
+
     function customSelectRoot(id) {
       return document.querySelector(`[data-custom-select="${id}"]`);
     }
@@ -852,6 +885,36 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       event.preventDefault();
       if (undo) undoEditor();
       if (redo) redoEditor();
+    }
+    function indentBodySelection() {
+      const body = $('body');
+      const start = body.selectionStart;
+      const end = body.selectionEnd;
+      const indent = '  ';
+      if (start === end) {
+        body.setRangeText(indent, start, end, 'end');
+      } else {
+        const value = body.value;
+        const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+        const selectionEndsAtLineStart = value[end - 1] === '\n';
+        const lineEnd = selectionEndsAtLineStart ? end : (value.indexOf('\n', end) === -1 ? value.length : value.indexOf('\n', end));
+        const lines = value.slice(lineStart, lineEnd).split('\n');
+        body.setRangeText(lines.map((line) => `${indent}${line}`).join('\n'), lineStart, lineEnd, 'select');
+        body.setSelectionRange(start + indent.length, end + indent.length * lines.length);
+      }
+      body.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    function handleBodyKeydown(event) {
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        indentBodySelection();
+        return;
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        event.stopPropagation();
+        void saveArticle();
+      }
     }
     async function preview() {
       const requestId = ++previewRequestId;
@@ -1404,7 +1467,8 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         setStatus('已读取', 'neutral');
       } catch (error) { setStatus(error.message, 'error'); }
     }
-    $('save').onclick = async () => {
+    async function saveArticle() {
+      rememberEditorSession();
       const board = $('board').value;
       const file = $('file').value.trim();
       const frontmatter = Object.fromEntries(fields.map((field) => [field, $(field).value]));
@@ -1421,7 +1485,8 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         await loadList();
       } catch (error) { setStatus(error.message, 'error'); }
       finally { $('save').disabled = false; }
-    };
+    }
+    $('save').onclick = saveArticle;
     $('new').onclick = () => { selectedPath = ''; fill(); renderList(); setStatus('新建模式', 'neutral'); $('title').focus(); };
     $('refresh').onclick = loadList;
     $('filter').oninput = renderList;
@@ -1520,10 +1585,18 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     });
     fields.forEach((field) => { $(field).addEventListener('input', markDirty); });
     $('body').oninput = handleBodyInput;
+    $('body').addEventListener('keydown', handleBodyKeydown);
     document.addEventListener('keydown', handleHistoryShortcut);
+    window.addEventListener('pagehide', rememberEditorSession);
     ['click', 'keyup', 'select'].forEach((eventName) => { $('body').addEventListener(eventName, updateEditorMeta); });
     initializeCustomSelects();
     fill();
-    loadList();
+    const savedSession = readEditorSession();
+    loadList().then(async () => {
+      const savedArticle = savedSession?.selectedPath && articles.find((article) => article.path === savedSession.selectedPath);
+      if (!savedArticle) return;
+      await loadArticle(savedArticle.path);
+      restoreEditorPosition(savedSession);
+    });
   </script>
 </> : <p>本地 CMS 仅在 Astro 开发服务器中可用。</p>}
