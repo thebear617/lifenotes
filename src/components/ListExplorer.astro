@@ -4,6 +4,7 @@ interface ExplorerEntry {
   title: string;
   description?: string;
   date: Date | null;
+  updated: Date | null;
   category: string;
   subcategory?: string;
   href: string;
@@ -18,8 +19,8 @@ const { entries } = Astro.props;
 const visibleEntries = [...entries]
   .filter((entry) => entry !== null)
   .sort((a, b) => {
-    const ta = a.date?.getTime() ?? Number.NEGATIVE_INFINITY;
-    const tb = b.date?.getTime() ?? Number.NEGATIVE_INFINITY;
+    const ta = a.updated?.getTime() ?? a.date?.getTime() ?? Number.NEGATIVE_INFINITY;
+    const tb = b.updated?.getTime() ?? b.date?.getTime() ?? Number.NEGATIVE_INFINITY;
     return tb - ta || a.title.localeCompare(b.title, 'zh-CN');
   });
 
@@ -67,6 +68,7 @@ const hasFilters = allCategories.length > 0 || allSubcategories.length > 0;
           data-desc={entry.description || ''}
           data-category={entry.category}
           data-subcategory={entry.subcategory || ''}
+          data-updated-ts={entry.updated?.getTime() ?? entry.date?.getTime() ?? 0}
         >
           <strong>{entry.title}</strong>
           {entry.description && <span class="record-description">{entry.description}</span>}
@@ -128,11 +130,11 @@ const hasFilters = allCategories.length > 0 || allSubcategories.length > 0;
     </div>
     <div class="float-panel-body">
       <div class="sort-options" data-sort-options>
-        <button class="sort-option on" type="button" data-sort="date-desc">
+        <button class="sort-option on" type="button" data-sort="updated-desc">
           <span class="sort-option-icon">↓</span>
           <span class="sort-option-label">最新优先</span>
         </button>
-        <button class="sort-option" type="button" data-sort="date-asc">
+        <button class="sort-option" type="button" data-sort="updated-asc">
           <span class="sort-option-icon">↑</span>
           <span class="sort-option-label">最早优先</span>
         </button>
@@ -164,7 +166,7 @@ const hasFilters = allCategories.length > 0 || allSubcategories.length > 0;
     let searchTerm = '';
     let currentPage = 1;
     const pageSize = 8;
-    let currentSort = 'date-desc';
+    let currentSort = 'updated-desc';
 
     const pagination = root.querySelector<HTMLElement>('[data-pagination]');
     const prevBtn = root.querySelector<HTMLButtonElement>('[data-page-prev]');
@@ -289,10 +291,10 @@ const hasFilters = allCategories.length > 0 || allSubcategories.length > 0;
     function sortEntries(entries: HTMLElement[]): HTMLElement[] {
       const sorted = [...entries];
       switch (currentSort) {
-        case 'date-asc':
+        case 'updated-asc':
           sorted.sort((a, b) => {
-            const ta = Number(a.dataset.dateTs) || 0;
-            const tb = Number(b.dataset.dateTs) || 0;
+            const ta = Number(a.dataset.updatedTs) || Number(a.dataset.dateTs) || 0;
+            const tb = Number(b.dataset.updatedTs) || Number(b.dataset.dateTs) || 0;
             return ta - tb || a.dataset.title!.localeCompare(b.dataset.title!, 'zh-CN');
           });
           break;
@@ -304,8 +306,8 @@ const hasFilters = allCategories.length > 0 || allSubcategories.length > 0;
           break;
         default:
           sorted.sort((a, b) => {
-            const ta = Number(a.dataset.dateTs) || 0;
-            const tb = Number(b.dataset.dateTs) || 0;
+            const ta = Number(a.dataset.updatedTs) || Number(a.dataset.dateTs) || 0;
+            const tb = Number(b.dataset.updatedTs) || Number(b.dataset.dateTs) || 0;
             return tb - ta || a.dataset.title!.localeCompare(b.dataset.title!, 'zh-CN');
           });
       }
@@ -367,6 +369,7 @@ const hasFilters = allCategories.length > 0 || allSubcategories.length > 0;
       const dateStr = card.querySelector('.record-date')?.textContent || '';
       const d = dateStr ? new Date(dateStr.replace(/\//g, '-')) : null;
       card.dataset.dateTs = d ? String(d.getTime()) : '0';
+      card.dataset.updatedTs = card.dataset.updatedTs || card.dataset.dateTs;
     });
 
     applyFilters();

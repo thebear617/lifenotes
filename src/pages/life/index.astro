@@ -11,6 +11,7 @@ const items = entries.map((entry) => ({
   title: entry.data.title,
   description: entry.data.description,
   date: entry.data.date,
+  updated: entry.data.updated,
   category: categoryForEntry(entry),
   subcategory: entry.data.subcategory,
   href: `${base}life/${entry.data.slug || entry.id}/`,
