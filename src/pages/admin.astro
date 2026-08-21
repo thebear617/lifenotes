@@ -436,8 +436,8 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     .editor-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; padding: 0 12px; border-top: 1px solid #eee7e0; color: #87909c; font-size: 11px; }
     .editor-footer-left, .editor-footer-right { display: flex; align-items: center; gap: 14px; min-width: 0; }
     .editor-footer-right { color: #75806f; white-space: nowrap; }
-    .manual-save { display: inline-flex; align-items: center; gap: 5px; }
-    .manual-save::before { width: 7px; height: 7px; border-radius: 50%; background: #2f8f3a; content: ""; }
+    .auto-save { display: inline-flex; align-items: center; gap: 5px; }
+    .auto-save::before { width: 7px; height: 7px; border-radius: 50%; background: #2f8f3a; content: ""; }
     .preview { min-height: 0; overflow: auto; padding: 15px var(--editor-content-gap) 15px 15px; background: #fff; color: #171717; font-size: .94rem; line-height: 1.8; transition: opacity .15s; }
     .preview.is-loading { opacity: .62; }
     .preview-error { color: #b42318; }
@@ -530,7 +530,43 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       .library-actions { justify-content: stretch; }
       .library-action-wrap, .library-action { flex: 1; }
     }
-  </style>
+
+     .editor-actions .secondary { min-height: 34px; padding: 0 12px; }
+     html:has(body.is-immersive) { overflow: hidden; }
+     body.is-immersive { overflow: hidden; }
+     body.is-immersive .admin {
+       grid-template-rows: minmax(0, 1fr);
+       width: 100%;
+       max-width: none;
+       height: 100vh;
+       min-height: 0;
+       padding: 0;
+       gap: 0;
+     }
+     body.is-immersive .topbar,
+     body.is-immersive .sidebar-panel,
+     body.is-immersive .fields { display: none; }
+     body.is-immersive .workspace {
+       grid-template-columns: minmax(0, 1fr);
+       height: 100%;
+       min-height: 0;
+     }
+     body.is-immersive .main-panel {
+       grid-template-rows: auto minmax(0, 1fr);
+       height: 100%;
+       min-height: 0;
+       padding: 0;
+       border-radius: 0;
+     }
+     body.is-immersive .editor-heading { min-height: 58px; margin: 0; padding: 10px 16px; }
+     body.is-immersive .editor-workspace { height: 100%; min-height: 0; border-radius: 0; }
+     @media (max-width: 620px) {
+       body.is-immersive .editor-workspace {
+         grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+         overflow: visible;
+       }
+     }
+   </style>
   <div class="admin">
     <header class="topbar">
       <div class="brand-group">
@@ -609,10 +645,11 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
 
       <main class="panel main-panel">
         <div class="editor-heading">
-          <div><h2>编辑文章</h2><p>编辑文章信息和 Markdown 内容，保存后直接写入本地文件。</p></div>
+          <div><h2>编辑文章</h2><p>编辑文章信息和 Markdown 内容，修改后自动写入本地文件。</p></div>
           <div class="editor-actions">
             <div class="status-group"><span id="status" class="save-state neutral" aria-live="polite">等待编辑</span></div>
-            <button id="save" class="primary" type="button">▣&nbsp; 保存文章</button>
+            <button id="immersive-toggle" class="secondary" type="button" aria-pressed="false" aria-label="进入沉浸式编辑" title="进入沉浸式编辑">沉浸式编辑</button>
+            <button id="save" class="primary" type="button">▣&nbsp; 立即保存</button>
           </div>
         </div>
 
@@ -672,7 +709,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
             </div>
             <div class="editor-footer">
               <div class="editor-footer-left"><span id="cursor-position">行 1，列 1</span><span id="character-count">0 字符</span><span>Markdown</span></div>
-              <div class="editor-footer-right"><span class="manual-save">仅手动保存</span></div>
+              <div class="editor-footer-right"><span class="auto-save">自动保存</span></div>
             </div>
           </div>
           <div class="editor-column">
@@ -702,8 +739,13 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     let previewFootnoteCleanup = () => {};
     let activePreviewFootnoteClose = null;
     let sortKey = 'updated-desc';
+    let autoSaveTimer = 0;
+    let savePromise = null;
+    let draftVersion = 0;
     const EDITOR_SESSION_KEY = 'lifenotes-admin-editor-state-v1';
+    const IMMERSIVE_SESSION_KEY = 'lifenotes-admin-immersive-v1';
     const editorHistoryLimit = 100;
+    const AUTO_SAVE_DELAY = 900;
     const fields = ['title', 'description', 'category', 'subcategory', 'topic', 'date', 'updated', 'slug', 'format', 'visible'];
     const sortLabels = {
       'title-asc': '标题 A → Z',
@@ -713,7 +755,21 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     };
     const escapeHtml = (text) => String(text ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const setStatus = (message, kind = 'neutral') => { $('status').textContent = message; $('status').className = `save-state ${kind}`; };
-    const markDirty = () => { isDirty = true; if (!$('status').classList.contains('error')) setStatus('有未保存修改', 'saving'); };
+    function scheduleAutoSave() {
+      window.clearTimeout(autoSaveTimer);
+      autoSaveTimer = 0;
+      if (!isDirty) return;
+      autoSaveTimer = window.setTimeout(() => {
+        autoSaveTimer = 0;
+        void saveArticle();
+      }, AUTO_SAVE_DELAY);
+    }
+    const markDirty = () => {
+      isDirty = true;
+      draftVersion += 1;
+      setStatus('等待自动保存', 'saving');
+      scheduleAutoSave();
+    };
     function rememberEditorSession() {
       if (!selectedPath) return;
       const body = $('body');
@@ -733,6 +789,51 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         const snapshot = JSON.parse(raw);
         return snapshot && typeof snapshot === 'object' ? snapshot : null;
       } catch { return null; }
+    }
+
+    function readImmersiveSession() {
+      try { return sessionStorage.getItem(IMMERSIVE_SESSION_KEY) === 'true'; } catch { return false; }
+    }
+
+    function setImmersiveMode(enabled, { focus = true, persist = true } = {}) {
+      const button = $('immersive-toggle');
+      document.body.classList.toggle('is-immersive', enabled);
+      button.setAttribute('aria-pressed', String(enabled));
+      button.textContent = enabled ? '退出沉浸式编辑' : '沉浸式编辑';
+      button.setAttribute('aria-label', enabled ? '退出沉浸式编辑' : '进入沉浸式编辑');
+      button.title = enabled ? '退出沉浸式编辑（Esc）' : '进入沉浸式编辑';
+      if (persist) {
+        try { sessionStorage.setItem(IMMERSIVE_SESSION_KEY, String(enabled)); } catch { /* sessionStorage may be unavailable. */ }
+      }
+      if (focus) (enabled ? $('body') : button).focus({ preventScroll: true });
+    }
+
+    function closeEscapeLayers() {
+      const lightbox = document.querySelector('.preview-lightbox');
+      if (lightbox) {
+        lightbox.querySelector('.preview-lightbox-close')?.click();
+        return true;
+      }
+      if (document.querySelector('.preview-footnote-popover.is-visible')) {
+        activePreviewFootnoteClose?.();
+        return true;
+      }
+      const customSelect = document.querySelector('.custom-select.open');
+      if (customSelect) {
+        closeCustomSelects();
+        return true;
+      }
+      const filterOpen = !$('filter-menu').hidden;
+      if (filterOpen) {
+        closeFilterModal();
+        return true;
+      }
+      const sortOpen = !$('sort-menu').hidden;
+      if (sortOpen) {
+        closeLibraryMenus();
+        return true;
+      }
+      return false;
     }
 
     function restoreEditorPosition(snapshot) {
@@ -913,7 +1014,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
         event.preventDefault();
         event.stopPropagation();
-        void saveArticle();
+        void saveArticle({ force: true });
       }
     }
     async function preview() {
@@ -1250,6 +1351,9 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       updateEditorMeta();
     }
     function fill(item = {}) {
+      window.clearTimeout(autoSaveTimer);
+      autoSaveTimer = 0;
+      draftVersion += 1;
       $('board').value = (item.path || 'life/').split('/')[0];
       $('file').value = item.path ? item.path.split('/').slice(1).join('/') : '新文章.md';
       fields.forEach((field) => { if ($(field)) $(field).value = item[field] ?? (field === 'visible' ? 'true' : field === 'format' ? 'note' : ''); });
@@ -1456,7 +1560,23 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       }).join('') || '<p class="count">暂无匹配文章</p>';
       document.querySelectorAll('.article').forEach((button) => { button.onclick = () => loadArticle(decodeURIComponent(button.dataset.path)); });
     }
+
+    async function flushAutoSave() {
+      while (isDirty) {
+        const saved = await saveArticle();
+        if (!saved) return false;
+      }
+      return true;
+    }
+
+    async function ensureEditorSaved() {
+      if (!isDirty) return true;
+      if (await flushAutoSave()) return true;
+      return window.confirm('自动保存失败，仍要切换吗？');
+    }
+
     async function loadArticle(articlePath) {
+      if (!(await ensureEditorSaved())) return;
       try {
         const res = await fetch('/admin/api/article?path=' + encodeURIComponent(articlePath));
         const data = await res.json();
@@ -1467,27 +1587,56 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         setStatus('已读取', 'neutral');
       } catch (error) { setStatus(error.message, 'error'); }
     }
-    async function saveArticle() {
+    async function saveArticle({ force = false } = {}) {
+      if (savePromise) return savePromise;
+      if (!isDirty && !force) return true;
+      window.clearTimeout(autoSaveTimer);
+      autoSaveTimer = 0;
       rememberEditorSession();
       const board = $('board').value;
       const file = $('file').value.trim();
       const frontmatter = Object.fromEntries(fields.map((field) => [field, $(field).value]));
       frontmatter.visible = frontmatter.visible === 'true';
+      const body = $('body').value;
+      const currentDraftVersion = draftVersion;
       $('save').disabled = true;
-      setStatus('保存中…', 'saving');
-      try {
-        const res = await fetch('/admin/api/article', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ path: board + '/' + file, frontmatter, body: $('body').value }) });
-        const data = await res.json();
-        if (!res.ok) throw new Error((data.errors || [data.error]).join('；'));
-        selectedPath = data.path;
-        isDirty = false;
-        setStatus('已保存 · 刚刚', 'saved');
-        await loadList();
-      } catch (error) { setStatus(error.message, 'error'); }
-      finally { $('save').disabled = false; }
+      setStatus('自动保存中…', 'saving');
+      const promise = (async () => {
+        try {
+          const res = await fetch('/admin/api/article', { method: 'POST', headers: {'Content-Type':'application/json'}, keepalive: true, body: JSON.stringify({ path: board + '/' + file, frontmatter, body }) });
+          const data = await res.json();
+          if (!res.ok) throw new Error((data.errors || [data.error]).join('；'));
+          const isCurrentDraft = draftVersion === currentDraftVersion;
+          if (isCurrentDraft) {
+            selectedPath = data.path;
+            isDirty = false;
+            setStatus('已自动保存 · 刚刚', 'saved');
+          }
+          await loadList();
+          if (!isCurrentDraft) {
+            setStatus('等待自动保存', 'saving');
+            scheduleAutoSave();
+          }
+          return true;
+        } catch (error) {
+          setStatus(error.message, 'error');
+          return false;
+        } finally { $('save').disabled = false; }
+      })();
+      savePromise = promise;
+      try { return await promise; }
+      finally { if (savePromise === promise) savePromise = null; }
     }
-    $('save').onclick = saveArticle;
-    $('new').onclick = () => { selectedPath = ''; fill(); renderList(); setStatus('新建模式', 'neutral'); $('title').focus(); };
+    $('save').onclick = () => { void saveArticle({ force: true }); };
+    $('immersive-toggle').onclick = () => setImmersiveMode(!document.body.classList.contains('is-immersive'));
+    $('new').onclick = async () => {
+      if (!(await ensureEditorSaved())) return;
+      selectedPath = '';
+      fill();
+      renderList();
+      setStatus('新建模式', 'neutral');
+      $('title').focus();
+    };
     $('refresh').onclick = loadList;
     $('filter').oninput = renderList;
     document.querySelectorAll('.sort-option').forEach((button) => {
@@ -1566,8 +1715,11 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     document.addEventListener('click', () => closeCustomSelects());
     document.addEventListener('keydown', (event) => {
       if (event.key !== 'Escape') return;
-      closeLibraryMenus();
-      closeFilterModal();
+      if (closeEscapeLayers()) return;
+      if (document.body.classList.contains('is-immersive')) {
+        event.preventDefault();
+        setImmersiveMode(false);
+      }
     });
     document.querySelectorAll('.editor-tool').forEach((button) => { button.onclick = () => applyToolbarAction(button.dataset.action); });
     $('sync-to-preview').onclick = syncSourceToPreview;
@@ -1583,14 +1735,19 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         if (block) selectedPreviewNode = block;
       }
     });
-    fields.forEach((field) => { $(field).addEventListener('input', markDirty); });
+    fields.forEach((field) => {
+      const element = $(field);
+      element.addEventListener('input', markDirty);
+      if (element.matches('select')) element.addEventListener('change', markDirty);
+    });
     $('body').oninput = handleBodyInput;
     $('body').addEventListener('keydown', handleBodyKeydown);
     document.addEventListener('keydown', handleHistoryShortcut);
-    window.addEventListener('pagehide', rememberEditorSession);
+    window.addEventListener('pagehide', () => { rememberEditorSession(); void saveArticle(); });
     ['click', 'keyup', 'select'].forEach((eventName) => { $('body').addEventListener(eventName, updateEditorMeta); });
     initializeCustomSelects();
     fill();
+    setImmersiveMode(readImmersiveSession(), { focus: false, persist: false });
     const savedSession = readEditorSession();
     loadList().then(async () => {
       const savedArticle = savedSession?.selectedPath && articles.find((article) => article.path === savedSession.selectedPath);
