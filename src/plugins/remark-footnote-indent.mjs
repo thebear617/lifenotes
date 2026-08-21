@@ -55,6 +55,85 @@ function extractIndentedContent(content, file) {
   return { footnoteContent, remainingContent };
 }
 
+const NESTED_ORDERED_MARKER = /^(\d+)[.)][ \t]+(.*)$/;
+
+function splitLazyNestedLists(list) {
+  // 二级列表只比父级多缩进两格时，会被解析成父项段落的惰性续行。
+  // 这里把这些带有序标记的续行拆出来重建为嵌套有序列表，
+  // 让两格与四格缩进在脚注里渲染结果一致。
+  for (const item of list.children) {
+    if (!Array.isArray(item.children)) continue;
+    for (let childIndex = 0; childIndex < item.children.length; childIndex += 1) {
+      const child = item.children[childIndex];
+      if (child.type !== 'paragraph') continue;
+      const text = child.children?.length === 1 && child.children[0].type === 'text' ? child.children[0] : null;
+      if (!text || !text.value.includes('\n')) continue;
+
+      const lines = text.value.split('\n');
+      let splitAt = -1;
+      for (let lineIndex = 1; lineIndex < lines.length; lineIndex += 1) {
+        if (NESTED_ORDERED_MARKER.test(lines[lineIndex])) {
+          splitAt = lineIndex;
+          break;
+        }
+      }
+      if (splitAt === -1) continue;
+
+      const baseLine = child.position?.start?.line || 1;
+      const items = [];
+      let start = null;
+      let current = null;
+      for (let lineIndex = splitAt; lineIndex < lines.length; lineIndex += 1) {
+        const match = NESTED_ORDERED_MARKER.exec(lines[lineIndex]);
+        if (match) {
+          if (start === null) start = Number(match[1]);
+          current = {
+            type: 'listItem',
+            spread: false,
+            children: [{
+              type: 'paragraph',
+              children: [{ type: 'text', value: match[2] }],
+              position: { start: { line: baseLine + lineIndex, column: 1 }, end: { line: baseLine + lineIndex, column: 1 } },
+            }],
+            position: { start: { line: baseLine + lineIndex, column: 1 }, end: { line: baseLine + lineIndex, column: 1 } },
+          };
+          items.push(current);
+        } else if (current) {
+          const paragraph = current.children[0];
+          paragraph.children[0].value += `\n${lines[lineIndex]}`;
+          paragraph.position.end.line = baseLine + lineIndex;
+          current.position.end.line = baseLine + lineIndex;
+        }
+      }
+
+      const nested = {
+        type: 'list',
+        ordered: true,
+        start: start === null ? 1 : start,
+        spread: false,
+        children: items,
+        position: { start: { line: baseLine + splitAt, column: 1 }, end: { line: baseLine + lines.length - 1, column: 1 } },
+      };
+
+      if (splitAt === 1 && !lines[0].trim()) {
+        item.children.splice(childIndex, 1, nested);
+      } else {
+        text.value = lines.slice(0, splitAt).join('\n');
+        if (child.position) child.position.end.line = baseLine + splitAt - 1;
+        if (text.position) text.position.end.line = baseLine + splitAt - 1;
+        item.children.splice(childIndex + 1, 0, nested);
+        childIndex += 1;
+      }
+    }
+  }
+}
+
+function forEachListInFootnotes(node, inFootnote, visit) {
+  const nextInFootnote = inFootnote || node.type === 'footnoteDefinition';
+  if (nextInFootnote && node.type === 'list') visit(node);
+  (node.children || []).forEach((child) => forEachListInFootnotes(child, nextInFootnote, visit));
+}
+
 export default function remarkFootnoteIndent() {
   return (tree, file) => {
     if (!Array.isArray(tree.children)) return;
@@ -94,5 +173,7 @@ export default function remarkFootnoteIndent() {
         tree.children.splice(nextIndex, 1);
       }
     }
+
+    forEachListInFootnotes(tree, false, splitLazyNestedLists);
   };
 }

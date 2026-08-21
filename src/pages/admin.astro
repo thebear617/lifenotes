@@ -735,6 +735,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     let redoStack = [];
     let isProgrammaticEdit = false;
     let selectedPreviewNode = null;
+    let pendingScrollRestore = null;
     let syncHighlightTimer = null;
     let previewFootnoteCleanup = () => {};
     let activePreviewFootnoteClose = null;
@@ -778,6 +779,8 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         selectionStart: body.selectionStart,
         selectionEnd: body.selectionEnd,
         scrollTop: body.scrollTop,
+        previewScrollTop: $('preview').scrollTop,
+        pageScrollTop: window.scrollY,
       };
       try { sessionStorage.setItem(EDITOR_SESSION_KEY, JSON.stringify(snapshot)); } catch { /* sessionStorage may be unavailable in a restricted browser context. */ }
     }
@@ -845,6 +848,38 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       body.focus({ preventScroll: true });
       body.setSelectionRange(start, end);
       body.scrollTop = Math.min(Math.max(Number(snapshot.scrollTop) || 0, 0), body.scrollHeight);
+      if (snapshot.previewScrollTop != null || snapshot.pageScrollTop != null) {
+        pendingScrollRestore = {
+          previewTop: Math.max(Number(snapshot.previewScrollTop) || 0, 0),
+          pageTop: Math.max(Number(snapshot.pageScrollTop) || 0, 0),
+        };
+      }
+    }
+
+    function restoreScrollPositions(previewTop, pageTop) {
+      // Immersive mode scrolls inside #preview; normal mode grows with content and scrolls with the window, so compensate both owners.
+      const preview = $('preview');
+      let settled = false;
+      const settle = () => {
+        settled = true;
+        window.removeEventListener('wheel', settle);
+        window.removeEventListener('touchstart', settle);
+      };
+      const apply = () => {
+        if (settled) return;
+        preview.scrollTop = Math.min(previewTop, preview.scrollHeight);
+        window.scrollTo(0, Math.min(pageTop, document.documentElement.scrollHeight));
+      };
+      window.addEventListener('wheel', settle, { passive: true });
+      window.addEventListener('touchstart', settle, { passive: true });
+      apply();
+      // Images load asynchronously and stretch the content height, so keep compensating until they finish; stop as soon as the user scrolls manually.
+      preview.querySelectorAll('img').forEach((img) => {
+        if (img.complete) return;
+        img.addEventListener('load', apply, { once: true });
+        img.addEventListener('error', apply, { once: true });
+      });
+      window.setTimeout(settle, 3000);
     }
 
     function customSelectRoot(id) {
@@ -1005,10 +1040,28 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       }
       body.dispatchEvent(new Event('input', { bubbles: true }));
     }
+
+    function outdentBodySelection() {
+      const body = $('body');
+      const start = body.selectionStart;
+      const end = body.selectionEnd;
+      const value = body.value;
+      const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+      const selectionEndsAtLineStart = value[end - 1] === '\n';
+      const lineEnd = selectionEndsAtLineStart ? end : (value.indexOf('\n', end) === -1 ? value.length : value.indexOf('\n', end));
+      const lines = value.slice(lineStart, lineEnd).split('\n');
+      const removed = lines.map((line) => (line.match(/^(?:\t| {1,2})/) || [''])[0].length);
+      if (!removed.some((count) => count > 0)) return;
+      body.setRangeText(lines.map((line) => line.replace(/^(?:\t| {1,2})/, '')).join('\n'), lineStart, lineEnd, 'select');
+      const totalRemoved = removed.reduce((sum, count) => sum + count, 0);
+      body.setSelectionRange(Math.max(lineStart, start - removed[0]), Math.max(lineStart, end - totalRemoved));
+      body.dispatchEvent(new Event('input', { bubbles: true }));
+    }
     function handleBodyKeydown(event) {
       if (event.key === 'Tab') {
         event.preventDefault();
-        indentBodySelection();
+        if (event.shiftKey) outdentBodySelection();
+        else indentBodySelection();
         return;
       }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
@@ -1024,6 +1077,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         previewFootnoteCleanup();
         $('preview').innerHTML = '';
         selectedPreviewNode = null;
+        pendingScrollRestore = null;
         $('preview').classList.remove('is-loading');
         return;
       }
@@ -1042,6 +1096,11 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
           enhancePreviewImages();
           enhancePreviewFootnotes();
           selectedPreviewNode = null;
+          if (pendingScrollRestore) {
+            const { previewTop, pageTop } = pendingScrollRestore;
+            pendingScrollRestore = null;
+            restoreScrollPositions(previewTop, pageTop);
+          }
         }
       } catch (error) {
         if (requestId === previewRequestId) {

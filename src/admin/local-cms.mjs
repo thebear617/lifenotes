@@ -109,6 +109,23 @@ export default function localCms() {
   return {
     name: 'lifenotes-local-cms',
     configureServer(server) {
+      // CMS writes trigger the dev server's content-change broadcast, which full-reloads the admin page itself.
+      // Swallow update signals shortly after a self-write so saving does not refresh the editor.
+      let lastSelfWriteAt = 0;
+      const SUPPRESS_WINDOW_MS = 2500;
+      const hot = server.hot || server.ws;
+      if (hot) {
+        const originalSend = hot.send.bind(hot);
+        hot.send = (...args) => {
+          const payload = typeof args[0] === 'string' ? { type: args[0] } : (args[0] || {});
+          if ((payload.type === 'full-reload' || payload.type === 'update') && Date.now() - lastSelfWriteAt < SUPPRESS_WINDOW_MS) {
+            console.log(`[local-cms] swallowed ${payload.type} broadcast caused by CMS save`);
+            return;
+          }
+          return originalSend(...args);
+        };
+      }
+
       // Astro's dev HTML response currently omits the charset parameter. Keep
       // the CMS page explicitly UTF-8 even when Vite later sets its own type.
       server.middlewares.use((request, response, next) => {
@@ -153,6 +170,7 @@ export default function localCms() {
             if (errors.length) return json(response, 400, { errors });
             await fs.mkdir(path.dirname(target), { recursive: true });
             await fs.writeFile(target, serializeMarkdown(data.frontmatter, data.body || ''), 'utf8');
+            lastSelfWriteAt = Date.now();
             return json(response, 200, { ok: true, path: data.path });
           }
           return json(response, 404, { error: 'Not found' });
