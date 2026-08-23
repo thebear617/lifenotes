@@ -1,4 +1,6 @@
 ---
+import 'katex/dist/katex.min.css';
+
 // The local CMS is intentionally available only from Astro's dev server.
 const isDev = import.meta.env.DEV;
 const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.replace(/\/?$/, '/');
@@ -431,8 +433,14 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     .editor-tool { display: inline-grid; min-width: 27px; height: 27px; flex: 0 0 auto; place-items: center; padding: 0 5px; border: 0; border-radius: 5px; color: #4b5563; background: transparent; font-size: 13px; font-weight: 700; }
     .editor-tool:hover { border: 0; color: #9a3412; background: #fff0e6; }
     .editor-tool-divider { width: 1px; height: 20px; flex: 0 0 auto; margin: 0 5px; background: #e8e0d8; }
-    .editor-pane { display: block; min-width: 0; min-height: 0; overflow: hidden; background: #fff; }
+    .editor-pane { position: relative; display: block; min-width: 0; min-height: 0; overflow: hidden; background: #fff; }
     textarea#body { display: block; width: 100%; max-width: 100%; min-width: 0; min-height: 0; height: 100%; resize: none; border: 0; border-radius: 0; padding: 15px var(--editor-content-gap) calc(15px + var(--editor-caret-space)) 15px; overflow-x: hidden; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; color: #283449; font: 13px/1.75 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .editor-jump-controls { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: grid; gap: 6px; }
+    .editor-jump-button { display: grid; width: 30px; height: 30px; place-items: center; padding: 0; border: 1px solid rgba(127, 83, 52, .24); border-radius: 50%; color: rgba(154, 52, 18, .78); background: rgba(255, 253, 251, .8); box-shadow: 0 3px 10px rgba(82, 54, 31, .12); opacity: .58; transition: opacity .15s, color .15s, background-color .15s, transform .15s; }
+    .editor-jump-button:hover, .editor-jump-button:focus-visible { color: #9a3412; background: rgba(255, 240, 230, .94); opacity: .96; }
+    .editor-jump-button:focus-visible { outline: 2px solid rgba(194, 65, 12, .28); outline-offset: 2px; }
+    .editor-jump-button:active { transform: scale(.94); }
+    .editor-jump-button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
     .editor-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; padding: 0 12px; border-top: 1px solid #eee7e0; color: #87909c; font-size: 11px; }
     .editor-footer-left, .editor-footer-right { display: flex; align-items: center; gap: 14px; min-width: 0; }
     .editor-footer-right { color: #75806f; white-space: nowrap; }
@@ -626,7 +634,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
           </header>
           <div class="filter-modal-body">
             <div class="filter-fields">
-              <div class="filter-field"><span>领域</span><div class="custom-select" data-custom-select="filter-board"><select class="custom-select-native" id="filter-board" aria-hidden="true" tabindex="-1"><option value="">全部领域</option><option value="life">生活美食</option><option value="hotel">服务业</option><option value="ai">AI 产业</option><option value="auto">数码出行</option><option value="biology">动植物</option><option value="finance">金融经济</option><option value="history">社会人文</option></select><button class="custom-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="领域"><span class="custom-select-label">全部领域</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="custom-select-menu" role="listbox" hidden></div></div></div>
+              <div class="filter-field"><span>领域</span><div class="custom-select" data-custom-select="filter-board"><select class="custom-select-native" id="filter-board" aria-hidden="true" tabindex="-1"><option value="">全部领域</option><option value="life">生活美食</option><option value="hotel">服务业</option><option value="ai">AI 产业</option><option value="auto">数码出行</option><option value="biology">动植物</option><option value="finance">金融经济</option><option value="humanities">社会人文</option></select><button class="custom-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="领域"><span class="custom-select-label">全部领域</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="custom-select-menu" role="listbox" hidden></div></div></div>
               <div class="filter-field"><span>分类</span><div class="custom-select" data-custom-select="filter-category"><select class="custom-select-native" id="filter-category" aria-hidden="true" tabindex="-1" disabled><option value="">请先选择领域</option></select><button class="custom-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="分类" disabled><span class="custom-select-label">请先选择领域</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="custom-select-menu" role="listbox" hidden></div></div></div>
               <div class="filter-field"><span>子分类</span><div class="custom-select" data-custom-select="filter-subcategory"><select class="custom-select-native" id="filter-subcategory" aria-hidden="true" tabindex="-1" disabled><option value="">请先选择分类</option></select><button class="custom-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="子分类" disabled><span class="custom-select-label">请先选择分类</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="custom-select-menu" role="listbox" hidden></div></div></div>
             </div>
@@ -666,9 +674,9 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
               <div class="field-card-heading"><h3>内容归类</h3><p>用领域和主题信息整理文章。</p></div>
               <div class="field-stack">
                 <div class="field-row three">
-                  <label class="field-label">领域<select id="board"><option value="life">生活美食</option><option value="hotel">服务业</option><option value="ai">AI 产业</option><option value="auto">数码出行</option><option value="biology">动植物</option><option value="finance">金融经济</option><option value="history">社会人文</option></select></label>
-                  <label class="field-label">分类<input id="category" /></label>
-                  <label class="field-label">子分类<input id="subcategory" /></label>
+                  <label class="field-label">领域<select id="board"><option value="life">生活美食</option><option value="hotel">服务业</option><option value="ai">AI 产业</option><option value="auto">数码出行</option><option value="biology">动植物</option><option value="finance">金融经济</option><option value="humanities">社会人文</option></select></label>
+                  <label class="field-label">分类<select id="category" disabled><option value="">请先选择领域</option></select></label>
+                  <label class="field-label">子分类<select id="subcategory" disabled><option value="">请先选择分类</option></select></label>
                 </div>
                 <label class="field-label">topic<input id="topic" /></label>
               </div>
@@ -706,6 +714,10 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
             </div>
             <div class="editor-pane">
               <textarea id="body" wrap="soft" placeholder="在这里编辑 Markdown…" spellcheck="false"></textarea>
+              <div class="editor-jump-controls" aria-label="Markdown 内容定位">
+                <button class="editor-jump-button" id="scroll-to-top" type="button" aria-label="跳转到文章顶部" title="跳转到顶部"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5 8 1.75l5 3.75M8 2.25v12" /></svg></button>
+                <button class="editor-jump-button" id="scroll-to-bottom" type="button" aria-label="跳转到文章底部" title="跳转到底部"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m3 10.5 5 3.75 5-3.75M8 13.75v-12" /></svg></button>
+              </div>
             </div>
             <div class="editor-footer">
               <div class="editor-footer-left"><span id="cursor-position">行 1，列 1</span><span id="character-count">0 字符</span><span>Markdown</span></div>
@@ -735,6 +747,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     let redoStack = [];
     let isProgrammaticEdit = false;
     let selectedPreviewNode = null;
+    let selectedPreviewSourceRange = null;
     let pendingScrollRestore = null;
     let syncHighlightTimer = null;
     let previewFootnoteCleanup = () => {};
@@ -1077,6 +1090,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         previewFootnoteCleanup();
         $('preview').innerHTML = '';
         selectedPreviewNode = null;
+        selectedPreviewSourceRange = null;
         pendingScrollRestore = null;
         $('preview').classList.remove('is-loading');
         return;
@@ -1096,6 +1110,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
           enhancePreviewImages();
           enhancePreviewFootnotes();
           selectedPreviewNode = null;
+          selectedPreviewSourceRange = null;
           if (pendingScrollRestore) {
             const { previewTop, pageTop } = pendingScrollRestore;
             pendingScrollRestore = null;
@@ -1107,6 +1122,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
           previewFootnoteCleanup();
           $('preview').innerHTML = `<p class="preview-error">预览渲染失败：${escapeHtml(error.message)}</p>`;
           selectedPreviewNode = null;
+          selectedPreviewSourceRange = null;
         }
       } finally {
         if (requestId === previewRequestId) $('preview').classList.remove('is-loading');
@@ -1332,7 +1348,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         previewFootnoteCleanup = () => {};
       };
     }
-    const previewBlockSelector = 'h1[data-source-start], h2[data-source-start], h3[data-source-start], p[data-source-start], ul[data-source-start], ol[data-source-start], blockquote[data-source-start], pre[data-source-start], table[data-source-start], li[data-source-start]';
+    const previewBlockSelector = 'h1[data-source-start], h2[data-source-start], h3[data-source-start], h4[data-source-start], h5[data-source-start], h6[data-source-start], p[data-source-start], ul[data-source-start], ol[data-source-start], blockquote[data-source-start], pre[data-source-start], table[data-source-start], li[data-source-start], hr[data-source-start], figure[data-source-start], dl[data-source-start], .katex-display[data-source-start]';
     function findPreviewBlock(node) {
       const element = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
       const block = element?.closest?.(previewBlockSelector);
@@ -1357,8 +1373,48 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       if (!startLine || !endLine) return null;
       return { start: sourceLineOffset(startLine), end: sourceLineOffset(endLine, true), startLine, endLine };
     }
+    function capturePreviewSelection() {
+      const preview = $('preview');
+      const selection = window.getSelection();
+      if (!selection?.rangeCount || selection.isCollapsed || !preview.contains(selection.anchorNode) || !preview.contains(selection.focusNode)) return;
+      const nodes = [findPreviewBlock(selection.anchorNode), findPreviewBlock(selection.focusNode)].filter(Boolean);
+      const ranges = nodes.map(previewRange).filter(Boolean);
+      if (!ranges.length) return;
+      selectedPreviewNode = nodes[0];
+      selectedPreviewSourceRange = {
+        start: Math.min(...ranges.map(range => range.start)),
+        end: Math.max(...ranges.map(range => range.end)),
+        startLine: Math.min(...ranges.map(range => range.startLine)),
+        endLine: Math.max(...ranges.map(range => range.endLine)),
+      };
+    }
     function previewBlocks() {
       return Array.from($('preview').querySelectorAll(previewBlockSelector));
+    }
+    function previewBlockPosition(node) {
+      const preview = $('preview');
+      const previewRect = preview.getBoundingClientRect();
+      const rect = node.getBoundingClientRect();
+      return {
+        top: rect.top - previewRect.top + preview.scrollTop,
+        bottom: rect.bottom - previewRect.top + preview.scrollTop,
+      };
+    }
+    function findPreviewBlockForScrollPosition() {
+      const preview = $('preview');
+      const targetPosition = preview.scrollTop + Math.min(72, preview.clientHeight * 0.32);
+      const candidates = previewBlocks()
+        .map(node => ({ node, range: previewRange(node), position: previewBlockPosition(node) }))
+        .filter(item => item.range);
+      const containing = candidates
+        .filter(item => item.position.top <= targetPosition && item.position.bottom >= targetPosition)
+        .sort((left, right) => {
+          const lineSpan = item => item.range.endLine - item.range.startLine;
+          return lineSpan(left) - lineSpan(right);
+        });
+      if (containing[0]) return containing[0].node;
+      return candidates
+        .sort((left, right) => Math.abs(left.position.top - targetPosition) - Math.abs(right.position.top - targetPosition))[0]?.node || null;
     }
     function findPreviewBlockForLine(line) {
       const blocks = previewBlocks();
@@ -1396,12 +1452,16 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     }
     function syncPreviewToSource() {
       const selection = window.getSelection();
-      const selectionNode = selection?.rangeCount && $('preview').contains(selection.anchorNode)
-        ? findPreviewBlock(selection.anchorNode)
+      const selectionNode = selection?.rangeCount
+        ? [selection.anchorNode, selection.focusNode]
+          .filter(node => $('preview').contains(node))
+          .map(findPreviewBlock)
+          .find(Boolean)
         : null;
-      const target = selectionNode || selectedPreviewNode;
-      const range = previewRange(target);
-      if (!target || !range) return setStatus('请先在预览中点击或选中一段内容', 'neutral');
+      const target = [selectionNode, selectedPreviewNode, findPreviewBlockForScrollPosition()]
+        .find(node => previewRange(node));
+      const range = selectionNode ? previewRange(selectionNode) : (selectedPreviewSourceRange || previewRange(target));
+      if (!target || !range) return setStatus('当前预览没有可定位的内容', 'neutral');
       const body = $('body');
       body.focus();
       body.setSelectionRange(range.start, range.end);
@@ -1409,13 +1469,113 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       body.scrollTop = Math.max(0, (range.startLine - 1) * lineHeight - body.clientHeight / 2);
       updateEditorMeta();
     }
+    const BOARD_CATEGORIES = {
+      humanities: {
+        '城市观察': ['观察方法', '单一城市', '城市对比', '城市专题'],
+        '国家与文明': ['国别研究', '跨国对比', '文明圈', '国际关系'],
+        '宗教与信仰': ['世界宗教', '民间信仰', '宗教思想', '信仰与社会'],
+        '制度与政治': ['政治体制', '经济制度', '法律体系', '政策演化'],
+        '历史与社会': ['历史事件', '社会变迁', '文化现象', '时代精神'],
+        '人与社会': ['心理与认知', '人际关系', '人口与族群', '人生阶段'],
+      },
+      finance: {
+        '个人财务': ['资金安全', '预算管理', '消费决策', '信用借贷'],
+        '投资理财': ['基础概念', '投资工具', '风险管理', '资产配置'],
+        '宏观经济': ['基础概念', '经济现象', '政策制度', '经济史'],
+      },
+      biology: {
+        '宠物养护': ['行为问题', '健康医疗', '选购指南', '日常观察'],
+        '动物知识': ['基础概念', '行为生态', '物种科普', '保护保育'],
+        '植物科普': ['基础概念', '物种科普', '园艺养护', '入侵与生态'],
+      },
+      auto: {
+        '汽车': ['产业观察', '车型选购', '用车常识', '智能驾驶'],
+        '手机': ['系统设置', '应用技巧', '故障排查', '产业观察'],
+      },
+      hotel: {
+        '酒店': ['品牌分析', '入住体验', '会员体系', '产业观察'],
+        '餐饮连锁': ['品牌分析', '经营模式', '食品安全', '产业观察'],
+        '物流': ['快递服务', '大件物流', '跨境转运', '产业观察'],
+        '零售': ['线下零售', '电商平台', '新零售模式', '产业观察'],
+      },
+      ai: {
+        '模型': ['基础概念', '能力评估', '模型选型', '行业进展'],
+        '工具': ['编程助手', '框架与协议', '调试排错', '效能研究'],
+        '工作流': ['自动化平台', '流程设计', '集成方案', '最佳实践'],
+        'Agent': ['架构设计', '工具调用', '记忆与状态', '评测方法'],
+        '产业判断': ['算力与硬件', '商业模式', '投资与并购', '市场格局'],
+      },
+      life: {
+        '健康与身体': ['体态与运动', '健康习惯', '急救常识', '人际心理'],
+        '饮食与厨房': ['厨房常识', '家常菜谱', '饮品调制', '食材选购'],
+        '美食探店': ['城市探店', '全国合集', '美食评论', '网红探店'],
+        '居家实用': ['清洁妙招', '家居安全', '网络通讯', '家具选购'],
+        '学习速查': ['学习计划', '速查对照', '学习方法', '工具效率'],
+      },
+    };
+
+    function refreshEditorCategories() {
+      const board = $('board').value;
+      const categorySelect = $('category');
+      const subcategorySelect = $('subcategory');
+      subcategorySelect.innerHTML = '<option value="">请先选择分类</option>';
+      subcategorySelect.disabled = true;
+      subcategorySelect.value = '';
+      if (board && BOARD_CATEGORIES[board]) {
+        categorySelect.innerHTML = '<option value="">请选择分类</option>';
+        Object.keys(BOARD_CATEGORIES[board]).forEach((cat) => {
+          const option = document.createElement('option');
+          option.value = cat;
+          option.textContent = cat;
+          categorySelect.appendChild(option);
+        });
+        categorySelect.disabled = false;
+      } else {
+        categorySelect.innerHTML = '<option value="">请先选择领域</option>';
+        categorySelect.disabled = true;
+      }
+      categorySelect.value = '';
+    }
+
+    function refreshEditorSubcategories() {
+      const board = $('board').value;
+      const category = $('category').value;
+      const subcategorySelect = $('subcategory');
+      if (board && category && BOARD_CATEGORIES[board] && BOARD_CATEGORIES[board][category]) {
+        subcategorySelect.innerHTML = '<option value="">请选择子分类</option>';
+        BOARD_CATEGORIES[board][category].forEach((sub) => {
+          const option = document.createElement('option');
+          option.value = sub;
+          option.textContent = sub;
+          subcategorySelect.appendChild(option);
+        });
+        subcategorySelect.disabled = false;
+      } else {
+        subcategorySelect.innerHTML = '<option value="">' + (category ? '该分类下暂无枚举' : '请先选择分类') + '</option>';
+        subcategorySelect.disabled = true;
+      }
+      subcategorySelect.value = '';
+    }
+
+    function setSelectValueIfExists(select, value) {
+      if (!value || !select) return;
+      if (Array.from(select.options).some((opt) => opt.value === value)) select.value = value;
+    }
+
     function fill(item = {}) {
       window.clearTimeout(autoSaveTimer);
       autoSaveTimer = 0;
       draftVersion += 1;
       $('board').value = (item.path || 'life/').split('/')[0];
+      refreshEditorCategories();
+      setSelectValueIfExists($('category'), item.category);
+      refreshEditorSubcategories();
+      setSelectValueIfExists($('subcategory'), item.subcategory);
       $('file').value = item.path ? item.path.split('/').slice(1).join('/') : '新文章.md';
-      fields.forEach((field) => { if ($(field)) $(field).value = item[field] ?? (field === 'visible' ? 'true' : field === 'format' ? 'note' : ''); });
+      fields.forEach((field) => {
+        if (field === 'category' || field === 'subcategory') return;
+        if ($(field)) $(field).value = item[field] ?? (field === 'visible' ? 'true' : field === 'format' ? 'note' : '');
+      });
       $('body').value = item.body || '';
       resetEditorHistory();
       preview();
@@ -1728,6 +1888,8 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       updateFilterBadge();
       renderList();
     };
+    $('board').onchange = () => { refreshEditorCategories(); markDirty(); };
+    $('category').onchange = () => { refreshEditorSubcategories(); markDirty(); };
     $('clear-library-filters').onclick = () => {
       $('filter-board').value = '';
       refreshFilterOptions();
@@ -1785,15 +1947,13 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     $('sync-to-source').onclick = syncPreviewToSource;
     $('preview').addEventListener('click', (event) => {
       const block = findPreviewBlock(event.target);
-      if (block) selectedPreviewNode = block;
-    });
-    document.addEventListener('selectionchange', () => {
-      const selection = window.getSelection();
-      if (selection?.rangeCount && $('preview').contains(selection.anchorNode)) {
-        const block = findPreviewBlock(selection.anchorNode);
-        if (block) selectedPreviewNode = block;
+      if (block) {
+        selectedPreviewNode = block;
+        if (window.getSelection()?.isCollapsed !== false) selectedPreviewSourceRange = null;
       }
     });
+    $('preview').addEventListener('mouseup', capturePreviewSelection);
+    document.addEventListener('selectionchange', capturePreviewSelection);
     fields.forEach((field) => {
       const element = $(field);
       element.addEventListener('input', markDirty);
@@ -1801,6 +1961,13 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     });
     $('body').oninput = handleBodyInput;
     $('body').addEventListener('keydown', handleBodyKeydown);
+    function scrollBodyToEdge(edge) {
+      const body = $('body');
+      body.focus({ preventScroll: true });
+      body.scrollTo({ top: edge === 'top' ? 0 : body.scrollHeight, behavior: 'smooth' });
+    }
+    $('scroll-to-top').onclick = () => scrollBodyToEdge('top');
+    $('scroll-to-bottom').onclick = () => scrollBodyToEdge('bottom');
     document.addEventListener('keydown', handleHistoryShortcut);
     window.addEventListener('pagehide', () => { rememberEditorSession(); void saveArticle(); });
     ['click', 'keyup', 'select'].forEach((eventName) => { $('body').addEventListener(eventName, updateEditorMeta); });

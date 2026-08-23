@@ -11,7 +11,7 @@ import rehypeSourcePosition from '../plugins/rehype-source-position.mjs';
 import footnoteReferenceWithLabel from '../plugins/footnote-reference-with-label.mjs';
 
 const ROOT = path.resolve(process.cwd(), 'src/content');
-const BOARDS = ['life', 'hotel', 'ai', 'auto', 'biology', 'finance', 'history'];
+const BOARDS = ['life', 'hotel', 'ai', 'auto', 'biology', 'finance', 'humanities'];
 const FIELDS = ['title', 'description', 'category', 'subcategory', 'date', 'updated', 'slug', 'topic', 'format', 'visible'];
 const markdownProcessor = createMarkdownProcessor({
   remarkPlugins: [remarkFootnoteIndent, remarkMath],
