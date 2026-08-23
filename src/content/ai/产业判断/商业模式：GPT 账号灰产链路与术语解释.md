@@ -1,11 +1,11 @@
 ---
-title: "AI产业：GPT 账号灰产链路与相关术语解释"
+title: "商业模式：GPT 账号灰产链路与术语解释"
 description: "从风险识别角度梳理 GPT 账号灰产常见参与环节及相关术语，区分账号、凭证、接口和服务层面的风险。"
 slug: gpt-account-gray-market
 date: 2026-08-16
 updated: 2026-08-16
-category: "风险识别"
-subcategory: "AI产业"
+category: "产业判断"
+subcategory: "商业模式"
 ---
 
 ## 第一部分：术语逻辑串讲

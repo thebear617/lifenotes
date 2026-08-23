@@ -1,11 +1,11 @@
 ---
-title: "AI工具：OpenClaw vs Hermes 对比"
+title: "编程助手：OpenClaw vs Hermes 对比"
 description: "Hermes 相比 OpenClaw 在稳定性、Token 节省、Skill 自主进化上有明显优势但缺 Web UI；已用顺 OpenClaw 的不用换，新手推荐 Hermes。"
 slug: openclaw-vs-hermes
 date: 2026-06-13
 updated: 2026-07-30
-category: "工具对比"
-subcategory: "AI工具"
+category: "工具"
+subcategory: "编程助手"
 ---
 
 **来源**：小龙虾 vs 爱马仕 AI，到底该装哪个？｜6 个维度实测对比，一次讲清楚；UP：奇思妙想CYC

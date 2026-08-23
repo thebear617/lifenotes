@@ -1,11 +1,11 @@
 ---
-title: "前端开发：CSS 未套用导致组件宽度溢出"
+title: "调试排错：CSS 未套用导致组件宽度溢出"
 description: "一次本地 CMS 编辑器排查记录：CSS 规则写入并不等于真正作用到目标组件，必须检查选择器、实际输出和计算样式，否则宽度、内边距与卡片布局很容易出现溢出。"
 slug: css-style-not-applied-component-overflow
 date: 2026-08-14
 updated: 2026-08-14
-category: "开发实践"
-subcategory: "CSS 布局"
+category: "工具"
+subcategory: "调试排错"
 ---
 
 ## 核心结论
