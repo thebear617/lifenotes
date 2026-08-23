@@ -8,14 +8,14 @@ import PrintButton from '../../components/PrintButton.astro';
 import { categoryForEntry } from '../../data/content.js';
 
 export async function getStaticPaths() {
-  const formalBoardIds = ['ai', 'auto', 'biology', 'finance', 'history'];
+  const formalBoardIds = ['ai', 'auto', 'biology', 'finance', 'humanities'];
   const getFormalEntries = (id) => {
     switch (id) {
       case 'ai': return getCollection('ai');
       case 'auto': return getCollection('auto');
       case 'biology': return getCollection('biology');
       case 'finance': return getCollection('finance');
-      case 'history': return getCollection('history');
+      case 'humanities': return getCollection('humanities');
       default: return [];
     }
   };
