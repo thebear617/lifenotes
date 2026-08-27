@@ -793,6 +793,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     let savePromise = null;
     let draftVersion = 0;
     const EDITOR_SESSION_KEY = 'lifenotes-admin-editor-state-v1';
+    const EDITOR_DRAFT_KEY = 'lifenotes-admin-editor-draft-v1';
     const IMMERSIVE_SESSION_KEY = 'lifenotes-admin-immersive-v1';
     const editorHistoryLimit = 100;
     const AUTO_SAVE_DELAY = 900;
@@ -818,6 +819,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       isDirty = true;
       draftVersion += 1;
       setStatus('等待自动保存', 'saving');
+      rememberEditorDraft();
       scheduleAutoSave();
     };
     function rememberEditorSession() {
@@ -832,6 +834,58 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         pageScrollTop: window.scrollY,
       };
       try { sessionStorage.setItem(EDITOR_SESSION_KEY, JSON.stringify(snapshot)); } catch { /* sessionStorage may be unavailable in a restricted browser context. */ }
+    }
+
+    function rememberEditorDraft() {
+      if (!isDirty) return;
+      const body = $('body');
+      const file = $('file')?.value.trim() || '';
+      const board = $('board')?.value || '';
+      const path = board && file ? `${board}/${file}` : '';
+      if (!path) return;
+      const frontmatter = Object.fromEntries(fields.map((field) => [field, $(field).value]));
+      frontmatter.visible = frontmatter.visible === 'true';
+      const snapshot = {
+        version: 1,
+        selectedPath: selectedPath || '',
+        path,
+        frontmatter,
+        body: body.value,
+        selectionStart: body.selectionStart,
+        selectionEnd: body.selectionEnd,
+        scrollTop: body.scrollTop,
+        previewScrollTop: $('preview').scrollTop,
+        pageScrollTop: window.scrollY,
+      };
+      try { localStorage.setItem(EDITOR_DRAFT_KEY, JSON.stringify(snapshot)); } catch { /* localStorage may be unavailable or full. */ }
+    }
+
+    function readEditorDraft() {
+      try {
+        const raw = localStorage.getItem(EDITOR_DRAFT_KEY);
+        if (!raw) return null;
+        const snapshot = JSON.parse(raw);
+        return snapshot && typeof snapshot === 'object' && snapshot.version === 1 ? snapshot : null;
+      } catch { return null; }
+    }
+
+    function clearEditorDraft() {
+      try { localStorage.removeItem(EDITOR_DRAFT_KEY); } catch { /* localStorage may be unavailable. */ }
+    }
+
+    function restoreEditorDraft(snapshot) {
+      if (!snapshot || typeof snapshot.body !== 'string') return false;
+      const path = String(snapshot.path || '').trim();
+      if (!path) return false;
+      const existingPath = snapshot.selectedPath || path;
+      if (snapshot.selectedPath && !articles.some((article) => article.path === existingPath || article.path === path)) return false;
+      selectedPath = snapshot.selectedPath || '';
+      fill({ path, body: snapshot.body, ...(snapshot.frontmatter || {}) });
+      isDirty = true;
+      renderList();
+      setStatus('已恢复未保存草稿', 'saving');
+      scheduleAutoSave();
+      return true;
     }
 
     function readEditorSession() {
@@ -1939,13 +1993,14 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       setStatus('自动保存中…', 'saving');
       const promise = (async () => {
         try {
-          const res = await fetch('/admin/api/article', { method: 'POST', headers: {'Content-Type':'application/json'}, keepalive: true, body: JSON.stringify({ path: board + '/' + file, previousPath, frontmatter, body }) });
+          const res = await fetch('/admin/api/article', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ path: board + '/' + file, previousPath, frontmatter, body }) });
           const data = await res.json();
           if (!res.ok) throw new Error((data.errors || [data.error]).join('；'));
           const isCurrentDraft = draftVersion === currentDraftVersion;
           if (isCurrentDraft) {
             selectedPath = data.path;
             isDirty = false;
+            clearEditorDraft();
             updateDeleteButton();
             setStatus('已自动保存 · 刚刚', 'saved');
           }
@@ -2092,13 +2147,18 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     $('scroll-to-top').onclick = () => scrollBodyToEdge('top');
     $('scroll-to-bottom').onclick = () => scrollBodyToEdge('bottom');
     document.addEventListener('keydown', handleHistoryShortcut);
-    window.addEventListener('pagehide', () => { rememberEditorSession(); void saveArticle(); });
+    window.addEventListener('pagehide', () => { rememberEditorSession(); rememberEditorDraft(); });
     ['click', 'keyup', 'select'].forEach((eventName) => { $('body').addEventListener(eventName, updateEditorMeta); });
     initializeCustomSelects();
     fill();
     setImmersiveMode(readImmersiveSession(), { focus: false, persist: false });
     const savedSession = readEditorSession();
     loadList().then(async () => {
+      const savedDraft = readEditorDraft();
+      if (restoreEditorDraft(savedDraft)) {
+        restoreEditorPosition(savedDraft);
+        return;
+      }
       const savedArticle = savedSession?.selectedPath && articles.find((article) => article.path === savedSession.selectedPath);
       if (!savedArticle) return;
       await loadArticle(savedArticle.path);
