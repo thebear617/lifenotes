@@ -1,5 +1,8 @@
 import fs from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import os from 'node:os';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import { createMarkdownProcessor } from '@astrojs/markdown-remark';
 import remarkMath from 'remark-math';
 import remarkFootnoteIndent from '../plugins/remark-footnote-indent.mjs';
@@ -11,6 +14,7 @@ import rehypeSourcePosition from '../plugins/rehype-source-position.mjs';
 import footnoteReferenceWithLabel from '../plugins/footnote-reference-with-label.mjs';
 
 const ROOT = path.resolve(process.cwd(), 'src/content');
+const execFileAsync = promisify(execFile);
 const BOARDS = ['life', 'hotel', 'ai', 'auto', 'biology', 'finance', 'humanities'];
 const FIELDS = ['title', 'description', 'category', 'subcategory', 'date', 'updated', 'slug', 'topic', 'format', 'visible'];
 const markdownProcessor = createMarkdownProcessor({
@@ -27,6 +31,57 @@ function safePath(value) {
   if (!absolute.startsWith(`${ROOT}${path.sep}`)) return null;
   const board = value.split('/')[0];
   return BOARDS.includes(board) ? absolute : null;
+}
+
+function trashDirectory() {
+  return process.platform === 'darwin'
+    ? path.join(os.homedir(), '.Trash')
+    : path.join(os.homedir(), '.local', 'share', 'Trash', 'files');
+}
+
+async function moveToTrash(filePath) {
+  if (process.platform === 'darwin') {
+    const script = [
+      'on run argv',
+      '  set targetFile to POSIX file (item 1 of argv) as alias',
+      '  tell application "Finder"',
+      '    delete targetFile',
+      '  end tell',
+      'end run',
+    ].join('\n');
+    await execFileAsync('/usr/bin/osascript', ['-e', script, filePath]);
+    return filePath;
+  }
+
+  const directory = trashDirectory();
+  await fs.mkdir(directory, { recursive: true });
+  const originalName = path.basename(filePath);
+  const parsed = path.parse(originalName);
+  let target = path.join(directory, originalName);
+  let suffix = 1;
+  while (true) {
+    try {
+      await fs.access(target);
+      target = path.join(directory, `${parsed.name} (${suffix})${parsed.ext}`);
+      suffix += 1;
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      break;
+    }
+  }
+  try {
+    await fs.rename(filePath, target);
+  } catch (error) {
+    if (error.code !== 'EXDEV') throw error;
+    await fs.copyFile(filePath, target);
+    try {
+      await fs.unlink(filePath);
+    } catch (removeError) {
+      await fs.rm(target, { force: true }).catch(() => {});
+      throw removeError;
+    }
+  }
+  return target;
 }
 
 function scalar(value) {
@@ -163,12 +218,43 @@ export default function localCms() {
             const source = await fs.readFile(safePath(articlePath), 'utf8');
             return json(response, 200, { path: articlePath, ...parseMarkdown(source) });
           }
+          if (request.method === 'DELETE' && url.pathname === '/article' && safePath(articlePath)) {
+            const absolutePath = safePath(articlePath);
+            try {
+              await fs.access(absolutePath);
+            } catch (error) {
+              if (error.code === 'ENOENT') return json(response, 404, { error: '文章不存在' });
+              throw error;
+            }
+            await moveToTrash(absolutePath);
+            lastSelfWriteAt = Date.now();
+            return json(response, 200, { ok: true, path: articlePath });
+          }
           if (request.method === 'POST' && url.pathname === '/article') {
             const data = await readBody(request);
             const target = safePath(data.path);
+            const previous = data.previousPath ? safePath(data.previousPath) : null;
+            if (data.previousPath && !previous) return json(response, 400, { error: '原文章路径不在允许的内容目录内' });
             const errors = validate(data.frontmatter || {}, data.path);
             if (errors.length) return json(response, 400, { errors });
-            await fs.mkdir(path.dirname(target), { recursive: true });
+            if (previous && previous !== target) {
+              try {
+                await fs.access(previous);
+              } catch (error) {
+                if (error.code === 'ENOENT') return json(response, 404, { error: '原文章不存在' });
+                throw error;
+              }
+              try {
+                await fs.access(target);
+                return json(response, 409, { error: '目标路径已存在，请先更换文件路径' });
+              } catch (error) {
+                if (error.code !== 'ENOENT') throw error;
+              }
+              await fs.mkdir(path.dirname(target), { recursive: true });
+              await fs.rename(previous, target);
+            } else {
+              await fs.mkdir(path.dirname(target), { recursive: true });
+            }
             await fs.writeFile(target, serializeMarkdown(data.frontmatter, data.body || ''), 'utf8');
             lastSelfWriteAt = Date.now();
             return json(response, 200, { ok: true, path: data.path });
