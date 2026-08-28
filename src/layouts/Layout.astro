@@ -23,16 +23,21 @@ const href = (path = '') => `${base}${path}`;
     <link rel="icon" type="image/png" href={href('favicon.png')} />
     <title>{title} · lifenotes</title>
   </head>
-  <body>
+  <body class="sidebar-collapsed">
     <div class="layout">
-      <button class="sidebar-toggle" id="sidebarToggle" aria-label="切换侧边栏">☰</button>
-      <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+      <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="展开侧边栏" aria-expanded="false">☰</button>
+      <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
       <nav class="sidebar" id="sidebar" aria-label="主导航">
         <div class="sidebar-brand">
-          <button class="sidebar-close" id="sidebarClose" aria-label="关闭侧边栏">✕</button>
-          <p class="sidebar-eyebrow">LifeNotes</p>
+          <button class="sidebar-close" id="sidebarClose" type="button" aria-label="关闭侧边栏">✕</button>
+          <button class="sidebar-collapse" id="sidebarCollapse" type="button" aria-label="收起侧边栏" title="收起侧边栏">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3.5" y="4" width="17" height="16" rx="2"></rect><path d="M9 4v16"></path><path d="m15 9-3 3 3 3"></path></svg>
+          </button>
+          <svg class="sidebar-brand-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v16"></path><path d="M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"></path></svg>
+          <p class="sidebar-eyebrow">LIFE NOTES</p>
           <h1 class="sidebar-title">常识笔记</h1>
+          <span class="sidebar-subtitle">个人常识资料库</span>
         </div>
         <div class="sidebar-nav">
           {boards.map((board) => (
@@ -56,31 +61,7 @@ const href = (path = '') => `${base}${path}`;
     </div>
 
     <script>
-      const toggle = document.getElementById('sidebarToggle');
-      const backdrop = document.getElementById('sidebarBackdrop');
-      const sidebar = document.getElementById('sidebar');
-      const closeBtn = document.getElementById('sidebarClose');
-
-      function openSidebar() {
-        document.body.classList.add('sidebar-open');
-        document.body.style.overflow = 'hidden';
-      }
-      function closeSidebar() {
-        document.body.classList.remove('sidebar-open');
-        document.body.style.overflow = '';
-      }
-
-      toggle?.addEventListener('click', openSidebar);
-      backdrop?.addEventListener('click', closeSidebar);
-      closeBtn?.addEventListener('click', closeSidebar);
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeSidebar();
-      });
-      document.querySelectorAll<HTMLAnchorElement>('.sidebar-item').forEach((link) => {
-        link.addEventListener('click', () => {
-          if (window.innerWidth < 720) closeSidebar();
-        });
-      });
+      import '../scripts/layout';
     </script>
   </body>
 </html>
