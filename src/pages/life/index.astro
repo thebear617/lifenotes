@@ -5,7 +5,7 @@ import ListExplorer from '../../components/ListExplorer.astro';
 import { categoryForEntry } from '../../data/content.js';
 
 const base = import.meta.env.BASE_URL;
-const entries = (await getCollection('life')).filter((entry) => entry.data.visible);
+const entries = await getCollection('life');
 const items = entries.map((entry) => ({
   slug: entry.data.slug || entry.id,
   title: entry.data.title,

@@ -20,6 +20,7 @@
 - `src/pages/admin.astro`：本地 CMS 管理页面，提供文章编辑、新建、Markdown 预览和保存界面。
 - `src/styles/global.css`：全站样式。
 - `src/data/boards.js`：领域导航配置。
+- `src/data/board-categories.js`：7 个领域的一级、二级分类配置。
 - 每次 Git 操作都在 `lifenotes/` 内执行；提交使用中文 `type: 描述`。
 
 ## 本地 CMS 约束
@@ -31,14 +32,14 @@
 
 ## Frontmatter 规范
 
-每篇 `src/content/<领域>/*.md` 的 frontmatter **必须**包含 `date` 和 `updated` 两个字段。`src/content.config.ts` 中的 `noteSchema` 将它们定义为 `z.coerce.date()` 必填项，缺失任一字段会导致 `npm run build` 直接失败。
+每篇 `src/content/<领域>/*.md` 的 frontmatter **必须**包含 `date` 字段；`updated` 可以省略，`src/content.config.ts` 会在解析时将其回退为 `date`。日期统一按 `YYYY-MM-DD` 字符串处理。
 
 | 字段 | 含义 | 格式 | 示例 |
 |------|------|------|------|
-| `date` | 文章创建 / 首发日期 | `YYYY-MM-DD`（不带引号） | `2026-08-05` |
-| `updated` | 最近一次内容修改日期 | `YYYY-MM-DD`（不带引号） | `2026-08-05` |
+| `date` | 文章创建 / 首发日期 | `YYYY-MM-DD` 字符串 | `"2026-08-05"` |
+| `updated` | 最近一次内容修改日期；省略时回退为 `date` | `YYYY-MM-DD` 字符串 | `"2026-08-05"` |
 
-- 内容更新后需**手动同步** `updated` 为当天日期。
+- 内容更新后如需记录修改日期，需**手动同步** `updated` 为当天日期；不填写时使用 `date`。
 - 推荐字段顺序：`title` → `description` → `category` → `subcategory` → `date` → `updated`（可选 `slug`）。
 - schema 定义位置：`src/content.config.ts`。
 
@@ -50,10 +51,12 @@ title: "示例文章"
 description: "这是一篇示例文章。"
 category: "tech"
 subcategory: "astro"
-date: 2026-08-05
-updated: 2026-08-05
+date: "2026-08-05"
+updated: "2026-08-05"
 ---
 ```
+
+正式内容文件使用 `src/content/<领域>/<一级分类英文>/<二级分类英文>/` 两层目录，文件名以对应二级分类的中文名作为前缀。目录仅用于组织内容，详情页地址由 `slug` 决定。
 
 ## 视频转写 skill
 

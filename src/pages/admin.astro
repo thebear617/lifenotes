@@ -1,5 +1,6 @@
 ---
 import 'katex/dist/katex.min.css';
+import boardCategories from '../data/board-categories.js';
 
 // The local CMS is intentionally available only from Astro's dev server.
 const isDev = import.meta.env.DEV;
@@ -243,61 +244,35 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     .filter-modal-body { overflow: visible; padding: 18px 22px 20px; }
     .filter-modal-body .filter-fields { gap: 14px; }
     .filter-modal-body .filter-field { gap: 6px; color: #334155; font-size: 11px; }
-    .custom-select { position: relative; min-width: 0; }
-    .custom-select-native { position: absolute; width: 1px; height: 1px; min-height: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; }
-    .custom-select-trigger {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      min-height: 40px;
-      padding: 8px 10px;
-      border: 1px solid #e1d9d1;
-      border-radius: 8px;
-      color: #172033;
-      background: #fff;
-      font-size: 13px;
-      font-weight: 600;
-      text-align: left;
-    }
-    .custom-select-trigger:hover { border-color: #d97745; color: #172033; background: #fffaf6; }
-    .custom-select-trigger:disabled { border-color: #e8e2dc; color: #a7adb6; background: #f7f5f2; cursor: not-allowed; }
-    .custom-select-trigger svg { width: 16px; height: 16px; flex: 0 0 auto; color: #a0a7b1; transition: transform .15s ease, color .15s ease; }
-    .custom-select.open .custom-select-trigger { border-color: #d97745; box-shadow: inset 0 0 0 1px #d97745; }
-    .custom-select.open .custom-select-trigger svg { color: #c2410c; transform: rotate(180deg); }
-    .custom-select-menu {
-      position: absolute;
-      top: calc(100% + 6px);
-      right: 0;
-      left: 0;
-      z-index: 30;
-      max-height: 300px;
-      overflow-y: auto;
-      padding: 5px;
-      border: 1px solid #e7ded5;
-      border-radius: 9px;
-      background: #fff;
-      box-shadow: 0 10px 24px rgba(82, 54, 31, .16);
-    }
-    .custom-select-menu[hidden] { display: none; }
-    .custom-select-option {
-      display: flex;
-      align-items: center;
-      width: 100%;
-      min-height: 34px;
-      padding: 0 9px;
-      border: 0;
-      border-radius: 6px;
-      color: #334155;
-      background: transparent;
-      font-size: 12px;
-      font-weight: 600;
-      text-align: left;
-    }
-    .custom-select-option::before { width: 16px; flex: 0 0 16px; color: #c2410c; content: ""; font-size: 14px; font-weight: 800; }
-    .custom-select-option:hover { border: 0; color: #9a3412; background: #fff4eb; }
-    .custom-select-option.is-selected { color: #9a3412; background: #fff4eb; }
-    .custom-select-option.is-selected::before { content: "✓"; }
+     .custom-select { position: relative; align-self: start; width: 100%; min-width: 0; }
+     .field-label > .custom-select { align-self: stretch; width: 100%; min-width: 0; }
+     .custom-select-native { position: absolute; width: 1px; height: 1px; min-height: 0 !important; padding: 0 !important; border: 0 !important; opacity: 0; pointer-events: none; }
+     .custom-select-trigger {
+       display: flex; width: 100%; height: 36px; min-height: 36px;
+       align-items: center; justify-content: space-between; gap: 8px;
+       padding: 7px 9px; border: 1px solid #e1d9d1; border-radius: 7px;
+       color: #3d322c; background: #fffdfb; font-size: 12px; font-weight: 600; text-align: left;
+     }
+     .custom-select-trigger:hover { border-color: #df9a72; color: #9a3412; background: #fff; }
+     .custom-select-trigger:disabled { border-color: #e8e2dc; color: #a7adb6; background: #f7f5f2; cursor: not-allowed; }
+     .custom-select-trigger svg { width: 15px; height: 15px; flex: 0 0 auto; color: #a0a7b1; transition: transform .15s ease, color .15s ease; }
+     .custom-select.open .custom-select-trigger { border-color: #df9a72; box-shadow: inset 0 0 0 1px #df9a72; }
+     .custom-select.open .custom-select-trigger svg { color: #c2410c; transform: rotate(180deg); }
+     .custom-select-menu {
+       position: absolute; top: calc(100% + 5px); right: 0; left: 0; z-index: 30;
+       max-height: 220px; overflow-y: auto; padding: 5px;
+       border: 1px solid #eadbd0; border-radius: 8px; background: #fffdfb;
+       box-shadow: 0 12px 26px rgba(82, 54, 31, .14);
+     }
+     .custom-select-menu[hidden] { display: none; }
+     .custom-select-option {
+       display: flex; width: 100%; min-height: 32px; align-items: center;
+       padding: 0 8px; border: 0; border-radius: 6px;
+       color: #6a5549; background: transparent; font-size: 11px; font-weight: 600; text-align: left;
+     }
+     .custom-select-option::before { width: 16px; flex: 0 0 16px; color: #c2410c; content: ""; font-size: 13px; font-weight: 800; }
+     .custom-select-option:hover, .custom-select-option.is-selected { border: 0; color: #9a3412; background: #fff1e7; }
+     .custom-select-option.is-selected::before { content: "✓"; }
     .filter-modal-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 22px; border-top: 1px solid #eee7e0; background: #fffdfb; }
     .filter-modal-footer .filter-clear-button { padding: 0; border: 0; color: #687285; background: transparent; font-size: 12px; font-weight: 600; }
     .filter-modal-footer .filter-clear-button:hover { border: 0; color: #9a3412; background: transparent; text-decoration: underline; }
@@ -694,20 +669,60 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
             <section class="field-card">
               <div class="field-card-heading"><h3>内容归类</h3><p>用领域和主题信息整理文章。</p></div>
               <div class="field-stack">
-                <div class="field-row three">
-                  <label class="field-label">领域<select id="board"><option value="life">生活美食</option><option value="hotel">服务业</option><option value="ai">AI 产业</option><option value="auto">数码出行</option><option value="biology">动植物</option><option value="finance">金融经济</option><option value="humanities">社会人文</option></select></label>
-                  <label class="field-label">分类<select id="category" disabled><option value="">请先选择领域</option></select></label>
-                  <label class="field-label">子分类<select id="subcategory" disabled><option value="">请先选择分类</option></select></label>
+                <label class="field-label">
+                  <span class="field-label-caption">领域 <span class="required">*</span></span>
+                  <div class="custom-select" data-custom-select="board">
+                    <select class="custom-select-native" id="board" required aria-required="true" aria-hidden="true" tabindex="-1">
+                      <option value="life">生活美食</option>
+                      <option value="hotel">服务业</option>
+                      <option value="ai">AI 产业</option>
+                      <option value="auto">数码出行</option>
+                      <option value="biology">动植物</option>
+                      <option value="finance">金融经济</option>
+                      <option value="humanities">社会人文</option>
+                    </select>
+                    <button class="custom-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="领域">
+                      <span class="custom-select-label">生活美食</span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </button>
+                    <div class="custom-select-menu" role="listbox" hidden></div>
+                  </div>
+                </label>
+                <div class="field-row">
+                  <label class="field-label">
+                    <span class="field-label-caption">分类 <span class="required">*</span></span>
+                    <div class="custom-select" data-custom-select="category">
+                      <select class="custom-select-native" id="category" required aria-required="true" aria-hidden="true" tabindex="-1" disabled><option value="">请先选择领域</option></select>
+                      <button class="custom-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="分类" disabled>
+                        <span class="custom-select-label">请先选择领域</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                      </button>
+                      <div class="custom-select-menu" role="listbox" hidden></div>
+                    </div>
+                  </label>
+                  <label class="field-label">
+                    <span class="field-label-caption">子分类 <span class="required">*</span></span>
+                    <div class="custom-select" data-custom-select="subcategory">
+                      <select class="custom-select-native" id="subcategory" required aria-required="true" aria-hidden="true" tabindex="-1" disabled><option value="">请先选择分类</option></select>
+                      <button class="custom-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="子分类" disabled>
+                        <span class="custom-select-label">请先选择分类</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                      </button>
+                      <div class="custom-select-menu" role="listbox" hidden></div>
+                    </div>
+                  </label>
                 </div>
-                <label class="field-label">topic<input id="topic" /></label>
               </div>
             </section>
             <section class="field-card">
               <div class="field-card-heading"><h3>文件与发布</h3><p>文件名决定保存位置，日期用于发布信息。</p></div>
               <div class="field-stack">
-                <div class="field-row"><label class="field-label">文件名（含 .md）<input id="file" /></label><label class="field-label">slug<input id="slug" /></label></div>
-                <div class="field-row"><label class="field-label">发布日期<input id="date" type="date" /></label><label class="field-label">更新日期<input id="updated" type="date" /></label></div>
-                <div class="field-row"><label class="field-label">format<select id="format"><option>note</option><option>article</option></select></label><label class="field-label">可见<select id="visible"><option value="true">是</option><option value="false">否</option></select></label></div>
+                <label class="field-label"><span class="field-label-caption" id="file-label">文件路径（相对于 src/content/life/）</span><input id="file" /></label>
+                <div class="field-row">
+                  <label class="field-label"><span class="field-label-caption">发布日期 <span class="required">*</span></span><input id="date" type="date" /></label>
+                  <label class="field-label"><span class="field-label-caption">更新日期</span><input id="updated" type="date" /></label>
+                </div>
+                <label class="field-label"><span class="field-label-caption">slug <span class="required">*</span></span><input id="slug" /></label>
               </div>
             </section>
           </div>
@@ -770,7 +785,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       </div>
     </section>
   </div>
-  <script>
+  <script define:vars={{ boardCategories }}>
     const $ = (id) => document.getElementById(id);
     let articles = [];
     let selectedPath = '';
@@ -797,7 +812,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     const IMMERSIVE_SESSION_KEY = 'lifenotes-admin-immersive-v1';
     const editorHistoryLimit = 100;
     const AUTO_SAVE_DELAY = 900;
-    const fields = ['title', 'description', 'category', 'subcategory', 'topic', 'date', 'updated', 'slug', 'format', 'visible'];
+    const fields = ['title', 'description', 'category', 'subcategory', 'date', 'updated', 'slug'];
     const sortLabels = {
       'title-asc': '标题 A → Z',
       'title-desc': '标题 Z → A',
@@ -844,7 +859,6 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       const path = board && file ? `${board}/${file}` : '';
       if (!path) return;
       const frontmatter = Object.fromEntries(fields.map((field) => [field, $(field).value]));
-      frontmatter.visible = frontmatter.visible === 'true';
       const snapshot = {
         version: 1,
         selectedPath: selectedPath || '',
@@ -1563,51 +1577,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       body.scrollTop = Math.max(0, (range.startLine - 1) * lineHeight - body.clientHeight / 2);
       updateEditorMeta();
     }
-    const BOARD_CATEGORIES = {
-      humanities: {
-        '城市观察': ['观察方法', '单一城市', '城市对比', '城市专题'],
-        '国家与文明': ['国别研究', '跨国对比', '文明圈', '国际关系'],
-        '宗教与信仰': ['世界宗教', '民间信仰', '宗教思想', '信仰与社会'],
-        '制度与政治': ['政治体制', '经济制度', '法律体系', '政策演化'],
-        '历史与社会': ['历史事件', '社会变迁', '文化现象', '时代精神'],
-        '人与社会': ['心理与认知', '人际关系', '人口与族群', '人生阶段'],
-      },
-      finance: {
-        '个人财务': ['资金安全', '预算管理', '消费决策', '信用借贷'],
-        '投资理财': ['基础概念', '投资工具', '风险管理', '资产配置'],
-        '宏观经济': ['基础概念', '经济现象', '政策制度', '经济史'],
-      },
-      biology: {
-        '宠物养护': ['行为问题', '健康医疗', '选购指南', '日常观察'],
-        '动物知识': ['基础概念', '行为生态', '物种科普', '保护保育'],
-        '植物科普': ['基础概念', '物种科普', '园艺养护', '入侵与生态'],
-      },
-      auto: {
-        '汽车': ['产业观察', '车型选购', '用车常识', '智能驾驶'],
-        '手机': ['系统设置', '应用技巧', '故障排查', '产业观察'],
-      },
-      hotel: {
-        '酒店': ['品牌分析', '入住体验', '会员体系', '产业观察'],
-        '餐饮连锁': ['品牌分析', '经营模式', '食品安全', '产业观察'],
-        '物流': ['快递服务', '大件物流', '跨境转运', '产业观察'],
-        '零售': ['线下零售', '电商平台', '新零售模式', '产业观察'],
-      },
-      ai: {
-        '模型': ['基础概念', '能力评估', '模型选型', '行业进展'],
-        '工具': ['编程助手', '框架与协议', '调试排错', '效能研究'],
-        '工作流': ['自动化平台', '流程设计', '集成方案', '最佳实践'],
-        'Agent': ['架构设计', '工具调用', '记忆与状态', '评测方法'],
-        '产业判断': ['算力与硬件', '商业模式', '投资与并购', '市场格局'],
-      },
-      life: {
-        '健康与身体': ['体态与运动', '健康习惯', '急救常识', '人际心理'],
-        '饮食与厨房': ['厨房常识', '家常菜谱', '饮品调制', '食材选购'],
-        '美食探店': ['城市探店', '全国合集', '美食评论', '网红探店'],
-        '居家实用': ['清洁妙招', '家居安全', '网络通讯', '家具选购'],
-        '学习': ['学习计划'],
-        '素材': ['速查对照', '省钱速查'],
-      },
-    };
+    const BOARD_CATEGORIES = boardCategories;
 
     function refreshEditorCategories() {
       const board = $('board').value;
@@ -1616,6 +1586,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       subcategorySelect.innerHTML = '<option value="">请先选择分类</option>';
       subcategorySelect.disabled = true;
       subcategorySelect.value = '';
+      syncCustomSelect('subcategory');
       if (board && BOARD_CATEGORIES[board]) {
         categorySelect.innerHTML = '<option value="">请选择分类</option>';
         Object.keys(BOARD_CATEGORIES[board]).forEach((cat) => {
@@ -1630,6 +1601,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         categorySelect.disabled = true;
       }
       categorySelect.value = '';
+      syncCustomSelect('category');
     }
 
     function refreshEditorSubcategories() {
@@ -1650,6 +1622,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         subcategorySelect.disabled = true;
       }
       subcategorySelect.value = '';
+      syncCustomSelect('subcategory');
     }
 
     function setSelectValueIfExists(select, value) {
@@ -1657,19 +1630,28 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       if (Array.from(select.options).some((opt) => opt.value === value)) select.value = value;
     }
 
+    function updateFileLabel() {
+      const board = $('board').value || 'life';
+      $('file-label').textContent = `文件路径（相对于 src/content/${board}/）`;
+    }
+
     function fill(item = {}) {
       window.clearTimeout(autoSaveTimer);
       autoSaveTimer = 0;
       draftVersion += 1;
       $('board').value = (item.path || 'life/').split('/')[0];
+      syncCustomSelect('board');
+      updateFileLabel();
       refreshEditorCategories();
       setSelectValueIfExists($('category'), item.category);
+      syncCustomSelect('category');
       refreshEditorSubcategories();
       setSelectValueIfExists($('subcategory'), item.subcategory);
+      syncCustomSelect('subcategory');
       $('file').value = item.path ? item.path.split('/').slice(1).join('/') : '新文章.md';
       fields.forEach((field) => {
         if (field === 'category' || field === 'subcategory') return;
-        if ($(field)) $(field).value = item[field] ?? (field === 'visible' ? 'true' : field === 'format' ? 'note' : '');
+        if ($(field)) $(field).value = item[field] ?? '';
       });
       $('body').value = item.body || '';
       resetEditorHistory();
@@ -1986,7 +1968,6 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       const file = $('file').value.trim();
       const previousPath = selectedPath;
       const frontmatter = Object.fromEntries(fields.map((field) => [field, $(field).value]));
-      frontmatter.visible = frontmatter.visible === 'true';
       const body = $('body').value;
       const currentDraftVersion = draftVersion;
       $('save').disabled = true;
@@ -2066,7 +2047,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       updateFilterBadge();
       renderList();
     };
-    $('board').onchange = () => { refreshEditorCategories(); markDirty(); };
+    $('board').onchange = () => { updateFileLabel(); refreshEditorCategories(); markDirty(); };
     $('category').onchange = () => { refreshEditorSubcategories(); markDirty(); };
     $('clear-library-filters').onclick = () => {
       $('filter-board').value = '';

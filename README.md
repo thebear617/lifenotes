@@ -2,7 +2,7 @@
 
 > 基于 Astro 7 的个人常识资料库与静态网站。
 
-当前版本：`v0.10.0`
+当前版本：`v1.3.0`
 
 在线地址（部署后）：<https://thebear617.github.io/lifenotes/>
 
@@ -15,12 +15,21 @@ src/
 ├── content.config.ts  # Content Layer 内容集合配置
 ├── content/           # 正式 Markdown 内容
 ├── data/boards.js    # 领域导航配置
+├── data/board-categories.js # 领域分类配置
 ├── layouts/          # 页面布局
 ├── pages/            # 首页、领域页、详情页
 └── styles/           # 全站样式
 content/
 └── _inbox/           # 原始转写与待整理资料
 ```
+
+正式内容目录使用两层英文目录表达 `category` 和 `subcategory`，最内层文件名以二级分类的中文名作为前缀，例如：
+
+```text
+src/content/life/materials/quick-reference/速查对照：尺寸距离时长.md
+```
+
+目录名只影响本地内容组织；详情页地址由 frontmatter 中的 `slug` 决定。
 
 当前领域包括：AI产业、动植物、社会人文、数码出行、生活美食、服务业、金融经济。
 
@@ -39,7 +48,7 @@ GitHub Pages 子路径构建：
 SITE_BASE=/lifenotes/ npm run build
 ```
 
-Astro 通过 `src/content.config.ts` 中的 `glob` loader 读取 `src/content/` 的 Markdown 并生成静态页面。新增内容时，在对应领域目录添加 Markdown 文件，填写 `title`、`date`、`updated`、`category` 等 frontmatter；重命名已有文章时保留显式 `slug`，以维持旧地址。
+Astro 通过 `src/content.config.ts` 中的 `glob` loader 读取 `src/content/` 的 Markdown 并生成静态页面。新增内容时，在对应领域目录添加 Markdown 文件，填写 `title`、`date`、`category`、`subcategory` 和 `slug` 等 frontmatter；`updated` 可以省略，构建时会回退到 `date`。重命名已有文章时保留显式 `slug`，以维持旧地址。
 
 ## 本地 CMS
 

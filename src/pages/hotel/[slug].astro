@@ -4,7 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 import ArticleToc from '../../components/ArticleToc.astro';
 import ArticlePopover from '../../components/ArticlePopover.astro';
 import PrintButton from '../../components/PrintButton.astro';
-import { categoryForEntry } from '../../data/content.js';
+import { categoryForEntry, formatDate } from '../../data/content.js';
 
 export async function getStaticPaths() {
   const entries = await getCollection('hotel');
@@ -25,10 +25,10 @@ const base = import.meta.env.BASE_URL;
       <article class="article-detail">
         <header class="article-header">
           <span class="article-category">{category}</span>
-          <h1>{entry.data.title}</h1>
-          <p class="article-meta">
-            发布于 {entry.data.date ? entry.data.date.toLocaleDateString('zh-CN') : '未标注日期'}{entry.data.updated && entry.data.updated !== entry.data.date && ` · 更新于 ${entry.data.updated.toLocaleDateString('zh-CN')}`}
-          </p>
+           <h1>{entry.data.title}</h1>
+           <p class="article-meta">
+              发布于 {formatDate(entry.data.date)}{entry.data.updated !== entry.data.date && ` · 更新于 ${formatDate(entry.data.updated)}`}
+           </p>
           <PrintButton />
         </header>
         <div class="article-body"><Content /></div>

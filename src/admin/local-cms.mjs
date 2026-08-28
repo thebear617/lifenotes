@@ -16,7 +16,7 @@ import footnoteReferenceWithLabel from '../plugins/footnote-reference-with-label
 const ROOT = path.resolve(process.cwd(), 'src/content');
 const execFileAsync = promisify(execFile);
 const BOARDS = ['life', 'hotel', 'ai', 'auto', 'biology', 'finance', 'humanities'];
-const FIELDS = ['title', 'description', 'category', 'subcategory', 'date', 'updated', 'slug', 'topic', 'format', 'visible'];
+const FIELDS = ['title', 'date', 'updated', 'category', 'subcategory', 'description', 'slug'];
 const markdownProcessor = createMarkdownProcessor({
   remarkPlugins: [remarkFootnoteIndent, remarkMath],
   rehypePlugins: [rehypeKatex, rehypeMark, rehypeTableWrap, rehypePopover, rehypeSourcePosition],
@@ -121,11 +121,8 @@ function serializeMarkdown(frontmatter, body) {
 function validate(frontmatter, articlePath) {
   const errors = [];
   if (!frontmatter.title?.trim()) errors.push('title 不能为空');
-  for (const field of ['date', 'updated']) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(frontmatter[field] || ''))) errors.push(`${field} 必须使用 YYYY-MM-DD`);
-  }
-  if (frontmatter.format && !['note', 'article'].includes(frontmatter.format)) errors.push('format 只能是 note 或 article');
-  if (frontmatter.visible !== undefined && typeof frontmatter.visible !== 'boolean') errors.push('visible 必须是 true 或 false');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(frontmatter.date || ''))) errors.push('date 必须使用 YYYY-MM-DD');
+  if (frontmatter.updated && !/^\d{4}-\d{2}-\d{2}$/.test(String(frontmatter.updated))) errors.push('updated 必须使用 YYYY-MM-DD');
   if (!safePath(articlePath)) errors.push('文章路径不在允许的 src/content 领域目录内');
   return errors;
 }

@@ -26,18 +26,16 @@ export async function getStaticPaths() {
 
 const { board, entries } = Astro.props;
 const base = import.meta.env.BASE_URL;
-const items = entries
-  .filter((entry) => entry.data.visible)
-  .map((entry) => ({
-    slug: entry.data.slug || entry.id,
-    title: entry.data.title,
-    description: entry.data.description,
-    date: entry.data.date,
-    updated: entry.data.updated,
-    category: categoryForEntry(entry),
-    subcategory: entry.data.subcategory,
-    href: `${base}${board.id}/${entry.data.slug || entry.id}/`,
-  }));
+const items = entries.map((entry) => ({
+  slug: entry.data.slug || entry.id,
+  title: entry.data.title,
+  description: entry.data.description,
+  date: entry.data.date,
+  updated: entry.data.updated,
+  category: categoryForEntry(entry),
+  subcategory: entry.data.subcategory,
+  href: `${base}${board.id}/${entry.data.slug || entry.id}/`,
+}));
 ---
 
 <Layout title={board.name} currentBoard={board.id}>

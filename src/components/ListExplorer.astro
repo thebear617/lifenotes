@@ -1,10 +1,12 @@
 ---
+import { dateTimestamp, formatDate } from '../data/content.js';
+
 interface ExplorerEntry {
   slug: string;
   title: string;
   description?: string;
-  date: Date | null;
-  updated: Date | null;
+  date: string | null;
+  updated: string | null;
   category: string;
   subcategory?: string;
   href: string;
@@ -19,8 +21,8 @@ const { entries } = Astro.props;
 const visibleEntries = [...entries]
   .filter((entry) => entry !== null)
   .sort((a, b) => {
-    const ta = a.updated?.getTime() ?? a.date?.getTime() ?? Number.NEGATIVE_INFINITY;
-    const tb = b.updated?.getTime() ?? b.date?.getTime() ?? Number.NEGATIVE_INFINITY;
+    const ta = dateTimestamp(a.updated || a.date);
+    const tb = dateTimestamp(b.updated || b.date);
     return tb - ta || a.title.localeCompare(b.title, 'zh-CN');
   });
 
@@ -68,11 +70,12 @@ const hasFilters = allCategories.length > 0 || allSubcategories.length > 0;
           data-desc={entry.description || ''}
           data-category={entry.category}
           data-subcategory={entry.subcategory || ''}
-          data-updated-ts={entry.updated?.getTime() ?? entry.date?.getTime() ?? 0}
+          data-date-ts={dateTimestamp(entry.date)}
+          data-updated-ts={dateTimestamp(entry.updated || entry.date)}
         >
           <strong>{entry.title}</strong>
           {entry.description && <span class="record-description">{entry.description}</span>}
-          <span class="record-date">{entry.date ? entry.date.toLocaleDateString('zh-CN') : '未标注日期'}</span>
+          <span class="record-date">{formatDate(entry.date)}</span>
           <div class="record-tags">
             <span class="record-category">{entry.category}</span>
             {entry.subcategory && <span class="record-tag">{entry.subcategory}</span>}
@@ -364,13 +367,6 @@ const hasFilters = allCategories.length > 0 || allSubcategories.length > 0;
       });
       pageNumbers.replaceChildren(...buttons);
     }
-
-    list.querySelectorAll<HTMLElement>('.record-card').forEach((card) => {
-      const dateStr = card.querySelector('.record-date')?.textContent || '';
-      const d = dateStr ? new Date(dateStr.replace(/\//g, '-')) : null;
-      card.dataset.dateTs = d ? String(d.getTime()) : '0';
-      card.dataset.updatedTs = card.dataset.updatedTs || card.dataset.dateTs;
-    });
 
     applyFilters();
   }
