@@ -41,6 +41,7 @@ const contentPathSegments = {
     '制度与政治': { directory: 'institutions-and-politics', subcategories: { '政治体制': 'political-systems', '经济制度': 'economic-systems', '法律体系': 'legal-systems', '政策演化': 'policy-evolution' } },
     '历史与社会': { directory: 'history-and-society', subcategories: { '历史事件': 'historical-events', '社会变迁': 'social-change', '文化现象': 'cultural-phenomena', '时代精神': 'zeitgeist' } },
     '人与社会': { directory: 'people-and-society', subcategories: { '心理与认知': 'psychology-and-cognition', '人际关系': 'interpersonal-relationships', '人口与族群': 'population-and-ethnicity', '人生阶段': 'life-stages' } },
+    '语言与文字': { directory: 'language-and-writing', subcategories: { '古文积累': 'classical-accumulation' } },
   },
 };
 
