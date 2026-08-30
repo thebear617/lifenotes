@@ -362,17 +362,18 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       min-height: 0;
       padding: 20px 14px 12px;
     }
-    .editor-heading { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin: 0 0 17px; padding: 0 2px; }
+    .editor-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; margin: 0 0 17px; padding: 0 2px; }
+    .editor-heading > div:first-child { flex: 1 1 260px; min-width: 0; }
     .editor-heading h2 { font-size: 20px; }
     .editor-heading p { margin: 5px 0 0; color: #8992a1; font-size: 12px; }
-    .editor-actions { flex: 0 0 auto; gap: 14px; }
-    .status-group { gap: 9px; color: #87909c; font-size: 12px; white-space: nowrap; }
+    .editor-actions { flex: 0 1 auto; flex-wrap: wrap; justify-content: flex-end; gap: 8px 14px; min-width: 0; max-width: 100%; }
+    .status-group { flex: 0 1 auto; gap: 9px; min-width: 0; max-width: 100%; color: #87909c; font-size: 12px; white-space: nowrap; }
     .save-state { display: inline-flex; align-items: center; gap: 6px; }
     .save-state::before { width: 10px; height: 10px; border: 1.5px solid currentColor; border-radius: 50%; content: ""; }
     .save-state.saved { color: #15803d; font-weight: 700; }
     .save-state.saved::before { border-width: 2px; }
     .save-state.saving { color: #b45309; }
-    .save-state.error { color: #b42318; white-space: normal; }
+    .save-state.error { color: #b42318; white-space: normal; overflow-wrap: anywhere; }
     .save-state.neutral { color: #87909c; }
 
     .fields { min-height: 0; margin-bottom: 12px; }
@@ -521,6 +522,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       .topbar-actions { width: 100%; justify-content: flex-end; }
       .brand-title { font-size: 19px; }
       .editor-heading { align-items: flex-start; flex-direction: column; }
+      .editor-heading > div:first-child { flex: 0 1 auto; }
       .editor-actions { width: 100%; justify-content: space-between; }
       .editor-workspace { grid-template-columns: 1fr; min-height: 860px; }
       .editor-sync-controls { display: none; }
@@ -1654,7 +1656,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     function updateFileLabel() {
       const articlePath = editorArticlePath();
       $('file-label').textContent = '文件路径（由领域、分类、子分类和标题自动生成）';
-      $('folder-path').value = articlePath ? `src/content/${articlePath}` : '';
+      $('folder-path').value = articlePath;
     }
 
     function editorArticlePath() {
@@ -1952,7 +1954,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       $('list').innerHTML = visibleArticles.map((article) => {
         const meta = [article.category, article.subcategory].filter(Boolean).join(' · ');
         const active = article.path === selectedPath ? ' active' : '';
-        return `<button class="article${active}" data-path="${encodeURIComponent(article.path)}" aria-pressed="${article.path === selectedPath}"><strong>${escapeHtml(article.title)}</strong><small>/${escapeHtml(article.path)}</small><span class="article-meta"><span>${escapeHtml(meta || '未分类')}</span><span>${escapeHtml(article.date || '未设置日期')}</span></span></button>`;
+        return `<button class="article${active}" data-path="${encodeURIComponent(article.path)}" aria-pressed="${article.path === selectedPath}"><strong>${escapeHtml(article.title)}</strong><small>${escapeHtml(article.path)}</small><span class="article-meta"><span>${escapeHtml(meta || '未分类')}</span><span>${escapeHtml(article.date || '未设置日期')}</span></span></button>`;
       }).join('') || '<p class="count">暂无匹配文章</p>';
       document.querySelectorAll('.article').forEach((button) => { button.onclick = () => loadArticle(decodeURIComponent(button.dataset.path)); });
     }
