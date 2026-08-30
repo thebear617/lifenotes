@@ -2,7 +2,7 @@
 
 > 基于 Astro 7 的个人常识资料库与静态网站。
 
-当前版本：`v1.4.0`
+当前版本：`v1.4.1`
 
 在线地址（部署后）：<https://thebear617.github.io/lifenotes/>
 
@@ -37,7 +37,7 @@ src/content/life/materials/quick-reference/速查对照：尺寸距离时长.md
 
 ```bash
 npm install
-npm run dev       # http://localhost:4321/
+npm run dev       # http://localhost:4326/
 npm run build
 npm run preview
 ```
@@ -59,6 +59,16 @@ npm run dev
 ```
 
 然后打开 <http://localhost:4326/admin/>。本地 CMS 支持编辑已有文章、新建文章、预览 Markdown，以及保存文章；点击保存后，内容会直接写入 `src/content/`，可继续通过 Astro 开发服务器查看效果。
+
+CMS 的每次保存（包括自动保存）都会将 `updated` 自动写为当天日期；该字段在后台仅供查看，无需手动修改。
+
+日常编辑只保留一个普通 `npm run dev` 实例。Agent 需要浏览器验收时，另开空闲端口运行：
+
+```bash
+npm run dev:verify -- --port 4402
+```
+
+该命令会把 `src/` 复制到系统临时目录，并使用独立的 Astro 缓存；验收中 CMS 的保存和自动保存只写入该副本，不会改动真实 `src/content/`。不要为了验收启动第二个普通 `npm run dev`。
 
 本地 CMS 仅在 Astro 开发服务器中可用，生产构建会移除 `/admin`，不会将管理页面发布到站点。不要把开发服务器或 `/admin/` 暴露到公网。
 

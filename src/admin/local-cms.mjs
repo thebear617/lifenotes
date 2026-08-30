@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import { execFile } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
@@ -12,8 +13,10 @@ import rehypePopover from '../plugins/rehype-popover.mjs';
 import rehypeTableWrap from '../plugins/rehype-table-wrap.mjs';
 import rehypeSourcePosition from '../plugins/rehype-source-position.mjs';
 import footnoteReferenceWithLabel from '../plugins/footnote-reference-with-label.mjs';
+import { canonicalArticlePath } from '../data/content-paths.js';
 
-const ROOT = path.resolve(process.cwd(), 'src/content');
+const ROOT = process.env.CMS_CONTENT_ROOT ? path.resolve(process.env.CMS_CONTENT_ROOT) : path.resolve(process.cwd(), 'src/content');
+const DEV_SERVER_LOCK = path.resolve(process.cwd(), '.astro', 'lifenotes-dev-server.lock');
 const execFileAsync = promisify(execFile);
 const BOARDS = ['life', 'hotel', 'ai', 'auto', 'biology', 'finance', 'humanities'];
 const FIELDS = ['title', 'date', 'updated', 'category', 'subcategory', 'description', 'slug'];
@@ -24,6 +27,59 @@ const markdownProcessor = createMarkdownProcessor({
     handlers: { footnoteReference: footnoteReferenceWithLabel },
   },
 });
+
+function readDevServerLock() {
+  try {
+    return JSON.parse(fsSync.readFileSync(DEV_SERVER_LOCK, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function isProcessRunning(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error.code === 'EPERM';
+  }
+}
+
+function claimDevServerLock() {
+  fsSync.mkdirSync(path.dirname(DEV_SERVER_LOCK), { recursive: true });
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const handle = fsSync.openSync(DEV_SERVER_LOCK, 'wx');
+      try {
+        fsSync.writeFileSync(handle, `${JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() })}\n`);
+      } finally {
+        fsSync.closeSync(handle);
+      }
+      process.once('exit', () => {
+        const owner = readDevServerLock();
+        if (owner?.pid === process.pid) fsSync.rmSync(DEV_SERVER_LOCK, { force: true });
+      });
+      return;
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      const owner = readDevServerLock();
+      if (owner?.pid === process.pid) return;
+      if (isProcessRunning(owner?.pid)) {
+        throw new Error(`LifeNotes 开发服务已在运行（PID ${owner.pid}）。请复用现有服务，不要在同一项目启动第二个 Astro 开发服务。`);
+      }
+      fsSync.rmSync(DEV_SERVER_LOCK, { force: true });
+    }
+  }
+
+  throw new Error('无法创建 LifeNotes 开发服务锁');
+}
+
+function usesIsolatedVerificationCache(server) {
+  const serverRoot = typeof server.config?.root === 'string' ? path.resolve(server.config.root) : path.resolve(process.cwd());
+  return process.env.CMS_ISOLATED_DEV === '1' && serverRoot !== path.resolve(process.cwd());
+}
 
 function safePath(value) {
   if (typeof value !== 'string' || !value.endsWith('.md')) return null;
@@ -109,6 +165,12 @@ function yamlValue(value) {
   return JSON.stringify(String(value ?? ''));
 }
 
+function currentLocalDate() {
+  const date = new Date();
+  const pad = (value) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 function serializeMarkdown(frontmatter, body) {
   const lines = ['---'];
   for (const field of FIELDS) {
@@ -124,6 +186,11 @@ function validate(frontmatter, articlePath) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(frontmatter.date || ''))) errors.push('date 必须使用 YYYY-MM-DD');
   if (frontmatter.updated && !/^\d{4}-\d{2}-\d{2}$/.test(String(frontmatter.updated))) errors.push('updated 必须使用 YYYY-MM-DD');
   if (!safePath(articlePath)) errors.push('文章路径不在允许的 src/content 领域目录内');
+  const normalizedPath = String(articlePath || '').replaceAll('\\', '/');
+  const board = normalizedPath.split('/')[0];
+  const expected = canonicalArticlePath(board, frontmatter.category, frontmatter.subcategory, frontmatter.title);
+  if (!expected) errors.push('文件路径无法从领域、分类、子分类和标题生成');
+  else if (expected !== normalizedPath) errors.push('文件路径必须与领域、分类、子分类和标题对应');
   return errors;
 }
 
@@ -161,6 +228,8 @@ export default function localCms() {
   return {
     name: 'lifenotes-local-cms',
     configureServer(server) {
+      if (server.config.command === 'serve' && !server.config.server.middlewareMode && !usesIsolatedVerificationCache(server)) claimDevServerLock();
+
       // CMS writes trigger the dev server's content-change broadcast, which full-reloads the admin page itself.
       // Swallow update signals shortly after a self-write so saving does not refresh the editor.
       let lastSelfWriteAt = 0;
@@ -232,7 +301,8 @@ export default function localCms() {
             const target = safePath(data.path);
             const previous = data.previousPath ? safePath(data.previousPath) : null;
             if (data.previousPath && !previous) return json(response, 400, { error: '原文章路径不在允许的内容目录内' });
-            const errors = validate(data.frontmatter || {}, data.path);
+            const frontmatter = { ...(data.frontmatter || {}), updated: currentLocalDate() };
+            const errors = validate(frontmatter, data.path);
             if (errors.length) return json(response, 400, { errors });
             if (previous && previous !== target) {
               try {
@@ -252,9 +322,9 @@ export default function localCms() {
             } else {
               await fs.mkdir(path.dirname(target), { recursive: true });
             }
-            await fs.writeFile(target, serializeMarkdown(data.frontmatter, data.body || ''), 'utf8');
+            await fs.writeFile(target, serializeMarkdown(frontmatter, data.body || ''), 'utf8');
             lastSelfWriteAt = Date.now();
-            return json(response, 200, { ok: true, path: data.path });
+            return json(response, 200, { ok: true, path: data.path, frontmatter });
           }
           return json(response, 404, { error: 'Not found' });
         } catch (error) {

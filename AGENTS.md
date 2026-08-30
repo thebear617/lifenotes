@@ -8,6 +8,7 @@
 - 补充资料入口：`content/_inbox/video-transcripts/`
 - 构建命令：`npm run build`
 - 本地开发：`npm run dev`
+- Agent 浏览器验收：`npm run dev:verify -- --port <空闲端口>`
 - 本地预览构建结果：`npm run preview`
 
 ## 文件边界
@@ -27,6 +28,8 @@
 
 - 使用 `npm run dev` 启动后，仅通过 <http://localhost:4326/admin/> 访问本地 CMS；支持编辑已有文章、新建文章、预览 Markdown 和保存。
 - 保存操作由 `src/admin/local-cms.mjs` 直接写入 `src/content/`，仍须遵守正式内容的目录、frontmatter 和日期规范。
+- 日常编辑只保留一个普通 `npm run dev` 实例。Agent 需要浏览器验收时，必须运行 `npm run dev:verify -- --port <空闲端口>`，不能再启动第二个普通开发服务器。
+- `dev:verify` 会在系统临时目录复制 `src/`，并使用独立的 Astro 根目录、缓存和 `CMS_CONTENT_ROOT`；验收中 CMS 的保存与自动保存只会修改临时副本，不会改动仓库源内容。
 - 本地 CMS 只应运行在开发环境。`src/pages/admin.astro` 必须保持开发环境判断，生产构建会移除 `/admin`；不要把开发服务器或管理入口暴露到公网。
 - 不要为方便线上访问而增加 CMS 的公网接口、认证绕过或其他部署配置。
 
@@ -39,7 +42,7 @@
 | `date` | 文章创建 / 首发日期 | `YYYY-MM-DD` 字符串 | `"2026-08-05"` |
 | `updated` | 最近一次内容修改日期；省略时回退为 `date` | `YYYY-MM-DD` 字符串 | `"2026-08-05"` |
 
-- 内容更新后如需记录修改日期，需**手动同步** `updated` 为当天日期；不填写时使用 `date`。
+- 通过本地 CMS 保存时，`updated` 会自动写为当天日期，无需手动编辑；直接修改 Markdown 源文件时，如需记录修改日期，仍需手动同步该字段。
 - 推荐字段顺序：`title` → `description` → `category` → `subcategory` → `date` → `updated`（可选 `slug`）。
 - schema 定义位置：`src/content.config.ts`。
 

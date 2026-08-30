@@ -1,9 +1,10 @@
 {
   "name": "lifenotes",
   "type": "module",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "scripts": {
     "dev": "astro dev --port 4326",
+    "dev:verify": "node scripts/start-isolated-cms-dev.mjs",
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview"

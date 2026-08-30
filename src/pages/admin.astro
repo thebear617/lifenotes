@@ -1,6 +1,7 @@
 ---
 import 'katex/dist/katex.min.css';
 import boardCategories from '../data/board-categories.js';
+import contentPathSegments from '../data/content-paths.js';
 
 // The local CMS is intentionally available only from Astro's dev server.
 const isDev = import.meta.env.DEV;
@@ -715,12 +716,12 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
               </div>
             </section>
             <section class="field-card">
-              <div class="field-card-heading"><h3>文件与发布</h3><p>文件名决定保存位置，日期用于发布信息。</p></div>
+              <div class="field-card-heading"><h3>文件与发布</h3><p>领域、分类和子分类决定保存目录；文件名决定具体文件。</p></div>
               <div class="field-stack">
-                <label class="field-label"><span class="field-label-caption" id="file-label">文件路径（相对于 src/content/life/）</span><input id="file" /></label>
+                <label class="field-label"><span class="field-label-caption" id="file-label">文件路径</span><input id="folder-path" readonly aria-readonly="true" /></label>
                 <div class="field-row">
                   <label class="field-label"><span class="field-label-caption">发布日期 <span class="required">*</span></span><input id="date" type="date" /></label>
-                  <label class="field-label"><span class="field-label-caption">更新日期</span><input id="updated" type="date" /></label>
+                  <label class="field-label"><span class="field-label-caption">更新日期（保存时自动更新）</span><input id="updated" type="date" readonly aria-readonly="true" /></label>
                 </div>
                 <label class="field-label"><span class="field-label-caption">slug <span class="required">*</span></span><input id="slug" /></label>
               </div>
@@ -785,8 +786,30 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       </div>
     </section>
   </div>
-  <script define:vars={{ boardCategories }}>
+  <script define:vars={{ boardCategories, contentPathSegments }}>
     const $ = (id) => document.getElementById(id);
+    function articleFilenameFromTitle(value) {
+      const normalized = String(value || '')
+        .trim()
+        .replaceAll('\0', '')
+        .replaceAll('/', '／')
+        .replaceAll('\\', '＼')
+        .replace(/\.md$/i, '')
+        .trim();
+      return normalized && normalized !== '.' && normalized !== '..' ? `${normalized}.md` : null;
+    }
+    function contentDirectoryFor(board, category, subcategory) {
+      const categoryConfig = contentPathSegments[board]?.[category];
+      const subcategoryDirectory = categoryConfig?.subcategories?.[subcategory];
+      if (!categoryConfig || !subcategoryDirectory) return null;
+      return `${board}/${categoryConfig.directory}/${subcategoryDirectory}`;
+    }
+    function canonicalArticlePath(board, category, subcategory, title) {
+      const directory = contentDirectoryFor(board, category, subcategory);
+      if (!directory) return null;
+      const normalizedFilename = articleFilenameFromTitle(title);
+      return normalizedFilename ? `${directory}/${normalizedFilename}` : null;
+    }
     let articles = [];
     let selectedPath = '';
     let isDirty = false;
@@ -854,9 +877,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     function rememberEditorDraft() {
       if (!isDirty) return;
       const body = $('body');
-      const file = $('file')?.value.trim() || '';
-      const board = $('board')?.value || '';
-      const path = board && file ? `${board}/${file}` : '';
+      const path = editorArticlePath();
       if (!path) return;
       const frontmatter = Object.fromEntries(fields.map((field) => [field, $(field).value]));
       const snapshot = {
@@ -1631,8 +1652,13 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     }
 
     function updateFileLabel() {
-      const board = $('board').value || 'life';
-      $('file-label').textContent = `文件路径（相对于 src/content/${board}/）`;
+      const articlePath = editorArticlePath();
+      $('file-label').textContent = '文件路径（由领域、分类、子分类和标题自动生成）';
+      $('folder-path').value = articlePath ? `src/content/${articlePath}` : '';
+    }
+
+    function editorArticlePath() {
+      return canonicalArticlePath($('board').value, $('category').value, $('subcategory').value, $('title').value) || '';
     }
 
     function fill(item = {}) {
@@ -1641,18 +1667,17 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       draftVersion += 1;
       $('board').value = (item.path || 'life/').split('/')[0];
       syncCustomSelect('board');
-      updateFileLabel();
       refreshEditorCategories();
       setSelectValueIfExists($('category'), item.category);
       syncCustomSelect('category');
       refreshEditorSubcategories();
       setSelectValueIfExists($('subcategory'), item.subcategory);
       syncCustomSelect('subcategory');
-      $('file').value = item.path ? item.path.split('/').slice(1).join('/') : '新文章.md';
       fields.forEach((field) => {
         if (field === 'category' || field === 'subcategory') return;
         if ($(field)) $(field).value = item[field] ?? '';
       });
+      updateFileLabel();
       $('body').value = item.body || '';
       resetEditorHistory();
       preview();
@@ -1964,8 +1989,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       window.clearTimeout(autoSaveTimer);
       autoSaveTimer = 0;
       rememberEditorSession();
-      const board = $('board').value;
-      const file = $('file').value.trim();
+      const path = editorArticlePath();
       const previousPath = selectedPath;
       const frontmatter = Object.fromEntries(fields.map((field) => [field, $(field).value]));
       const body = $('body').value;
@@ -1974,13 +1998,14 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       setStatus('自动保存中…', 'saving');
       const promise = (async () => {
         try {
-          const res = await fetch('/admin/api/article', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ path: board + '/' + file, previousPath, frontmatter, body }) });
+          const res = await fetch('/admin/api/article', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ path, previousPath, frontmatter, body }) });
           const data = await res.json();
           if (!res.ok) throw new Error((data.errors || [data.error]).join('；'));
           const isCurrentDraft = draftVersion === currentDraftVersion;
           if (isCurrentDraft) {
             selectedPath = data.path;
             isDirty = false;
+            if (data.frontmatter?.updated) $('updated').value = data.frontmatter.updated;
             clearEditorDraft();
             updateDeleteButton();
             setStatus('已自动保存 · 刚刚', 'saved');
@@ -2047,8 +2072,9 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       updateFilterBadge();
       renderList();
     };
-    $('board').onchange = () => { updateFileLabel(); refreshEditorCategories(); markDirty(); };
-    $('category').onchange = () => { refreshEditorSubcategories(); markDirty(); };
+    $('board').onchange = () => { refreshEditorCategories(); updateFileLabel(); markDirty(); };
+    $('category').onchange = () => { refreshEditorSubcategories(); updateFileLabel(); markDirty(); };
+    $('subcategory').onchange = updateFileLabel;
     $('clear-library-filters').onclick = () => {
       $('filter-board').value = '';
       refreshFilterOptions();
@@ -2118,6 +2144,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       element.addEventListener('input', markDirty);
       if (element.matches('select')) element.addEventListener('change', markDirty);
     });
+    $('title').addEventListener('input', updateFileLabel);
     $('body').oninput = handleBodyInput;
     $('body').addEventListener('keydown', handleBodyKeydown);
     function scrollBodyToEdge(edge) {
