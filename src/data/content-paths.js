@@ -4,6 +4,7 @@ const contentPathSegments = {
     '饮食与厨房': { directory: 'food-and-kitchen', subcategories: { '厨房常识': 'kitchen-basics', '家常菜谱': 'home-cooking', '饮品调制': 'drinks', '食材选购': 'ingredient-shopping' } },
     '美食探店': { directory: 'food-discovery', subcategories: { '城市探店': 'city-guides', '全国合集': 'nationwide-collection', '美食评论': 'restaurant-reviews', '网红探店': 'viral-food-spots' } },
     '居家实用': { directory: 'home', subcategories: { '清洁妙招': 'cleaning-tips', '家居安全': 'home-safety', '网络通讯': 'internet-communications', '家具选购': 'furniture-shopping' } },
+    '校园': { directory: 'campus', subcategories: { '校园指南': 'campus-guide', '政策速查': 'policy-reference' } },
     '学习': { directory: 'learning', subcategories: { '学习计划': 'study-plan' } },
     '素材': { directory: 'materials', subcategories: { '速查对照': 'quick-reference', '省钱速查': 'saving-tips' } },
   },

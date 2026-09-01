@@ -1,11 +1,11 @@
 ---
-title: "网络通讯：校园宽带办理"
+title: "校园指南：西电宽带办理 SOP"
+date: "2026-07-30"
+updated: "2026-09-01"
+category: "校园"
+subcategory: "校园指南"
 description: "西电电信校园网宽带的办理流程、套餐价格、退网拆机退费全流程，以及注意事项。"
-date: 2026-07-30
-updated: 2026-07-30
-category: "居家实用"
-subcategory: "网络通讯"
-slug: campus-broadband-guide
+slug: "campus-broadband-guide"
 ---
 
 ## 一、如何办理校园网宽带
@@ -43,3 +43,5 @@ slug: campus-broadband-guide
 ## 三、注意事项
 
 校园网赠送的手机号码**尽量不要绑定任何应用的账号或网站账号**，避免销户后账号无法找回。
+
+
