@@ -445,7 +445,9 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     .preview li + li { margin-top: .35rem; }
     .preview .task-list-item > input[type="checkbox"] { display: inline-block; width: 1rem; min-width: 1rem; max-width: 1rem; height: 1rem; margin: 0 .45rem 0 0; padding: 0; border: 0; border-radius: 0; background: transparent; vertical-align: -.12em; accent-color: #c2410c; }
     .preview .is-sync-target { border-radius: 4px; background: #fff1e7; box-shadow: 0 0 0 2px rgba(194, 65, 12, .12); }
-    .preview blockquote { margin: .8rem 0; padding: .6rem .9rem; border-left: 3px solid #f6b17a; background: #fff4e8; color: #5b5149; }
+    .preview blockquote { margin: .8rem 0; padding: .65rem 1rem; border: 1px solid rgba(194, 65, 12, .14); border-left: 3px solid #c2410c; border-radius: 0 8px 8px 0; background: #fffaf6; color: #5b5149; line-height: 1.7; }
+    .preview blockquote > p { margin: 0; }
+    .preview blockquote > p + p { margin-top: .6rem; }
     .preview .table-scroll { max-width: 100%; margin: .9rem 0; overflow-x: auto; }
     .preview .table-scroll table { margin: 0; }
     .preview table { width: 100%; min-width: max-content; border-collapse: collapse; font-size: .86rem; }
