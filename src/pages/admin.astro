@@ -728,7 +728,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
                 <label class="field-label"><span class="field-label-caption" id="file-label">文件路径</span><input id="folder-path" readonly aria-readonly="true" /></label>
                 <div class="field-row">
                   <label class="field-label"><span class="field-label-caption">发布日期 <span class="required">*</span></span><input id="date" type="date" /></label>
-                  <label class="field-label"><span class="field-label-caption">更新日期（保存时自动更新）</span><input id="updated" type="date" readonly aria-readonly="true" /></label>
+                  <label class="field-label"><span class="field-label-caption">更新时间（保存时自动更新）</span><input id="updated" type="text" readonly aria-readonly="true" placeholder="YYYY-MM-DD HH:mm" /></label>
                 </div>
                 <label class="field-label"><span class="field-label-caption">slug <span class="required">*</span></span><input id="slug" /></label>
               </div>

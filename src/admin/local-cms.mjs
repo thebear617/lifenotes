@@ -171,6 +171,12 @@ function currentLocalDate() {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+function currentLocalDateTime() {
+  const date = new Date();
+  const pad = (value) => String(value).padStart(2, '0');
+  return `${currentLocalDate()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function serializeMarkdown(frontmatter, body) {
   const lines = ['---'];
   for (const field of FIELDS) {
@@ -184,7 +190,7 @@ function validate(frontmatter, articlePath) {
   const errors = [];
   if (!frontmatter.title?.trim()) errors.push('title 不能为空');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(frontmatter.date || ''))) errors.push('date 必须使用 YYYY-MM-DD');
-  if (frontmatter.updated && !/^\d{4}-\d{2}-\d{2}$/.test(String(frontmatter.updated))) errors.push('updated 必须使用 YYYY-MM-DD');
+  if (frontmatter.updated && !/^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2})?$/.test(String(frontmatter.updated))) errors.push('updated 必须使用 YYYY-MM-DD 或 YYYY-MM-DD HH:mm');
   if (!safePath(articlePath)) errors.push('文章路径不在允许的 src/content 领域目录内');
   const normalizedPath = String(articlePath || '').replaceAll('\\', '/');
   const board = normalizedPath.split('/')[0];
@@ -301,7 +307,7 @@ export default function localCms() {
             const target = safePath(data.path);
             const previous = data.previousPath ? safePath(data.previousPath) : null;
             if (data.previousPath && !previous) return json(response, 400, { error: '原文章路径不在允许的内容目录内' });
-            const frontmatter = { ...(data.frontmatter || {}), updated: currentLocalDate() };
+            const frontmatter = { ...(data.frontmatter || {}), updated: currentLocalDateTime() };
             const errors = validate(frontmatter, data.path);
             if (errors.length) return json(response, 400, { errors });
             if (previous && previous !== target) {

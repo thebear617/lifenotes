@@ -11,11 +11,15 @@ function normalizeDateValue(value: unknown) {
 }
 
 const dateString = z.preprocess(normalizeDateValue, z.string());
+const updatedAtString = z.preprocess(
+  normalizeDateValue,
+  z.string().regex(/^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2})?$/, 'updated 必须使用 YYYY-MM-DD 或 YYYY-MM-DD HH:mm'),
+);
 
 const commonNoteSchema = z.object({
   title: z.string(),
   date: dateString,
-  updated: dateString.optional(),
+  updated: updatedAtString.optional(),
   category: z.string(),
   subcategory: z.string(),
   description: z.string().default(''),

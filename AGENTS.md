@@ -35,14 +35,14 @@
 
 ## Frontmatter 规范
 
-每篇 `src/content/<领域>/*.md` 的 frontmatter **必须**包含 `date` 字段；`updated` 可以省略，`src/content.config.ts` 会在解析时将其回退为 `date`。日期统一按 `YYYY-MM-DD` 字符串处理。
+每篇 `src/content/<领域>/*.md` 的 frontmatter **必须**包含 `date` 字段；`updated` 可以省略，`src/content.config.ts` 会在解析时将其回退为 `date`。`date` 统一按 `YYYY-MM-DD` 字符串处理；`updated` 支持 `YYYY-MM-DD` 或 `YYYY-MM-DD HH:mm`（本地时间，分钟级），列表排序按 `updated` 精确到分钟。
 
 | 字段 | 含义 | 格式 | 示例 |
 |------|------|------|------|
 | `date` | 文章创建 / 首发日期 | `YYYY-MM-DD` 字符串 | `"2026-08-05"` |
-| `updated` | 最近一次内容修改日期；省略时回退为 `date` | `YYYY-MM-DD` 字符串 | `"2026-08-05"` |
+| `updated` | 最近一次内容修改时间；省略时回退为 `date` | `YYYY-MM-DD` 或 `YYYY-MM-DD HH:mm` 字符串 | `"2026-08-05 21:30"` |
 
-- 通过本地 CMS 保存时，`updated` 会自动写为当天日期，无需手动编辑；直接修改 Markdown 源文件时，如需记录修改日期，仍需手动同步该字段。
+- 通过本地 CMS 保存时，`updated` 会自动写为当天的 `YYYY-MM-DD HH:mm`，无需手动编辑；直接修改 Markdown 源文件时，如需记录修改时间，仍需手动同步该字段。
 - 推荐字段顺序：`title` → `description` → `category` → `subcategory` → `date` → `updated`（可选 `slug`）。
 - schema 定义位置：`src/content.config.ts`。
 
@@ -55,7 +55,7 @@ description: "这是一篇示例文章。"
 category: "tech"
 subcategory: "astro"
 date: "2026-08-05"
-updated: "2026-08-05"
+updated: "2026-08-05 21:30"
 ---
 ```
 

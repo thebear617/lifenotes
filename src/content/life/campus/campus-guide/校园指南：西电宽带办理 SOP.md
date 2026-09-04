@@ -1,7 +1,7 @@
 ---
 title: "校园指南：西电宽带办理 SOP"
 date: "2026-07-30"
-updated: "2026-09-01"
+updated: "2026-09-01 16:55"
 category: "校园"
 subcategory: "校园指南"
 description: "西电电信校园网宽带的办理流程、套餐价格、退网拆机退费全流程，以及注意事项。"
