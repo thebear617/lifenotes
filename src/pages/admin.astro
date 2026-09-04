@@ -28,12 +28,12 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     .admin {
       display: grid;
       grid-template-rows: auto minmax(0, 1fr);
-      gap: 6px;
-      max-width: 1600px;
+      gap: 8px;
+      max-width: 1720px;
       height: 100vh;
       min-height: 720px;
       margin: auto;
-      padding: 9px 16px 16px;
+      padding: 10px 16px 16px;
     }
     .topbar,
     .panel {
@@ -125,7 +125,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
 
     .workspace {
       display: grid;
-      grid-template-columns: minmax(300px, 356px) minmax(0, 1fr);
+      grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
       gap: 6px;
       min-height: 0;
     }
@@ -280,7 +280,9 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     .filter-modal-footer .filter-done-button { min-height: 36px; padding: 0 16px; border-color: #c2410c; color: #fff; background: #c2410c; }
     .filter-modal-footer .filter-done-button:hover { border-color: #9a3412; color: #fff; background: #9a3412; }
     .toolbar { gap: 8px; margin-bottom: 16px; }
-    .toolbar button:first-child { flex: 1 1 auto; }
+    .toolbar button { flex: 1; min-width: 0; }
+    #field-toggle .tool-icon { display: inline-block; margin-right: 5px; transition: transform .15s ease; }
+    #field-toggle.is-open .tool-icon { transform: rotate(180deg); }
 
     button {
       cursor: pointer;
@@ -646,7 +648,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         </section>
         <div class="toolbar">
           <button id="new" type="button"><span aria-hidden="true">＋</span> 新建文章</button>
-          <button id="refresh" type="button"><span aria-hidden="true">⟳</span> 刷新</button>
+          <button id="field-toggle" type="button" aria-expanded="false" aria-controls="fields"><span class="tool-icon" aria-hidden="true">▾</span><span class="field-toggle-label">展开字段</span></button>
         </div>
         <div id="list" class="article-list"></div>
       </aside>
@@ -662,7 +664,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
           </div>
         </div>
 
-        <div class="fields">
+        <div class="fields" id="fields" hidden>
           <div class="field-grid field-card-grid">
             <section class="field-card">
               <div class="field-card-heading"><h3>内容核心</h3><p>标题和摘要会展示在文章列表与详情页。</p></div>
@@ -1928,6 +1930,20 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       $('filter-badge').textContent = String(count);
       $('filter-toggle').classList.toggle('active', count > 0);
     }
+
+    function toggleFieldsGroup() {
+      const panel = $('fields');
+      const button = $('field-toggle');
+      if (!panel || !button) return;
+      const expanded = !panel.hidden;
+      panel.hidden = expanded;
+      const open = !expanded;
+      button.setAttribute('aria-expanded', String(open));
+      button.classList.toggle('is-open', open);
+      const label = button.querySelector('.field-toggle-label');
+      if (label) label.textContent = open ? '收起字段' : '展开字段';
+    }
+
     async function loadList() {
       try {
         const res = await fetch('/admin/api/articles');
@@ -2044,7 +2060,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       setStatus('新建模式', 'neutral');
       $('title').focus();
     };
-    $('refresh').onclick = loadList;
+    $('field-toggle').onclick = toggleFieldsGroup;
     $('filter').oninput = renderList;
     document.querySelectorAll('.sort-option').forEach((button) => {
       button.onclick = () => {
