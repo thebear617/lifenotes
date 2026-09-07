@@ -2059,7 +2059,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         const res = await fetch('/admin/api/articles');
         const data = await res.json();
         articles = data.articles || [];
-        $('article-count').textContent = `共 ${articles.length} 篇文章`;
+        $('article-count').textContent = `共 0 / ${articles.length} 篇文章`;
         refreshFilterOptions();
         updateFilterBadge();
         renderList();
@@ -2084,6 +2084,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         const active = article.path === selectedPath ? ' active' : '';
         return `<button class="article${active}" data-path="${encodeURIComponent(article.path)}" aria-pressed="${article.path === selectedPath}"><strong>${escapeHtml(article.title)}</strong><small>${escapeHtml(article.path)}</small><span class="article-meta"><span>${escapeHtml(meta || '未分类')}</span><span>${escapeHtml(article.date || '未设置日期')}</span></span></button>`;
       }).join('') || '<p class="count">暂无匹配文章</p>';
+      $('article-count').textContent = `共 ${visibleArticles.length} / ${articles.length} 篇文章`;
       document.querySelectorAll('.article').forEach((button) => { button.onclick = () => loadArticle(decodeURIComponent(button.dataset.path)); });
     }
 
@@ -2303,8 +2304,5 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       restoreEditorPosition(savedSession);
     });
   </script>
-  <script>
-    import { mountAgentChat } from '../admin/agent-chat.mjs';
-    mountAgentChat({ entrySite: 'lifenotes' });
-  </script>
+  <script type="module" src="/src/admin/agent-chat.mjs" data-agent-entry-site="lifenotes"></script>
 </> : <p>本地 CMS 仅在 Astro 开发服务器中可用。</p>}
