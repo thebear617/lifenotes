@@ -18,7 +18,7 @@ import { canonicalArticlePath } from '../data/content-paths.js';
 const ROOT = process.env.CMS_CONTENT_ROOT ? path.resolve(process.env.CMS_CONTENT_ROOT) : path.resolve(process.cwd(), 'src/content');
 const DEV_SERVER_LOCK = path.resolve(process.cwd(), '.astro', 'lifenotes-dev-server.lock');
 const execFileAsync = promisify(execFile);
-const BOARDS = ['life', 'hotel', 'ai', 'auto', 'biology', 'finance', 'humanities'];
+const BOARDS = ['life', 'service', 'industry', 'humanities', 'notes'];
 const FIELDS = ['title', 'date', 'updated', 'category', 'subcategory', 'description', 'slug'];
 const markdownProcessor = createMarkdownProcessor({
   remarkPlugins: [remarkFootnoteIndent, remarkMath],

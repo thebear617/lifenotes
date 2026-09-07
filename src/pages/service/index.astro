@@ -5,7 +5,7 @@ import ListExplorer from '../../components/ListExplorer.astro';
 import { categoryForEntry } from '../../data/content.js';
 
 const base = import.meta.env.BASE_URL;
-const entries = await getCollection('hotel');
+const entries = await getCollection('service');
 const items = entries.map((entry) => ({
   slug: entry.data.slug || entry.id,
   title: entry.data.title,
@@ -14,11 +14,11 @@ const items = entries.map((entry) => ({
   updated: entry.data.updated,
   category: categoryForEntry(entry),
   subcategory: entry.data.subcategory,
-  href: `${base}hotel/${entry.data.slug || entry.id}/`,
+  href: `${base}service/${entry.data.slug || entry.id}/`,
 }));
 ---
 
-<Layout title="服务业" currentBoard="hotel">
+<Layout title="服务业" currentBoard="service">
   <h2 class="view-title">服务业</h2>
   <p class="view-sub">酒店 · 餐饮连锁 · 物流 · 零售</p>
   <ListExplorer entries={items} />

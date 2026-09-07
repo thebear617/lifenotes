@@ -1,3 +1,5 @@
 ---
-return Astro.redirect(import.meta.env.BASE_URL + 'ai/', 301);
+import boards from '../data/boards.js';
+const landing = boards.find((board) => board.id === 'life') ?? boards[0];
+return Astro.redirect(import.meta.env.BASE_URL + landing.id + '/', 301);
 ---

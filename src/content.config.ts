@@ -59,10 +59,8 @@ function createBoardCollection(base: string, categories: CategoryMap) {
 
 export const collections = {
   life: createBoardCollection('./src/content/life', boardCategories.life),
-  hotel: createBoardCollection('./src/content/hotel', boardCategories.hotel),
-  ai: createBoardCollection('./src/content/ai', boardCategories.ai),
-  auto: createBoardCollection('./src/content/auto', boardCategories.auto),
-  biology: createBoardCollection('./src/content/biology', boardCategories.biology),
-  finance: createBoardCollection('./src/content/finance', boardCategories.finance),
+  service: createBoardCollection('./src/content/service', boardCategories.service),
+  industry: createBoardCollection('./src/content/industry', boardCategories.industry),
   humanities: createBoardCollection('./src/content/humanities', boardCategories.humanities),
+  notes: createBoardCollection('./src/content/notes', boardCategories.notes),
 };
