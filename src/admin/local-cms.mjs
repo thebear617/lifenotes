@@ -236,17 +236,27 @@ export default function localCms() {
     configureServer(server) {
       if (server.config.command === 'serve' && !server.config.server.middlewareMode && !usesIsolatedVerificationCache(server)) claimDevServerLock();
 
-      // CMS writes trigger the dev server's content-change broadcast, which full-reloads the admin page itself.
-      // Swallow update signals shortly after a self-write so saving does not refresh the editor.
-      let lastSelfWriteAt = 0;
+      // Content writes — from the CMS, an Agent session, or a manual editor edit —
+      // trigger the dev server's content-change broadcast, which full-reloads the browser.
+      // Watch the content roots ourselves and swallow update signals shortly after any
+      // content write so saving or Agent edits never refresh the page.
+      let lastContentWriteAt = 0;
       const SUPPRESS_WINDOW_MS = 2500;
+      const markContentWrite = (filePath) => {
+        if (!filePath) return;
+        const resolved = path.resolve(filePath);
+        if (resolved === ROOT || resolved.startsWith(`${ROOT}${path.sep}`)) lastContentWriteAt = Date.now();
+      };
+      server.watcher.on('add', markContentWrite);
+      server.watcher.on('change', markContentWrite);
+      server.watcher.on('unlink', markContentWrite);
       const hot = server.hot || server.ws;
       if (hot) {
         const originalSend = hot.send.bind(hot);
         hot.send = (...args) => {
           const payload = typeof args[0] === 'string' ? { type: args[0] } : (args[0] || {});
-          if ((payload.type === 'full-reload' || payload.type === 'update') && Date.now() - lastSelfWriteAt < SUPPRESS_WINDOW_MS) {
-            console.log(`[local-cms] swallowed ${payload.type} broadcast caused by CMS save`);
+          if ((payload.type === 'full-reload' || payload.type === 'update') && Date.now() - lastContentWriteAt < SUPPRESS_WINDOW_MS) {
+            console.log(`[local-cms] swallowed ${payload.type} broadcast caused by content change`);
             return;
           }
           return originalSend(...args);
@@ -299,7 +309,7 @@ export default function localCms() {
               throw error;
             }
             await moveToTrash(absolutePath);
-            lastSelfWriteAt = Date.now();
+            lastContentWriteAt = Date.now();
             return json(response, 200, { ok: true, path: articlePath });
           }
           if (request.method === 'POST' && url.pathname === '/article') {
@@ -329,7 +339,7 @@ export default function localCms() {
               await fs.mkdir(path.dirname(target), { recursive: true });
             }
             await fs.writeFile(target, serializeMarkdown(frontmatter, data.body || ''), 'utf8');
-            lastSelfWriteAt = Date.now();
+            lastContentWriteAt = Date.now();
             return json(response, 200, { ok: true, path: data.path, frontmatter });
           }
           return json(response, 404, { error: 'Not found' });
