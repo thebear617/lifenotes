@@ -1,5 +1,6 @@
 import { unified } from '@astrojs/markdown-remark';
 import { defineConfig } from 'astro/config';
+import remarkBreaks from 'remark-breaks';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import fs from 'node:fs/promises';
@@ -28,7 +29,7 @@ export default defineConfig({
   }],
   markdown: {
     processor: unified({
-      remarkPlugins: [remarkFootnoteIndent, remarkMath],
+      remarkPlugins: [remarkFootnoteIndent, remarkBreaks, remarkMath],
       rehypePlugins: [rehypeKatex, rehypeMark, rehypeTableWrap, rehypePopover],
       remarkRehype: {
         handlers: { footnoteReference: footnoteReferenceWithLabel },

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { createMarkdownProcessor } from '@astrojs/markdown-remark';
+import remarkBreaks from 'remark-breaks';
 import remarkMath from 'remark-math';
 import remarkFootnoteIndent from '../plugins/remark-footnote-indent.mjs';
 import rehypeKatex from 'rehype-katex';
@@ -21,7 +22,7 @@ const execFileAsync = promisify(execFile);
 const BOARDS = ['life', 'service', 'industry', 'humanities', 'notes'];
 const FIELDS = ['title', 'date', 'updated', 'category', 'subcategory', 'description', 'slug'];
 const markdownProcessor = createMarkdownProcessor({
-  remarkPlugins: [remarkFootnoteIndent, remarkMath],
+  remarkPlugins: [remarkFootnoteIndent, remarkBreaks, remarkMath],
   rehypePlugins: [rehypeKatex, rehypeMark, rehypeTableWrap, rehypePopover, rehypeSourcePosition],
   remarkRehype: {
     handlers: { footnoteReference: footnoteReferenceWithLabel },

@@ -989,7 +989,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     const immersiveMedia = window.matchMedia(IMMERSIVE_WIDE_QUERY);
     let editorTocItems = [];
     let editorTocActiveIndex = -1;
-    let editorTocOpen = immersiveMedia.matches;
+    let editorTocOpen = false;
     let editorTocScrollFrame = 0;
     const editorHistoryLimit = 100;
     const AUTO_SAVE_DELAY = 900;
@@ -1105,7 +1105,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
         try { sessionStorage.setItem(IMMERSIVE_SESSION_KEY, String(enabled)); } catch { /* sessionStorage may be unavailable. */ }
       }
       if (focus) (enabled ? $('body') : button).focus({ preventScroll: true });
-      if (enabled) editorTocOpen = immersiveMedia.matches;
+      editorTocOpen = enabled;
       updateEditorTocVisibility();
     }
 
@@ -1669,7 +1669,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     function updateEditorTocVisibility() {
       const toc = $('editor-toc');
       if (!toc) return;
-      const visible = document.body.classList.contains('is-immersive') && editorTocItems.length > 0;
+      const visible = editorTocItems.length > 0;
       toc.hidden = !visible;
       toc.classList.toggle('is-collapsed', visible && !editorTocOpen);
       const toggle = $('editor-toc-toggle');
@@ -2458,8 +2458,8 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     $('filter-backdrop').onclick = closeFilterModal;
     document.addEventListener('click', closeLibraryMenus);
     document.addEventListener('click', () => closeCustomSelects());
-    immersiveMedia.addEventListener('change', (event) => {
-      editorTocOpen = event.matches;
+    immersiveMedia.addEventListener('change', () => {
+      editorTocOpen = document.body.classList.contains('is-immersive');
       updateEditorTocVisibility();
     });
     $('editor-toc-toggle').onclick = () => {

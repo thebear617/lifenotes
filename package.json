@@ -1,7 +1,7 @@
 {
   "name": "lifenotes",
   "type": "module",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "scripts": {
     "dev": "astro dev --port 4326",
     "dev:verify": "node scripts/start-isolated-cms-dev.mjs",
@@ -14,6 +14,7 @@
     "astro": "^7.2.0",
     "katex": "^0.18.1",
     "rehype-katex": "^7.0.1",
+    "remark-breaks": "^4.0.0",
     "remark-math": "^6.0.0"
   }
 }
