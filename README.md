@@ -14,13 +14,16 @@
 src/
 ├── content.config.ts  # Content Layer 内容集合配置
 ├── content/           # 正式 Markdown 内容
-├── data/boards.js    # 领域导航配置
-├── data/board-categories.js # 领域分类配置
-├── layouts/          # 页面布局
-├── pages/            # 首页、领域页、详情页
-└── styles/           # 全站样式
+├── data/boards.js     # 领域导航配置
+├── data/board-categories.js # 7 个领域的一级、二级分类配置
+├── admin/local-cms.mjs # 本地 CMS 中间件：读取 / 校验 / 写入 src/content/
+├── pages/admin.astro  # 本地 CMS 管理页（仅开发环境）
+├── layouts/           # 页面布局
+├── pages/             # 首页、领域页、详情页
+└── styles/            # 全站样式
 content/
-└── _inbox/           # 原始转写与待整理资料
+├── <领域>/            # 历史资料与原始整理源
+└── _inbox/            # 原始转写与待整理资料
 ```
 
 正式内容目录使用两层英文目录表达 `category` 和 `subcategory`，最内层文件名以二级分类的中文名作为前缀，例如：
@@ -48,7 +51,17 @@ GitHub Pages 子路径构建：
 SITE_BASE=/lifenotes/ npm run build
 ```
 
-Astro 通过 `src/content.config.ts` 中的 `glob` loader 读取 `src/content/` 的 Markdown 并生成静态页面。新增内容时，在对应领域目录添加 Markdown 文件，填写 `title`、`date`、`category`、`subcategory` 和 `slug` 等 frontmatter；`updated` 可以省略，构建时会回退到 `date`。重命名已有文章时保留显式 `slug`，以维持旧地址。
+Astro 通过 `src/content.config.ts` 中的 `glob` loader 读取 `src/content/` 的 Markdown 并生成静态页面。重命名已有文章时保留显式 `slug`，以维持旧地址。
+
+## Frontmatter 规范
+
+每篇 `src/content/<领域>/*.md` 必须包含 `date`（`YYYY-MM-DD` 字符串）；`updated` 可省略，`src/content.config.ts` 解析时回退为 `date`，支持 `YYYY-MM-DD` 或 `YYYY-MM-DD HH:mm`（本地时间，分钟级），列表按 `updated` 精确到分钟排序。
+
+推荐字段顺序：`title` → `description` → `category` → `subcategory` → `date` → `updated`（可选 `slug`）。
+
+正式内容使用 `src/content/<领域>/<一级分类英文>/<二级分类英文>/` 两层目录，最内层文件名以二级分类中文名作前缀；目录只影响本地组织，详情页地址由 `slug` 决定。
+
+通过本地 CMS 保存时 `updated` 会自动写为当天 `YYYY-MM-DD HH:mm`；直接改 Markdown 源文件时需手动同步该字段。
 
 ## 本地 CMS
 
@@ -70,17 +83,20 @@ npm run dev:verify -- --port 4402
 
 该命令会把 `src/` 复制到系统临时目录，并使用独立的 Astro 缓存；验收中 CMS 的保存和自动保存只写入该副本，不会改动真实 `src/content/`。不要为了验收启动第二个普通 `npm run dev`。
 
-本地 CMS 仅在 Astro 开发服务器中可用，生产构建会移除 `/admin`，不会将管理页面发布到站点。不要把开发服务器或 `/admin/` 暴露到公网。
+本地 CMS 仅在 Astro 开发服务器中可用，生产构建会移除 `/admin`，不会将管理页面发布到站点。不要把开发服务器或 `/admin/` 暴露到公网，也不要为线上访问而增加 CMS 的公网接口、认证绕过或其他部署配置。
 
 ## 视频进入 Life Notes
 
-共享转写 skill 位于 `~/.claude/skills/bili-audio-transcribe/`。原始 SRT、TXT 和 Markdown 转写默认写入：
+处理 B 站 / 小红书 / 抖音视频时，先读并遵循 `~/.claude/skills/bili-audio-transcribe/SKILL.md`，调用共享 wrapper：
 
-```text
-content/_inbox/video-transcripts/
+```bash
+/Users/mokaiche/.claude/skills/bili-audio-transcribe/scripts/bili-trans "<url-or-bv>" \
+  --proxy http://127.0.0.1:7897 \
+  --backend mlx \
+  --model large-v3-turbo
 ```
 
-整理后将正式记录写入 `src/content/<领域>/`，不把原始转写直接作为网页内容发布。
+原始 SRT、TXT 和 Markdown 转写默认写入 `content/_inbox/video-transcripts/`，不直接编译；整理后把正式记录写入 `src/content/<领域>/`，不把原始转写直接作为网页内容发布。MLX 转写需在 sandbox 外运行以访问 Apple Silicon Metal。
 
 ## 部署
 
