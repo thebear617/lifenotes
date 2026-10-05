@@ -23,7 +23,12 @@ console.log(`LifeNotes 隔离验收服务工作目录：${verificationRoot}`);
 const astro = path.join(projectRoot, 'node_modules', '.bin', 'astro');
 const child = spawn(astro, ['dev', '--root', verificationRoot, ...process.argv.slice(2)], {
   cwd: projectRoot,
-  env: { ...process.env, CMS_CONTENT_ROOT: path.join(verificationRoot, 'src', 'content'), CMS_ISOLATED_DEV: '1' },
+  env: {
+    ...process.env,
+    CMS_CONTENT_ROOT: path.join(verificationRoot, 'src', 'content'),
+    CMS_TRASH_ROOT: path.join(verificationRoot, '.trash'),
+    CMS_ISOLATED_DEV: '1',
+  },
   stdio: 'inherit',
 });
 

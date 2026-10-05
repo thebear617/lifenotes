@@ -1,0 +1,393 @@
+---
+import { dateTimestamp, formatDate } from '../data/content.js';
+import { coverRatio, coverTheme, coverTitleParts } from '../data/cover-themes.js';
+
+interface WallEntry {
+  slug: string;
+  title: string;
+  description?: string;
+  date: string | null;
+  updated: string | null;
+  category: string;
+  subcategory?: string;
+  href: string;
+}
+
+interface NavBoard {
+  id: string;
+  name: string;
+  icon?: string;
+}
+
+interface Props {
+  entries: WallEntry[];
+  board: NavBoard;
+  boards: NavBoard[];
+  base: string;
+}
+
+const { entries, board, boards, base } = Astro.props;
+
+const visibleEntries = [...entries]
+  .filter((entry) => entry !== null)
+  .sort((a, b) => {
+    const ta = dateTimestamp(a.updated || a.date);
+    const tb = dateTimestamp(b.updated || b.date);
+    return tb - ta || a.title.localeCompare(b.title, 'zh-CN');
+  });
+
+const categoryCounts = new Map<string, number>();
+for (const entry of visibleEntries) {
+  categoryCounts.set(entry.category, (categoryCounts.get(entry.category) || 0) + 1);
+}
+const categories = [...categoryCounts.keys()].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+
+const cards = visibleEntries.map((entry) => {
+  const theme = coverTheme(entry.category);
+  const parts = coverTitleParts(entry.title, entry.subcategory);
+  return {
+    ...entry,
+    theme,
+    parts,
+    ratio: coverRatio(entry.slug || entry.title),
+    dateLabel: formatDate(entry.date),
+    dateTs: dateTimestamp(entry.date),
+    updatedTs: dateTimestamp(entry.updated || entry.date),
+  };
+});
+
+const hrefFor = (item: NavBoard) => `${base}${item.id}/`;
+const mobileBoardLabels: Record<string, string> = {
+  humanities: '人文',
+  industry: '工业',
+  life: '生活',
+  service: '服务',
+  notes: '随笔',
+};
+---
+
+<section class="note-wall-page" data-note-wall>
+  <header class="note-wall-header">
+    <div class="wall-mobile-topbar">
+      <a class="wall-mobile-home" href={base} aria-label="返回常识笔记首页">
+        <svg class="wall-mobile-home-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M5 4.5h6.2a3 3 0 0 1 2.8 3v12a3.7 3.7 0 0 0-3-1.5H5a2 2 0 0 1-2-2v-9.5a2 2 0 0 1 2-2Z"></path>
+          <path d="M19 4.5h-3.2a3 3 0 0 0-2.8 3v12a3.7 3.7 0 0 1 3-1.5H19a2 2 0 0 0 2-2v-9.5a2 2 0 0 0-2-2Z"></path>
+        </svg>
+      </a>
+
+      <nav class="wall-tabs" aria-label="笔记领域">
+        {boards.map((item) => (
+          <a
+            class:list={['wall-tab', { 'is-active': item.id === board.id }]}
+            href={hrefFor(item)}
+            data-mobile-label={mobileBoardLabels[item.id] || item.name}
+            aria-current={item.id === board.id ? 'page' : undefined}
+          >
+            {item.name}
+          </a>
+        ))}
+      </nav>
+
+      <button class="wall-mobile-search-toggle" type="button" aria-label="打开搜索" aria-expanded="false" aria-controls="wall-search-panel" data-mobile-search-toggle>
+        <svg class="wall-mobile-search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.7" cy="10.7" r="6.4"></circle><path d="m15.6 15.6 4.1 4.1"></path></svg>
+        <span class="wall-mobile-search-label">取消</span>
+      </button>
+      <div class="wall-search-frame" id="wall-search-panel">
+        <div class="wall-search-main">
+          <svg class="wall-search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.7" cy="10.7" r="6.4"></circle><path d="m15.6 15.6 4.1 4.1"></path></svg>
+          <input
+            type="search"
+            class="wall-search-input"
+            placeholder="搜索标题、描述或分类"
+            autocomplete="off"
+            aria-label="搜索当前领域"
+            data-list-search-input
+          />
+          <button class="wall-search-action" type="button" aria-label="搜索" data-list-search-action>
+            <svg class="wall-search-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.7" cy="10.7" r="6.4"></circle><path d="m15.6 15.6 4.1 4.1"></path></svg>
+            <span class="wall-search-action-clear" aria-hidden="true">✕</span>
+          </button>
+        </div>
+        <div class="wall-search-footer">
+          <span class="wall-search-divider" aria-hidden="true"></span>
+          <span class="wall-search-chip">{board.name}</span>
+          <span class="wall-search-hit" data-wall-hit>当前命中 {cards.length} 篇笔记</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="wall-filter-row">
+      {categories.length > 0 && (
+        <div class="wall-pills" role="group" aria-label="一级分类">
+          <button class="wall-pill is-active" type="button" data-pill="" aria-pressed="true">
+            全部<small>{cards.length}</small>
+          </button>
+          {categories.map((category) => (
+            <button class="wall-pill" type="button" data-pill={category} aria-pressed="false">
+              {category}<small>{categoryCounts.get(category)}</small>
+            </button>
+          ))}
+        </div>
+      )}
+      <button class="wall-pill wall-pill--sort" type="button" data-float-toggle="sort" aria-label="排序">
+        <span class="wall-pill-sort-icon" aria-hidden="true">↕</span><span class="wall-pill-sort-label">排序</span>
+      </button>
+    </div>
+  </header>
+
+  {cards.length > 0 ? (
+    <div class="note-wall" data-record-list>
+      {cards.map((card) => (
+        <a
+          class="note-card"
+          href={card.href}
+          data-title={card.title}
+          data-desc={card.description || ''}
+          data-category={card.category}
+          data-subcategory={card.subcategory || ''}
+          data-date-ts={card.dateTs}
+          data-updated-ts={card.updatedTs}
+        >
+          <div
+            class="note-cover"
+            style={`--cover-bg:${card.theme.bg};--cover-ink:${card.theme.ink};--cover-accent:${card.theme.accent};--cover-quote:${card.theme.quote};--cover-ratio:${card.ratio}`}
+          >
+            <span class="note-cover-quote" aria-hidden="true">“</span>
+            <strong class="note-cover-title">
+              {card.parts.lead && <span class="note-cover-line note-cover-line--lead">{card.parts.lead}</span>}
+              <span class="note-cover-line">{card.parts.main}</span>
+            </strong>
+            <span class="note-cover-rule" aria-hidden="true"></span>
+          </div>
+          <div class="note-card-body">
+            <strong class="note-card-title">{card.title}</strong>
+            <div class="note-card-tags">
+              <span class="note-card-category">{card.category}</span>
+              {card.subcategory && <span class="note-card-sub">{card.subcategory}</span>}
+            </div>
+            <span class="note-card-date">{card.dateLabel}</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  ) : (
+    <div class="placeholder-box">
+      <strong>暂无可发布记录</strong>
+      <span>该领域已接入导航，后续有正式记录后会自动生成详情页。</span>
+    </div>
+  )}
+
+  <section class="empty-state" data-empty-state style="display:none">没有匹配的记录</section>
+
+  <div class="float-panel" data-float-panel="sort" hidden>
+    <div class="float-panel-header">
+      <span class="float-panel-title">排序</span>
+      <button class="float-panel-close" type="button" data-float-close="sort" aria-label="关闭排序">✕</button>
+    </div>
+    <div class="float-panel-body">
+      <div class="sort-options" data-sort-options>
+        <button class="sort-option on" type="button" data-sort="updated-desc">
+          <span class="sort-option-icon">↓</span>
+          <span class="sort-option-label">最新优先</span>
+        </button>
+        <button class="sort-option" type="button" data-sort="updated-asc">
+          <span class="sort-option-icon">↑</span>
+          <span class="sort-option-label">最早优先</span>
+        </button>
+        <button class="sort-option" type="button" data-sort="title-az">
+          <span class="sort-option-icon">A→Z</span>
+          <span class="sort-option-label">标题 A→Z</span>
+        </button>
+        <button class="sort-option" type="button" data-sort="title-za">
+          <span class="sort-option-icon">Z→A</span>
+          <span class="sort-option-label">标题 Z→A</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  function initWall(root: HTMLElement) {
+    const list = root.querySelector<HTMLElement>('[data-record-list]');
+    const emptyState = root.querySelector<HTMLElement>('[data-empty-state]');
+    const input = root.querySelector<HTMLInputElement>('[data-list-search-input]');
+    const actionBtn = root.querySelector<HTMLButtonElement>('[data-list-search-action]');
+    const mobileSearchToggle = root.querySelector<HTMLButtonElement>('[data-mobile-search-toggle]');
+    const hitEl = root.querySelector<HTMLElement>('[data-wall-hit]');
+    const cards = [...root.querySelectorAll<HTMLElement>('.note-card')];
+    if (!list) return;
+
+    const collator = new Intl.Collator('zh-CN', { numeric: true, sensitivity: 'base' });
+    let searchTerm = '';
+    let activeCategory = '';
+    let currentSort = 'updated-desc';
+
+    function setMobileSearchOpen(open: boolean) {
+      root.classList.toggle('is-mobile-search-open', open);
+      mobileSearchToggle?.setAttribute('aria-expanded', String(open));
+      mobileSearchToggle?.setAttribute('aria-label', open ? '收起搜索' : '打开搜索');
+      if (open) {
+        window.setTimeout(() => input?.focus(), 0);
+      } else {
+        input?.blur();
+        mobileSearchToggle?.blur();
+      }
+    }
+
+    mobileSearchToggle?.addEventListener('click', () => {
+      setMobileSearchOpen(!root.classList.contains('is-mobile-search-open'));
+    });
+
+    function timestamp(card: HTMLElement, key: 'updatedTs' | 'dateTs') {
+      return Number(card.dataset[key]) || 0;
+    }
+
+    function sortCards(items: HTMLElement[]) {
+      const sorted = [...items];
+      switch (currentSort) {
+        case 'updated-asc':
+          sorted.sort((a, b) => (timestamp(a, 'updatedTs') - timestamp(b, 'updatedTs'))
+            || collator.compare(a.dataset.title || '', b.dataset.title || ''));
+          break;
+        case 'title-az':
+          sorted.sort((a, b) => collator.compare(a.dataset.title || '', b.dataset.title || ''));
+          break;
+        case 'title-za':
+          sorted.sort((a, b) => collator.compare(b.dataset.title || '', a.dataset.title || ''));
+          break;
+        default:
+          sorted.sort((a, b) => (timestamp(b, 'updatedTs') - timestamp(a, 'updatedTs'))
+            || collator.compare(a.dataset.title || '', b.dataset.title || ''));
+      }
+      return sorted;
+    }
+
+    function syncSearchAction() {
+      if (!actionBtn) return;
+      const hasTerm = Boolean(searchTerm);
+      actionBtn.classList.toggle('has-term', hasTerm);
+      actionBtn.setAttribute('aria-label', hasTerm ? '清除搜索' : '搜索');
+    }
+
+    function apply({ scroll = false } = {}) {
+      const matched = cards.filter((card) => {
+        if (activeCategory && card.dataset.category !== activeCategory) return false;
+        if (!searchTerm) return true;
+        const haystack = [
+          card.dataset.title,
+          card.dataset.desc,
+          card.dataset.category,
+          card.dataset.subcategory,
+        ].filter(Boolean).join(' ').toLowerCase();
+        return haystack.includes(searchTerm);
+      });
+
+      for (const card of cards) card.style.display = 'none';
+      for (const card of sortCards(matched)) {
+        list.append(card);
+        card.style.display = '';
+      }
+
+      if (emptyState) emptyState.style.display = matched.length ? 'none' : '';
+      if (hitEl) hitEl.textContent = `当前命中 ${matched.length} 篇笔记`;
+      if (scroll && matched.length) list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // 排序面板
+    const panel = root.querySelector<HTMLElement>('[data-float-panel="sort"]');
+    const toggle = root.querySelector<HTMLElement>('[data-float-toggle="sort"]');
+
+    function closePanel() {
+      if (!panel) return;
+      panel.classList.remove('open');
+      toggle?.classList.remove('is-active');
+      window.setTimeout(() => { panel.hidden = true; }, 180);
+    }
+
+    toggle?.addEventListener('click', () => {
+      if (!panel) return;
+      if (!panel.hidden) {
+        closePanel();
+        return;
+      }
+      panel.hidden = false;
+      toggle.classList.add('is-active');
+      requestAnimationFrame(() => panel.classList.add('open'));
+    });
+
+    root.querySelector('[data-float-close="sort"]')?.addEventListener('click', closePanel);
+
+    document.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      if (target.closest('[data-float-panel]') || target.closest('[data-float-toggle]')) return;
+      closePanel();
+    });
+
+    root.querySelectorAll<HTMLElement>('[data-sort]').forEach((button) => {
+      button.addEventListener('click', () => {
+        root.querySelectorAll('[data-sort]').forEach((item) => item.classList.remove('on'));
+        button.classList.add('on');
+        currentSort = button.getAttribute('data-sort') || 'updated-desc';
+        closePanel();
+        apply({ scroll: true });
+      });
+    });
+
+    // 一级分类胶囊
+    root.querySelectorAll<HTMLElement>('[data-pill]').forEach((pill) => {
+      pill.addEventListener('click', () => {
+        root.querySelectorAll('[data-pill]').forEach((item) => {
+          item.classList.remove('is-active');
+          item.setAttribute('aria-pressed', 'false');
+        });
+        pill.classList.add('is-active');
+        pill.setAttribute('aria-pressed', 'true');
+        activeCategory = pill.getAttribute('data-pill') || '';
+        apply({ scroll: true });
+      });
+    });
+
+    // 搜索：无内容时圆按钮是放大镜（点击聚焦），有内容时变清除
+    input?.addEventListener('input', () => {
+      searchTerm = input.value.trim().toLowerCase();
+      syncSearchAction();
+      apply();
+    });
+
+    actionBtn?.addEventListener('click', () => {
+      if (!input) return;
+      if (!searchTerm) {
+        input.focus();
+        return;
+      }
+      input.value = '';
+      searchTerm = '';
+      syncSearchAction();
+      input.focus();
+      apply();
+    });
+
+    apply();
+
+    // 滚动收缩 header：对齐小猫书（rAF 节流 + 滞回阈值，避免阈值附近抖动）
+    const SCROLL_ENTER = 180;
+    const SCROLL_EXIT = 6;
+    let scrollFrame = 0;
+    const syncScrolled = () => {
+      if (scrollFrame) return;
+      scrollFrame = window.requestAnimationFrame(() => {
+        scrollFrame = 0;
+        const isScrolled = root.classList.contains('is-scrolled');
+        const threshold = isScrolled ? SCROLL_EXIT : SCROLL_ENTER;
+        const next = window.scrollY > threshold;
+        if (next !== isScrolled) root.classList.toggle('is-scrolled', next);
+      });
+    };
+    window.addEventListener('scroll', syncScrolled, { passive: true });
+    syncScrolled();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-note-wall]').forEach(initWall);
+</script>

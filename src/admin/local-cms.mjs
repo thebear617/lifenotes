@@ -91,25 +91,13 @@ function safePath(value) {
 }
 
 function trashDirectory() {
+  if (process.env.CMS_TRASH_ROOT) return path.resolve(process.env.CMS_TRASH_ROOT);
   return process.platform === 'darwin'
     ? path.join(os.homedir(), '.Trash')
     : path.join(os.homedir(), '.local', 'share', 'Trash', 'files');
 }
 
-async function moveToTrash(filePath) {
-  if (process.platform === 'darwin') {
-    const script = [
-      'on run argv',
-      '  set targetFile to POSIX file (item 1 of argv) as alias',
-      '  tell application "Finder"',
-      '    delete targetFile',
-      '  end tell',
-      'end run',
-    ].join('\n');
-    await execFileAsync('/usr/bin/osascript', ['-e', script, filePath]);
-    return filePath;
-  }
-
+async function moveToTrashDirectory(filePath) {
   const directory = trashDirectory();
   await fs.mkdir(directory, { recursive: true });
   const originalName = path.basename(filePath);
@@ -139,6 +127,34 @@ async function moveToTrash(filePath) {
     }
   }
   return target;
+}
+
+async function moveToTrash(filePath) {
+  if (process.platform === 'darwin') {
+    const script = [
+      'on run argv',
+      '  set targetFile to POSIX file (item 1 of argv) as alias',
+      '  tell application "Finder"',
+      '    delete targetFile',
+      '  end tell',
+      'end run',
+    ].join('\n');
+    try {
+      await execFileAsync('/usr/bin/osascript', ['-e', script, filePath]);
+      return filePath;
+    } catch (error) {
+      // 隔离验收、无 GUI 会话或 Finder 暂时不可用时，仍然保留可恢复删除能力。
+      try {
+        await fs.access(filePath);
+      } catch (accessError) {
+        if (accessError.code === 'ENOENT') return filePath;
+        throw accessError;
+      }
+      console.warn(`[local-cms] Finder 废纸篓不可用，改为移动到 ${trashDirectory()}: ${error.message}`);
+    }
+  }
+
+  return moveToTrashDirectory(filePath);
 }
 
 function scalar(value) {
@@ -298,7 +314,13 @@ export default function localCms() {
           }
           const articlePath = url.searchParams.get('path');
           if (request.method === 'GET' && url.pathname === '/article' && safePath(articlePath)) {
-            const source = await fs.readFile(safePath(articlePath), 'utf8');
+            let source;
+            try {
+              source = await fs.readFile(safePath(articlePath), 'utf8');
+            } catch (error) {
+              if (error.code === 'ENOENT') return json(response, 404, { error: '文章不存在' });
+              throw error;
+            }
             return json(response, 200, { path: articlePath, ...parseMarkdown(source) });
           }
           if (request.method === 'DELETE' && url.pathname === '/article' && safePath(articlePath)) {

@@ -19,7 +19,14 @@ const base = import.meta.env.BASE_URL;
 
 <Layout title="服务业" currentBoard="service">
   <section class:list={['article-page-shell', { 'has-toc': headings.length > 0 }]}>
-    <a class="back-link" href={`${base}service/`}>← 返回服务业</a>
+    <div class="article-nav-row">
+      <a class="back-link" href={`${base}service/`}>← 返回服务业</a>
+      {headings.length > 0 && (
+        <button class="article-toc-toggle" id="articleTocToggle" type="button" aria-label="打开文章目录" aria-expanded="false">
+          <span aria-hidden="true">☰</span>
+        </button>
+      )}
+    </div>
     <div class="article-detail-layout">
       <ArticleToc headings={headings} />
       <article class="article-detail">

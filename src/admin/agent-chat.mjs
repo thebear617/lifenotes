@@ -4,7 +4,7 @@ const STORAGE_PREFIX = 'local-agent-gateway-v1';
 const BACKEND_LABELS = {
   'claude-code': 'Claude Code',
   opencode: 'OpenCode',
-  codebuddy: 'CodeBuddy',
+  codex: 'Codex',
 };
 
 const styles = `
@@ -97,11 +97,46 @@ const styles = `
 .agent-chat-new-dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .agent-chat-new-dialog-header strong { color: #0f4c55; font-size: 15px; }
 .agent-chat-new-dialog-header small { display: block; margin-top: 4px; color: #82979c; font-size: 10px; }
+.agent-chat-mode-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; padding: 4px; border: 1px solid #dfeaea; border-radius: 10px; background: #f5fafa; }
+.agent-chat-mode-button { min-height: 32px; border: 0; border-radius: 7px; color: #6d8589; background: transparent; font-size: 11px; font-weight: 800; }
+.agent-chat-mode-button:hover, .agent-chat-mode-button.is-selected { color: #0f766e; background: #fff; box-shadow: 0 2px 7px rgba(15, 63, 70, .08); }
+.agent-chat-web-fields, .agent-chat-plugin-fields { display: grid; gap: 13px; min-width: 0; }
+.agent-chat-web-fields[hidden], .agent-chat-plugin-fields[hidden] { display: none; }
+.agent-chat-plugin-intro { margin: -3px 0 0; color: #6d8589; font-size: 10px; line-height: 1.55; }
+.agent-chat-native-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.agent-chat-native-toolbar strong { color: #48666c; font-size: 10px; }
+.agent-chat-native-refresh { min-height: 28px; padding: 0 9px; border: 1px solid #d4e2e4; border-radius: 7px; color: #48666c; background: #fff; font-size: 10px; font-weight: 800; }
+.agent-chat-native-refresh:hover { border-color: #8ed2c9; color: #0f766e; background: #f0fdfa; }
+.agent-chat-native-sessions { display: grid; gap: 5px; max-height: 218px; overflow-y: auto; padding: 2px; scrollbar-width: thin; }
+.agent-chat-native-session { display: grid; gap: 3px; width: 100%; padding: 8px 9px; border: 1px solid #dce8e9; border-radius: 9px; color: #48666c; background: #fbfefe; text-align: left; }
+.agent-chat-native-session:hover, .agent-chat-native-session.is-selected { border-color: #0f9f91; color: #0f766e; background: #effcf9; }
+.agent-chat-native-session strong, .agent-chat-native-session small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-chat-native-session strong { font-size: 11px; }
+.agent-chat-native-session small { color: #82979c; font-size: 9px; }
+.agent-chat-native-empty { padding: 10px 8px; color: #82979c; font-size: 10px; line-height: 1.55; }
 .agent-chat-new-dialog-close { width: 28px; height: 28px; padding: 0; border: 0; border-radius: 7px; color: #6e8388; background: transparent; font-size: 19px; }
 .agent-chat-new-dialog-close:hover { color: #0f766e; background: #e9f8f5; }
 .agent-chat-new-dialog-label { display: grid; gap: 6px; color: #48666c; font-size: 10px; font-weight: 800; }
 .agent-chat-new-dialog-label input { box-sizing: border-box; width: 100%; min-height: 38px; padding: 0 10px; border: 1px solid #d4e2e4; border-radius: 9px; outline: 0; color: #26343a; background: #fbfefe; font-size: 12px; }
 .agent-chat-new-dialog-label input:focus { border-color: #8ed2c9; box-shadow: 0 0 0 3px rgba(20, 184, 166, .12); }
+.agent-chat-model-dropdown { position: relative; display: block; }
+.agent-chat-model-trigger { position: relative; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; width: 100%; min-height: 38px; padding: 0 34px 0 10px; border: 1px solid #d4e2e4; border-radius: 9px; color: #26343a; background: #fbfefe; text-align: left; font-size: 12px; cursor: pointer; }
+.agent-chat-model-trigger:hover, .agent-chat-model-trigger[aria-expanded="true"] { border-color: #8ed2c9; background: #f0fdfa; box-shadow: 0 0 0 3px rgba(20, 184, 166, .12); }
+.agent-chat-model-trigger:disabled { color: #9aabad; background: #f3f6f6; cursor: not-allowed; }
+.agent-chat-model-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-chat-model-select-arrow { position: absolute; top: 50%; right: 12px; color: #6e8388; pointer-events: none; transform: translateY(-58%); font-size: 16px; line-height: 1; }
+.agent-chat-model-menu { position: absolute; top: calc(100% + 6px); right: 0; left: 0; z-index: 1430; display: grid; gap: 3px; max-height: 260px; overflow-y: auto; padding: 6px; border: 1px solid #cfe0e2; border-radius: 12px; background: rgba(255, 255, 255, .99); box-shadow: 0 18px 40px rgba(15, 63, 70, .2); scrollbar-width: thin; overscroll-behavior: contain; }
+.agent-chat-model-menu.is-open-upward { top: auto; bottom: calc(100% + 6px); }
+.agent-chat-model-menu[hidden] { display: none; }
+.agent-chat-model-option { display: block; width: 100%; min-height: 34px; padding: 7px 9px; border: 0; border-radius: 8px; color: #48666c; background: transparent; text-align: left; font-size: 11px; line-height: 1.25; cursor: pointer; }
+.agent-chat-model-option:hover, .agent-chat-model-option.is-selected, .agent-chat-model-option:focus-visible { color: #0f766e; background: #effcf9; }
+.agent-chat-model-option strong, .agent-chat-model-option small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-chat-model-option strong { font-size: 11px; }
+.agent-chat-model-option small { margin-top: 3px; color: #82979c; font-size: 9px; font-weight: 600; }
+.agent-chat-model-option:hover small, .agent-chat-model-option.is-selected small, .agent-chat-model-option:focus-visible small { color: #4e9088; }
+.agent-chat-model-empty { padding: 8px 9px; color: #82979c; font-size: 10px; }
+.agent-chat-model-select-arrow { position: absolute; top: 50%; right: 12px; color: #6e8388; pointer-events: none; transform: translateY(-58%); font-size: 16px; line-height: 1; }
+.agent-chat-model-help { margin: -6px 0 0; color: #82979c; font-size: 10px; line-height: 1.5; }
 .agent-chat-backends { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
 .agent-chat-backends[hidden] { display: none; }
 .agent-chat-backend { min-height: 58px; padding: 6px; border: 1px solid #d4e2e4; border-radius: 9px; color: #48666c; background: #fff; text-align: center; }
@@ -114,6 +149,17 @@ const styles = `
 .agent-chat-new-dialog-actions .is-primary { border-color: #0f766e; color: #fff; background: #0f766e; }
 .agent-chat-new-dialog-actions .is-primary:hover { border-color: #115e59; color: #fff; background: #115e59; }
 .agent-chat-new-dialog-actions button:disabled { cursor: not-allowed; opacity: .45; }
+.agent-chat-confirm-backdrop { position: absolute; inset: 0; z-index: 1420; display: grid; place-items: center; padding: 14px; background: rgba(15, 63, 70, .2); backdrop-filter: blur(2px); }
+.agent-chat-confirm-backdrop[hidden] { display: none; }
+.agent-chat-confirm-dialog { display: grid; gap: 12px; width: min(360px, 100%); padding: 18px; border: 1px solid #cfe0e2; border-radius: 16px; background: rgba(255, 255, 255, .99); box-shadow: 0 22px 60px rgba(15, 63, 70, .28); }
+.agent-chat-confirm-dialog:focus { outline: 0; }
+.agent-chat-confirm-title { color: #0f4c55; font-size: 15px; font-weight: 800; }
+.agent-chat-confirm-message { margin: 0; color: #48666c; font-size: 12px; line-height: 1.7; }
+.agent-chat-confirm-actions { display: flex; justify-content: flex-end; gap: 7px; }
+.agent-chat-confirm-actions button { min-height: 34px; padding: 0 14px; border: 1px solid #d4e2e4; border-radius: 8px; color: #48666c; background: #fff; font-size: 11px; font-weight: 800; }
+.agent-chat-confirm-actions button:hover { border-color: #8ed2c9; color: #0f766e; background: #f0fdfa; }
+.agent-chat-confirm-actions .is-danger { border-color: #b42318; color: #fff; background: #b42318; }
+.agent-chat-confirm-actions .is-danger:hover { border-color: #912018; background: #912018; }
 .agent-chat-widget.is-busy .agent-chat-toggle-dot { background: #fbbf24; animation: agent-chat-pulse 1.2s ease-in-out infinite; }
 @keyframes agent-chat-pulse { 50% { opacity: .35; transform: scale(.72); } }
 @media (max-width: 620px) { .agent-chat-widget { right: 14px; bottom: 14px; } .agent-chat-panel { height: min(680px, calc(100vh - 78px)); } }
@@ -138,10 +184,27 @@ export function mountAgentChat({ entrySite }) {
         <div class="agent-chat-composer-row"><span class="agent-chat-hint" id="agent-chat-hint">Enter 发送 · Shift+Enter 换行</span><button class="agent-chat-send" id="agent-chat-send" type="submit" disabled>发送</button><button id="agent-chat-interrupt" type="button" hidden>中断</button></div>
       </form>
       <section class="agent-chat-new-dialog" id="agent-chat-new-dialog" hidden role="dialog" aria-modal="false" aria-labelledby="agent-chat-new-title">
-      <div class="agent-chat-new-dialog-header"><div><strong id="agent-chat-new-title">新建 Agent 会话</strong></div><button class="agent-chat-new-dialog-close" id="agent-chat-new-dialog-close" type="button" aria-label="关闭新建会话窗口">×</button></div>
+      <div class="agent-chat-new-dialog-header"><div><strong id="agent-chat-new-title">新建 Agent 会话</strong><small id="agent-chat-new-description">启动一条独立的网页 Agent 会话。</small></div><button class="agent-chat-new-dialog-close" id="agent-chat-new-dialog-close" type="button" aria-label="关闭新建会话窗口">×</button></div>
+      <div class="agent-chat-mode-switch" id="agent-chat-mode-switch" role="tablist" aria-label="会话来源"><button class="agent-chat-mode-button is-selected" data-mode="web" type="button" role="tab" aria-selected="true">独立 Web 会话</button><button class="agent-chat-mode-button" data-mode="plugin" type="button" role="tab" aria-selected="false">本地插件会话</button></div>
       <div class="agent-chat-backends" id="agent-chat-backends"></div>
-      <label class="agent-chat-new-dialog-label" for="agent-chat-session-title">会话名称<input id="agent-chat-session-title" type="text" maxlength="80" autocomplete="off" /></label>
+      <div class="agent-chat-web-fields" id="agent-chat-web-fields">
+        <label class="agent-chat-new-dialog-label" for="agent-chat-model-trigger">模型<span class="agent-chat-model-dropdown" id="agent-chat-model-dropdown"><button class="agent-chat-model-trigger" id="agent-chat-model-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="agent-chat-model-menu" disabled><span class="agent-chat-model-value" id="agent-chat-model-value">先选择 Agent</span><span class="agent-chat-model-select-arrow" aria-hidden="true">⌄</span></button><span class="agent-chat-model-menu" id="agent-chat-model-menu" role="listbox" aria-label="选择模型" hidden></span></span></label>
+        <p class="agent-chat-model-help">模型列表与本机 Agent 配置同步，模型只对当前会话生效。</p>
+        <label class="agent-chat-new-dialog-label" for="agent-chat-session-title">会话名称<input id="agent-chat-session-title" type="text" maxlength="80" autocomplete="off" /></label>
+      </div>
+      <div class="agent-chat-plugin-fields" id="agent-chat-plugin-fields" hidden>
+        <p class="agent-chat-plugin-intro">从本机插件已经保存的会话中选择一条。接入只创建网页控制入口，不删除原插件记录。</p>
+        <div class="agent-chat-native-toolbar"><strong id="agent-chat-native-count">选择一个本地会话</strong><button class="agent-chat-native-refresh" id="agent-chat-native-refresh" type="button">刷新列表</button></div>
+        <div class="agent-chat-native-sessions" id="agent-chat-native-sessions"></div>
+      </div>
       <div class="agent-chat-new-dialog-actions"><button id="agent-chat-new-cancel" type="button">取消</button><button class="is-primary" id="agent-chat-new-create" type="button" disabled>创建会话</button></div>
+      </section>
+      <section class="agent-chat-confirm-backdrop" id="agent-chat-confirm-backdrop" hidden>
+        <div class="agent-chat-confirm-dialog" id="agent-chat-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="agent-chat-confirm-title" aria-describedby="agent-chat-confirm-message" tabindex="-1">
+          <strong class="agent-chat-confirm-title" id="agent-chat-confirm-title">结束 Agent 会话</strong>
+          <p class="agent-chat-confirm-message" id="agent-chat-confirm-message"></p>
+          <div class="agent-chat-confirm-actions"><button id="agent-chat-confirm-cancel" type="button">取消</button><button class="is-danger" id="agent-chat-confirm-accept" type="button">确定</button></div>
+        </div>
       </section>
     </section>
     <button class="agent-chat-toggle" id="agent-chat-toggle" type="button" aria-expanded="false" aria-controls="agent-chat-panel"><span class="agent-chat-toggle-dot" aria-hidden="true"></span>Agent</button>`;
@@ -157,9 +220,25 @@ class AgentChatController {
     this.sessionList = root.querySelector('#agent-chat-sessions');
     this.messages = root.querySelector('#agent-chat-messages');
     this.backends = root.querySelector('#agent-chat-backends');
+    this.modeSwitch = root.querySelector('#agent-chat-mode-switch');
+    this.modeButtons = [...root.querySelectorAll('.agent-chat-mode-button')];
+    this.dialogDescription = root.querySelector('#agent-chat-new-description');
+    this.webFields = root.querySelector('#agent-chat-web-fields');
+    this.pluginFields = root.querySelector('#agent-chat-plugin-fields');
+    this.nativeSessionsList = root.querySelector('#agent-chat-native-sessions');
+    this.nativeCount = root.querySelector('#agent-chat-native-count');
+    this.nativeRefresh = root.querySelector('#agent-chat-native-refresh');
+    this.modelDropdown = root.querySelector('#agent-chat-model-dropdown');
+    this.modelTrigger = root.querySelector('#agent-chat-model-trigger');
+    this.modelValue = root.querySelector('#agent-chat-model-value');
+    this.modelMenu = root.querySelector('#agent-chat-model-menu');
     this.newDialog = root.querySelector('#agent-chat-new-dialog');
     this.sessionTitle = root.querySelector('#agent-chat-session-title');
     this.createButton = root.querySelector('#agent-chat-new-create');
+    this.confirmBackdrop = root.querySelector('#agent-chat-confirm-backdrop');
+    this.confirmDialog = root.querySelector('#agent-chat-confirm-dialog');
+    this.confirmMessage = root.querySelector('#agent-chat-confirm-message');
+    this.confirmAccept = root.querySelector('#agent-chat-confirm-accept');
     this.input = root.querySelector('#agent-chat-input');
     this.sendButton = root.querySelector('#agent-chat-send');
     this.interruptButton = root.querySelector('#agent-chat-interrupt');
@@ -172,10 +251,19 @@ class AgentChatController {
     this.currentReasoning = '';
     this.currentTools = new Map();
     this.currentPermissions = new Map();
+    this.confirmation = null;
     this.selectedBackend = null;
+    this.selectedModel = '';
+    this.mode = this.readModePreference();
+    this.nativeSessions = [];
+    this.selectedNativeSession = null;
+    this.nativeLoading = false;
+    this.modelChoices = [];
     this.eventAbort = null;
     this.token = null;
     this.gatewayReady = false;
+    this.bootstrapInFlight = null;
+    this.authRecoveryInFlight = null;
     this.refreshInFlight = false;
     this.pollTimer = null;
     this.storageKey = `${STORAGE_PREFIX}:sessions:${entrySite}`;
@@ -190,11 +278,33 @@ class AgentChatController {
     this.root.querySelector('#agent-chat-new').onclick = () => this.toggleBackends(true);
     this.root.querySelector('#agent-chat-new-dialog-close').onclick = () => this.toggleBackends(false);
     this.root.querySelector('#agent-chat-new-cancel').onclick = () => this.toggleBackends(false);
+    this.root.querySelector('#agent-chat-confirm-cancel').onclick = () => this.resolveConfirmation(false);
+    this.confirmAccept.onclick = () => this.resolveConfirmation(true);
+    this.confirmBackdrop.onclick = (event) => { if (event.target === this.confirmBackdrop) this.resolveConfirmation(false); };
+    this.confirmDialog.onkeydown = (event) => { if (event.key === 'Escape') { event.preventDefault(); this.resolveConfirmation(false); } };
     this.createButton.onclick = () => { void this.createSelectedSession(); };
+    this.modeButtons.forEach((button) => { button.onclick = () => this.setDialogMode(button.dataset.mode); });
+    this.nativeRefresh.onclick = () => { void this.refreshNativeSessions(); };
     this.sessionTitle.onkeydown = (event) => {
       if (event.key === 'Enter') { event.preventDefault(); void this.createSelectedSession(); }
     };
-    this.sessionTitle.oninput = () => { this.createButton.disabled = !this.selectedBackend || !this.sessionTitle.value.trim() || !this.gatewayReady; };
+    this.sessionTitle.oninput = () => this.updateCreateButton();
+    this.modelTrigger.onclick = () => this.toggleModelMenu();
+    this.modelTrigger.onkeydown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        this.closeModelMenu();
+      } else if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        this.openModelMenu();
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        this.openModelMenu(true);
+      }
+    };
+    document.addEventListener('click', (event) => {
+      if (!this.modelDropdown.contains(event.target)) this.closeModelMenu();
+    });
     this.resumeButton.onclick = () => { void this.resumeCurrent(); };
     this.root.querySelector('#agent-chat-form').onsubmit = (event) => { event.preventDefault(); void this.send(); };
     this.input.onkeydown = (event) => {
@@ -208,20 +318,27 @@ class AgentChatController {
   }
 
   async bootstrap() {
-    try {
-      const response = await fetch(`${GATEWAY_URL}/v1/bootstrap`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Gateway bootstrap 失败');
-      this.token = data.token;
-      this.gatewayReady = true;
-      this.setConnection('', 'online');
-      await this.refresh();
-      if (!this.pollTimer) this.pollTimer = window.setInterval(() => { void this.refresh(); }, 30_000);
-    } catch (error) {
-      this.setConnection('');
-      this.renderSessions();
-      window.setTimeout(() => { void this.bootstrap(); }, 10_000);
-    }
+    if (this.bootstrapInFlight) return this.bootstrapInFlight;
+    this.bootstrapInFlight = (async () => {
+      try {
+        const response = await fetch(`${GATEWAY_URL}/v1/bootstrap`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Gateway bootstrap 失败');
+        this.token = data.token;
+        this.gatewayReady = true;
+        this.setConnection('', 'online');
+        await this.refresh();
+        if (!this.pollTimer) this.pollTimer = window.setInterval(() => { void this.refresh(); }, 30_000);
+      } catch (error) {
+        this.gatewayReady = false;
+        this.setConnection('');
+        this.renderSessions();
+        window.setTimeout(() => { void this.bootstrap(); }, 10_000);
+      } finally {
+        this.bootstrapInFlight = null;
+      }
+    })();
+    return this.bootstrapInFlight;
   }
 
   async refresh() {
@@ -233,7 +350,10 @@ class AgentChatController {
       const live = (sessionData.sessions || []).filter((session) => session.entrySite === this.entrySite && session.status !== 'ended');
       const remembered = this.readRememberedSessions().filter((session) => session.status !== 'ended');
       const liveIds = new Set(live.map((session) => session.id));
-      const nextSessions = [...live, ...remembered.filter((session) => !liveIds.has(session.id)).map((session) => ({ ...session, status: 'unavailable' }))];
+      const nextSessions = this.sortSessions([
+        ...live,
+        ...remembered.filter((session) => !liveIds.has(session.id)).map((session) => ({ ...session, status: 'unavailable' })),
+      ]);
       const sessionsChanged = JSON.stringify(nextSessions) !== JSON.stringify(this.sessions);
       const backendsChanged = JSON.stringify(nextBackends) !== JSON.stringify(this.backendsData);
       this.backendsData = nextBackends;
@@ -263,27 +383,69 @@ class AgentChatController {
   }
 
   async request(path, options = {}) {
+    const requestToken = this.token;
     const headers = { ...(options.headers || {}), 'X-Agent-Gateway-Token': this.token };
     const response = await fetch(`${GATEWAY_URL}${path}`, { ...options, headers });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.message || data.error || `Gateway HTTP ${response.status}`);
+    if (!response.ok) {
+      if (response.status === 403 && data.error === 'access-denied') this.recoverGatewayAuth(requestToken);
+      throw new Error(data.message || data.error || `Gateway HTTP ${response.status}`);
+    }
     return data;
+  }
+
+  recoverGatewayAuth(requestToken) {
+    if (!requestToken || requestToken !== this.token) return;
+    this.token = null;
+    this.gatewayReady = false;
+    this.setConnection('正在刷新 Gateway 凭证…', 'error');
+    if (this.authRecoveryInFlight) return;
+    const sessionId = this.current?.id;
+    this.authRecoveryInFlight = this.bootstrap().then(() => {
+      if (this.gatewayReady && this.current?.id === sessionId && this.current.status !== 'ended') {
+        this.connectEvents(this.current);
+      }
+    }).finally(() => {
+      this.authRecoveryInFlight = null;
+    });
   }
 
   togglePanel() { this.panel.hidden ? this.openPanel() : this.closePanel(); }
   openPanel() { this.panel.hidden = false; this.root.querySelector('#agent-chat-toggle').setAttribute('aria-expanded', 'true'); }
-  closePanel() { this.panel.hidden = true; this.root.querySelector('#agent-chat-toggle').setAttribute('aria-expanded', 'false'); }
+  closePanel() { this.resolveConfirmation(false); this.panel.hidden = true; this.root.querySelector('#agent-chat-toggle').setAttribute('aria-expanded', 'false'); }
   toggleBackends(open) {
+    this.closeModelMenu();
     this.newDialog.hidden = !open;
     if (open) {
       this.selectedBackend = null;
+      this.selectedModel = '';
       this.sessionTitle.value = '';
+      this.selectedNativeSession = null;
+      this.nativeSessions = [];
+      this.setDialogMode(this.mode);
       this.renderBackendChoices();
       window.setTimeout(() => this.sessionTitle.focus(), 0);
     }
   }
 
+  setDialogMode(mode) {
+    this.mode = mode === 'plugin' ? 'plugin' : 'web';
+    try { localStorage.setItem(`${STORAGE_PREFIX}:mode:${this.entrySite}`, this.mode); } catch { /* Preference is optional. */ }
+    this.modeButtons.forEach((button) => {
+      const selected = button.dataset.mode === this.mode;
+      button.classList.toggle('is-selected', selected);
+      button.setAttribute('aria-selected', String(selected));
+    });
+    const plugin = this.mode === 'plugin';
+    this.webFields.hidden = plugin;
+    this.pluginFields.hidden = !plugin;
+    this.dialogDescription.textContent = plugin ? '接入本机插件已经保存的会话。' : '启动一条独立的网页 Agent 会话。';
+    this.createButton.textContent = plugin ? '接入会话' : '创建会话';
+    this.renderBackendChoices();
+  }
+
   renderBackendChoices() {
+    this.closeModelMenu();
     this.backends.innerHTML = '';
     for (const backend of this.backendsData) {
       const button = document.createElement('button');
@@ -292,26 +454,223 @@ class AgentChatController {
       button.disabled = !backend.installed || backend.adapter !== 'configured';
       if (this.selectedBackend === backend.id) button.classList.add('is-selected');
       button.innerHTML = `<span>${BACKEND_LABELS[backend.id] || backend.id}</span>`;
-      button.onclick = () => { this.selectedBackend = backend.id; this.renderBackendChoices(); };
+      button.onclick = () => { this.selectedBackend = backend.id; this.selectedModel = ''; this.renderBackendChoices(); };
       this.backends.append(button);
     }
-    this.createButton.disabled = !this.selectedBackend || !this.sessionTitle.value.trim() || !this.gatewayReady;
+    const backend = this.backendsData.find((item) => item.id === this.selectedBackend);
+    const models = Array.isArray(backend?.models) ? backend.models.filter((model) => model?.id) : [];
+    const availableModelIds = new Set(models.map((model) => model.id));
+    if (!availableModelIds.has(this.selectedModel)) {
+      this.selectedModel = backend?.defaultModel && availableModelIds.has(backend.defaultModel)
+        ? backend.defaultModel
+        : models[0]?.id || '';
+    }
+    if (this.mode === 'web') this.renderModelChoices(backend, models);
+    else {
+      this.modelChoices = [];
+      this.closeModelMenu();
+      this.renderNativeSessions();
+      if (backend) void this.refreshNativeSessions();
+    }
+    this.updateCreateButton();
+  }
+
+  async refreshNativeSessions() {
+    if (this.mode !== 'plugin' || !this.selectedBackend || !this.gatewayReady) return;
+    const backend = this.selectedBackend;
+    this.nativeLoading = true;
+    this.renderNativeSessions();
+    try {
+      const data = await this.request(`/v1/native-sessions?backend=${encodeURIComponent(backend)}`);
+      if (this.mode === 'plugin' && this.selectedBackend === backend) {
+        this.nativeSessions = Array.isArray(data.sessions) ? data.sessions : [];
+        this.selectedNativeSession = this.nativeSessions.find((item) => item.nativeSessionId === this.selectedNativeSession?.nativeSessionId) || null;
+      }
+    } catch (error) {
+      this.nativeSessions = [];
+      this.setConnection(error.message, 'error');
+    } finally {
+      this.nativeLoading = false;
+      this.renderNativeSessions();
+      this.updateCreateButton();
+    }
+  }
+
+  renderNativeSessions() {
+    if (!this.nativeSessionsList) return;
+    this.nativeSessionsList.innerHTML = '';
+    if (!this.selectedBackend) {
+      this.nativeSessionsList.innerHTML = '<span class="agent-chat-native-empty">先选择 Agent，再读取本机插件会话。</span>';
+      this.nativeCount.textContent = '选择一个本地会话';
+      return;
+    }
+    if (this.nativeLoading) {
+      this.nativeSessionsList.innerHTML = '<span class="agent-chat-native-empty">正在读取本机会话…</span>';
+      this.nativeCount.textContent = '正在刷新';
+      return;
+    }
+    if (!this.nativeSessions.length) {
+      this.nativeSessionsList.innerHTML = '<span class="agent-chat-native-empty">没有发现这个 Agent 在当前工作目录的本地会话。</span>';
+      this.nativeCount.textContent = '未发现本地会话';
+      return;
+    }
+    this.nativeCount.textContent = `发现 ${this.nativeSessions.length} 个本地会话`;
+    for (const session of this.nativeSessions) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `agent-chat-native-session${this.selectedNativeSession?.nativeSessionId === session.nativeSessionId ? ' is-selected' : ''}`;
+      button.innerHTML = `<strong>${escapeHtml(session.title || '未命名会话')}</strong><small>${escapeHtml(`${session.model || '默认模型'} · ${session.messageCount ?? '未知'} 条消息 · ${formatTime(session.lastActivityAt || session.createdAt)}`)}${session.attached ? ' · 已接入' : ''}</small>`;
+      button.onclick = () => {
+        this.selectedNativeSession = session;
+        this.renderNativeSessions();
+        this.updateCreateButton();
+      };
+      this.nativeSessionsList.append(button);
+    }
+  }
+
+  renderModelChoices(backend, models) {
+    this.modelChoices = models;
+    this.modelMenu.innerHTML = '';
+    this.modelTrigger.disabled = !models.length;
+    if (!models.length) {
+      const empty = document.createElement('span');
+      empty.className = 'agent-chat-model-empty';
+      empty.textContent = backend ? '暂无可用模型' : '先选择 Agent';
+      this.modelMenu.append(empty);
+      this.modelValue.textContent = empty.textContent;
+      return;
+    }
+    for (const model of models) {
+      const option = document.createElement('button');
+      option.className = 'agent-chat-model-option';
+      option.type = 'button';
+      option.setAttribute('role', 'option');
+      option.setAttribute('aria-selected', String(model.id === this.selectedModel));
+      option.dataset.modelId = model.id;
+      const label = document.createElement('strong');
+      label.textContent = model.label || model.id;
+      const id = document.createElement('small');
+      id.textContent = model.id;
+      option.append(label, id);
+      option.onclick = () => this.chooseModel(model.id);
+      option.onkeydown = (event) => {
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          this.moveModelFocus(option, event.key === 'ArrowDown' ? 1 : -1);
+        } else if (event.key === 'Home' || event.key === 'End') {
+          event.preventDefault();
+          const options = [...this.modelMenu.querySelectorAll('.agent-chat-model-option')];
+          (event.key === 'Home' ? options[0] : options.at(-1))?.focus();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          this.closeModelMenu(true);
+        }
+      };
+      this.modelMenu.append(option);
+    }
+    const selected = models.find((model) => model.id === this.selectedModel);
+    this.modelValue.textContent = selected ? `${selected.label || selected.id}${selected.label ? ` · ${selected.id}` : ''}` : '选择模型';
+  }
+
+  toggleModelMenu() {
+    if (this.modelTrigger.disabled || !this.modelChoices.length) return;
+    this.modelMenu.hidden ? this.openModelMenu() : this.closeModelMenu();
+  }
+
+  openModelMenu(focusLast = false) {
+    if (this.modelTrigger.disabled || !this.modelChoices.length) return;
+    this.modelMenu.hidden = false;
+    this.modelTrigger.setAttribute('aria-expanded', 'true');
+    const triggerRect = this.modelTrigger.getBoundingClientRect();
+    const panelRect = this.panel.getBoundingClientRect();
+    const roomBelow = panelRect.bottom - triggerRect.bottom - 6;
+    const roomAbove = triggerRect.top - panelRect.top - 6;
+    const menuHeight = Math.min(this.modelMenu.scrollHeight, 272);
+    this.modelMenu.classList.toggle('is-open-upward', roomBelow < menuHeight && roomAbove > roomBelow);
+    window.setTimeout(() => {
+      const options = [...this.modelMenu.querySelectorAll('.agent-chat-model-option')];
+      (focusLast ? options.at(-1) : options.find((option) => option.dataset.modelId === this.selectedModel) || options[0])?.focus();
+    }, 0);
+  }
+
+  closeModelMenu(focusTrigger = false) {
+    if (!this.modelMenu) return;
+    this.modelMenu.hidden = true;
+    this.modelTrigger?.setAttribute('aria-expanded', 'false');
+    if (focusTrigger) this.modelTrigger?.focus();
+  }
+
+  moveModelFocus(option, offset) {
+    const options = [...this.modelMenu.querySelectorAll('.agent-chat-model-option')];
+    const index = options.indexOf(option);
+    if (index < 0 || !options.length) return;
+    options[(index + offset + options.length) % options.length]?.focus();
+  }
+
+  chooseModel(modelId) {
+    const model = this.modelChoices.find((item) => item.id === modelId);
+    if (!model) return;
+    this.selectedModel = model.id;
+    this.modelMenu.querySelectorAll('.agent-chat-model-option').forEach((option) => {
+      const selected = option.dataset.modelId === model.id;
+      option.classList.toggle('is-selected', selected);
+      option.setAttribute('aria-selected', String(selected));
+    });
+    this.modelValue.textContent = `${model.label || model.id}${model.label ? ` · ${model.id}` : ''}`;
+    this.closeModelMenu(true);
+    this.updateCreateButton();
+  }
+
+  updateCreateButton() {
+    this.createButton.disabled = this.mode === 'plugin'
+      ? !this.selectedBackend || !this.selectedNativeSession || this.selectedNativeSession.attached || !this.gatewayReady
+      : !this.selectedBackend || !this.selectedModel || !this.sessionTitle.value.trim() || !this.gatewayReady;
+  }
+
+  selectedModelValue() {
+    return this.selectedModel.trim();
   }
 
   async createSelectedSession() {
+    if (this.mode === 'plugin') {
+      await this.attachSelectedSession();
+      return;
+    }
     const backend = this.selectedBackend;
     const title = this.sessionTitle.value.trim();
-    if (!backend || !title) return;
-    await this.createSession(backend, title);
+    const model = this.selectedModelValue();
+    if (!backend || !title || !model) return;
+    await this.createSession(backend, title, model || null);
   }
 
-  async createSession(backend, title) {
+  async attachSelectedSession() {
+    const native = this.selectedNativeSession;
+    if (!native || native.attached || !this.gatewayReady) return;
+    this.toggleBackends(false);
+    this.setConnection(`正在接入 ${BACKEND_LABELS[native.backend] || native.backend} 本地会话…`);
+    try {
+      const session = await this.request('/v1/native-sessions/attach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ backend: native.backend, nativeSessionId: native.nativeSessionId, model: native.model, entrySite: this.entrySite, recommendedRepo: this.defaultRepo(), title: native.title }),
+      });
+      this.sessions = this.sortSessions([session, ...this.sessions.filter((item) => item.id !== session.id)]);
+      this.rememberSession(session);
+      await this.selectSession(session);
+      this.setConnection(`${this.sessions.filter((item) => item.status !== 'unavailable').length} 个本地会话`, 'online');
+    } catch (error) {
+      this.setConnection(error.message, 'error');
+    }
+  }
+
+  async createSession(backend, title, model) {
     if (!this.gatewayReady) return;
     this.toggleBackends(false);
-    this.setConnection(`正在启动 ${BACKEND_LABELS[backend] || backend}…`);
+    this.setConnection(`正在启动 ${BACKEND_LABELS[backend] || backend}${model ? ` · ${model}` : ''}…`);
     try {
-      const session = await this.request('/v1/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ backend, entrySite: this.entrySite, recommendedRepo: this.defaultRepo(), title }) });
-      this.sessions = [session, ...this.sessions.filter((item) => item.id !== session.id)];
+      const session = await this.request('/v1/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ backend, model, entrySite: this.entrySite, recommendedRepo: this.defaultRepo(), title }) });
+      this.sessions = this.sortSessions([session, ...this.sessions.filter((item) => item.id !== session.id)]);
       this.rememberSession(session);
       await this.selectSession(session);
       this.setConnection(`${this.sessions.filter((item) => item.status !== 'unavailable').length} 个本地会话`, 'online');
@@ -349,7 +708,22 @@ class AgentChatController {
     this.renderSessions();
     this.renderMessages();
     this.updateCurrentChrome();
+    if (session.mode === 'plugin') await this.loadNativeHistory(session);
     this.connectEvents(session);
+  }
+
+  async loadNativeHistory(session) {
+    try {
+      const data = await this.request(`/v1/sessions/${encodeURIComponent(session.id)}/history`);
+      if (this.current?.id !== session.id) return;
+      if (Array.isArray(data.messages) && data.messages.length) {
+        this.currentMessages = data.messages;
+        this.persistCurrent();
+        this.renderMessages();
+      }
+    } catch (error) {
+      if (this.current?.id === session.id) this.setConnection(`历史记录读取失败：${error.message}`, 'error');
+    }
   }
 
   connectEvents(session) {
@@ -358,8 +732,13 @@ class AgentChatController {
     this.eventAbort = controller;
     void (async () => {
       try {
-        const response = await fetch(`${GATEWAY_URL}/v1/sessions/${encodeURIComponent(session.id)}/events`, { headers: { 'X-Agent-Gateway-Token': this.token }, signal: controller.signal });
-        if (!response.ok || !response.body) throw new Error('无法连接 session 事件流');
+        const requestToken = this.token;
+        const response = await fetch(`${GATEWAY_URL}/v1/sessions/${encodeURIComponent(session.id)}/events`, { headers: { 'X-Agent-Gateway-Token': requestToken }, signal: controller.signal });
+        if (!response.ok || !response.body) {
+          const data = await response.json().catch(() => ({}));
+          if (response.status === 403 && data.error === 'access-denied') this.recoverGatewayAuth(requestToken);
+          throw new Error(data.message || '无法连接 session 事件流');
+        }
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
@@ -467,7 +846,9 @@ class AgentChatController {
     this.current.status = 'running';
     this.updateCurrentChrome();
     try {
-      await this.request(`/v1/sessions/${encodeURIComponent(this.current.id)}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content, context: this.collectContext() }) });
+      const message = { content };
+      if (this.current.mode !== 'plugin') message.context = this.collectContext();
+      await this.request(`/v1/sessions/${encodeURIComponent(this.current.id)}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message) });
     } catch (error) {
       this.currentMessages.push({ role: 'assistant', text: error.message, error: true, complete: true });
       this.persistCurrent();
@@ -524,8 +905,13 @@ class AgentChatController {
   }
 
   async endCurrent(session = this.current) {
-    if (!session || session.status === 'unavailable' || session.status === 'ended') return;
-    if (!window.confirm(`结束“${session.title || BACKEND_LABELS[session.backend] || session.backend}”会话？结束后不会继续保留本地进程。`)) return;
+    if (!session || session.status === 'ended') return;
+    const confirmed = await this.confirmEndSession(session);
+    if (!confirmed) return;
+    if (session.status === 'unavailable') {
+      this.removeUnavailableSession(session);
+      return;
+    }
     try {
       const data = await this.request(`/v1/sessions/${encodeURIComponent(session.id)}`, { method: 'DELETE' });
       const ended = data.session || data;
@@ -571,6 +957,38 @@ class AgentChatController {
 
   defaultRepo() { return `/Users/mokaiche/Documents/htmls/${this.entrySite}`; }
 
+  confirmEndSession(session) {
+    this.resolveConfirmation(false);
+    const title = session.title || BACKEND_LABELS[session.backend] || session.backend;
+    this.confirmMessage.textContent = session.status === 'unavailable'
+      ? `移除“${title}”会话？这只会清除本机保存的失效记录。`
+      : session.mode === 'plugin'
+        ? `断开“${title}”的网页接入？不会删除原插件会话，但会停止当前网页控制入口。`
+        : `结束“${title}”会话？结束后不会继续保留本地进程。`;
+    this.confirmBackdrop.hidden = false;
+    const previouslyFocused = document.activeElement;
+    const confirmation = new Promise((resolve) => { this.confirmation = { resolve, previouslyFocused }; });
+    window.setTimeout(() => this.confirmAccept.focus(), 0);
+    return confirmation;
+  }
+
+  resolveConfirmation(value) {
+    if (!this.confirmation) return;
+    const { resolve, previouslyFocused } = this.confirmation;
+    this.confirmation = null;
+    this.confirmBackdrop.hidden = true;
+    resolve(value);
+    if (previouslyFocused?.isConnected) previouslyFocused.focus();
+  }
+
+  sortSessions(sessions) {
+    return [...sessions].sort((left, right) => {
+      const leftTime = Date.parse(left.createdAt || left.lastActivityAt || '') || 0;
+      const rightTime = Date.parse(right.createdAt || right.lastActivityAt || '') || 0;
+      return rightTime - leftTime;
+    });
+  }
+
   renderSessions() {
     this.sessionList.innerHTML = '';
     if (!this.sessions.length) {
@@ -583,15 +1001,17 @@ class AgentChatController {
       const button = document.createElement('button');
       button.className = `agent-chat-session${this.current?.id === session.id ? ' is-active' : ''}${session.status === 'unavailable' ? ' is-stale' : ''}`;
       button.type = 'button';
-      button.innerHTML = `<strong>${escapeHtml(session.title || BACKEND_LABELS[session.backend] || session.backend)}</strong><small>${escapeHtml(session.status === 'unavailable' ? 'Gateway 已重启' : `${BACKEND_LABELS[session.backend] || session.backend} · ${session.status || 'idle'}`)} · ${formatTime(session.lastActivityAt || session.createdAt)}</small>`;
+      const sourceLabel = session.mode === 'plugin' ? '插件' : 'Web';
+      button.innerHTML = `<strong>${escapeHtml(session.title || BACKEND_LABELS[session.backend] || session.backend)}</strong><small>${escapeHtml(session.status === 'unavailable' ? 'Gateway 已重启' : `${sourceLabel} · ${BACKEND_LABELS[session.backend] || session.backend} · ${session.model || '默认模型'} · ${session.status || 'idle'}`)} · ${formatTime(session.lastActivityAt || session.createdAt)}</small>`;
       button.onclick = () => { void this.selectSession(session); };
       wrap.append(button);
-      if (!['unavailable', 'ended'].includes(session.status)) {
+      if (session.status !== 'ended') {
         const endButton = document.createElement('button');
         endButton.className = 'agent-chat-session-end';
         endButton.type = 'button';
-        endButton.title = '结束此 Agent 会话';
-        endButton.setAttribute('aria-label', `结束 ${session.title || BACKEND_LABELS[session.backend] || session.backend} 会话`);
+        const actionLabel = session.status === 'unavailable' ? '移除失效的' : session.mode === 'plugin' ? '断开' : '结束';
+        endButton.title = session.status === 'unavailable' ? '移除失效会话' : session.mode === 'plugin' ? '断开网页接入' : '结束此 Agent 会话';
+        endButton.setAttribute('aria-label', `${actionLabel} ${session.title || BACKEND_LABELS[session.backend] || session.backend} 会话`);
         endButton.textContent = '⌫';
         endButton.onclick = (event) => { event.stopPropagation(); void this.endCurrent(session); };
         wrap.append(endButton);
@@ -685,6 +1105,10 @@ class AgentChatController {
     try { return JSON.parse(localStorage.getItem(this.storageKey) || '[]'); } catch { return []; }
   }
 
+  readModePreference() {
+    try { return localStorage.getItem(`${STORAGE_PREFIX}:mode:${this.entrySite}`) === 'plugin' ? 'plugin' : 'web'; } catch { return 'web'; }
+  }
+
   rememberSession(session) {
     if (!session?.id) return;
     if (session.status === 'ended') { this.forgetSession(session); return; }
@@ -692,10 +1116,31 @@ class AgentChatController {
     try { localStorage.setItem(this.storageKey, JSON.stringify(list.map(({ subscribers, adapter, ...item }) => item))); } catch { /* Local storage is optional. */ }
   }
 
+  removeUnavailableSession(session) {
+    if (!session?.id || session.status !== 'unavailable') return;
+    const wasCurrent = this.current?.id === session.id;
+    this.sessions = this.sessions.filter((item) => item.id !== session.id);
+    this.forgetSession(session);
+    if (wasCurrent) {
+      this.disconnectEvents();
+      this.current = null;
+      this.currentMessages = [];
+      this.currentReasoning = '';
+      this.currentTools.clear();
+      this.currentPermissions.clear();
+      this.renderMessages('已移除失效会话；可以新建一个会话。');
+    }
+    this.renderSessions();
+    this.syncComposer();
+  }
+
   forgetSession(session) {
     if (!session?.id) return;
     const list = this.readRememberedSessions().filter((item) => item.id !== session.id && item.status !== 'ended');
-    try { localStorage.setItem(this.storageKey, JSON.stringify(list)); } catch { /* Local storage is optional. */ }
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(list));
+      localStorage.removeItem(this.transcriptKey(session.id));
+    } catch { /* Local storage is optional. */ }
   }
 
   transcriptKey(id) { return `${STORAGE_PREFIX}:transcript:${this.entrySite}:${id}`; }

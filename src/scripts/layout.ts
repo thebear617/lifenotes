@@ -1,136 +1,57 @@
-const toggle = document.getElementById("sidebarToggle");
-const backdrop = document.getElementById("sidebarBackdrop");
-const close = document.getElementById("sidebarClose");
-const collapse = document.getElementById("sidebarCollapse");
-const sidebar = document.getElementById("sidebar");
-const DESKTOP_BREAKPOINT = 720;
+const tocToggle = document.getElementById("articleTocToggle");
+const tocColumn = document.querySelector<HTMLElement>(".article-toc-column");
+const tocDetails = tocColumn?.querySelector<HTMLDetailsElement>(".article-toc");
+const scrollContainer = document.querySelector<HTMLElement>(".main-area");
+const mobileQuery = window.matchMedia("(max-width: 720px)");
 
-let desktopPinned = false;
-let desktopHovered = false;
-let compactLayout = window.innerWidth < DESKTOP_BREAKPOINT;
-let hoverCloseTimer: number | undefined;
-
-function isCompactLayout() {
-  return window.innerWidth < DESKTOP_BREAKPOINT;
+function syncFloatingToc() {
+  const floating = Boolean(mobileQuery.matches && scrollContainer && scrollContainer.scrollTop > 8);
+  tocToggle?.classList.toggle("is-floating", floating);
 }
 
-function clearHoverCloseTimer() {
-  if (hoverCloseTimer !== undefined) {
-    window.clearTimeout(hoverCloseTimer);
-    hoverCloseTimer = undefined;
-  }
+function syncTocToggle() {
+  const open = Boolean(mobileQuery.matches && tocColumn?.classList.contains("is-mobile-open"));
+  tocToggle?.setAttribute("aria-expanded", String(open));
+  tocToggle?.setAttribute("aria-label", open ? "关闭文章目录" : "打开文章目录");
+  tocToggle?.classList.toggle("is-open", open);
 }
 
-function updateToggleState(expanded: boolean) {
-  toggle?.setAttribute("aria-expanded", String(expanded));
-  toggle?.setAttribute("aria-label", expanded ? "侧边栏已展开" : "展开侧边栏");
+function closeMobileToc() {
+  tocColumn?.classList.remove("is-mobile-open");
+  syncTocToggle();
 }
 
-function syncDesktopSidebar() {
-  const expanded = desktopPinned || desktopHovered;
-  document.body.classList.toggle(
-    "sidebar-expanded",
-    !compactLayout && expanded,
-  );
-  document.body.classList.toggle(
-    "sidebar-collapsed",
-    !compactLayout && !expanded,
-  );
-  updateToggleState(
-    compactLayout ? document.body.classList.contains("sidebar-open") : expanded,
-  );
-}
-
-function setDesktopHover(value: boolean) {
-  clearHoverCloseTimer();
-  desktopHovered = value;
-  syncDesktopSidebar();
-}
-
-function scheduleDesktopClose() {
-  clearHoverCloseTimer();
-  if (desktopPinned) return;
-  hoverCloseTimer = window.setTimeout(() => {
-    desktopHovered = false;
-    syncDesktopSidebar();
-  }, 120);
-}
-
-function closeSidebar() {
-  sidebar?.classList.remove("open");
-  document.body.classList.remove("sidebar-open");
-  document.body.style.overflow = "";
-  updateToggleState(false);
-}
-
-function openSidebar() {
-  sidebar?.classList.add("open");
-  document.body.classList.add("sidebar-open");
-  document.body.style.overflow = "hidden";
-  updateToggleState(true);
-}
-
-toggle?.addEventListener("mouseenter", () => {
-  if (!compactLayout) setDesktopHover(true);
+tocToggle?.addEventListener("click", () => {
+  if (!mobileQuery.matches || !tocColumn) return;
+  const open = tocColumn.classList.toggle("is-mobile-open");
+  if (open && tocDetails) tocDetails.open = true;
+  syncTocToggle();
 });
-toggle?.addEventListener("mouseleave", () => {
-  if (!compactLayout) scheduleDesktopClose();
+
+document.addEventListener("click", (event) => {
+  if (!tocColumn?.classList.contains("is-mobile-open")) return;
+  const target = event.target as Node;
+  if (tocColumn.contains(target) || tocToggle?.contains(target)) return;
+  closeMobileToc();
 });
-toggle?.addEventListener("click", () => {
-  if (compactLayout) {
-    openSidebar();
-    return;
-  }
-  desktopPinned = true;
-  setDesktopHover(true);
-});
-backdrop?.addEventListener("click", closeSidebar);
-close?.addEventListener("click", closeSidebar);
-collapse?.addEventListener("click", () => {
-  desktopPinned = false;
-  desktopHovered = false;
-  clearHoverCloseTimer();
-  syncDesktopSidebar();
-});
-sidebar?.addEventListener("mouseenter", () => {
-  if (!compactLayout) setDesktopHover(true);
-});
-sidebar?.addEventListener("mouseleave", () => {
-  if (!compactLayout) scheduleDesktopClose();
-});
+
 document.addEventListener("keydown", (event) => {
-  if (event.key !== "Escape") return;
-  if (compactLayout) {
-    closeSidebar();
-    return;
-  }
-  desktopPinned = false;
-  desktopHovered = false;
-  clearHoverCloseTimer();
-  syncDesktopSidebar();
+  if (event.key === "Escape") closeMobileToc();
 });
 
-window.addEventListener(
-  "resize",
-  () => {
-    const nextCompactLayout = isCompactLayout();
-    if (nextCompactLayout !== compactLayout) {
-      compactLayout = nextCompactLayout;
-      clearHoverCloseTimer();
-      desktopHovered = false;
-      closeSidebar();
-    }
-    syncDesktopSidebar();
-  },
-  { passive: true },
-);
-
-document
-  .querySelectorAll<HTMLAnchorElement>(".sidebar-item")
-  .forEach((link) => {
-    link.addEventListener("click", () => {
-      if (compactLayout) closeSidebar();
-    });
+tocColumn?.querySelectorAll<HTMLAnchorElement>(".article-toc-link").forEach((link) => {
+  link.addEventListener("click", () => {
+    if (mobileQuery.matches) closeMobileToc();
   });
+});
 
-syncDesktopSidebar();
+mobileQuery.addEventListener("change", () => {
+  closeMobileToc();
+  syncFloatingToc();
+  syncTocToggle();
+});
+
+scrollContainer?.addEventListener("scroll", syncFloatingToc, { passive: true });
+
+syncFloatingToc();
+syncTocToggle();

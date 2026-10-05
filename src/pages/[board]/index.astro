@@ -1,25 +1,17 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import NoteWall from '../../components/NoteWall.astro';
 import boards from '../../data/boards.js';
 import { getCollection } from 'astro:content';
-import ListExplorer from '../../components/ListExplorer.astro';
 import { categoryForEntry } from '../../data/content.js';
 
+type BoardId = 'life' | 'service' | 'humanities' | 'industry' | 'notes';
+
 export async function getStaticPaths() {
-  const getFormalEntries = (id: string) => {
-    switch (id) {
-      case 'industry': return getCollection('industry');
-      case 'humanities': return getCollection('humanities');
-      case 'notes': return getCollection('notes');
-      default: return [];
-    }
-  };
-  return Promise.all(boards
-    .filter((board) => !['life', 'service'].includes(board.id))
-    .map(async (board) => ({
-      params: { board: board.id },
-      props: { board, entries: await getFormalEntries(board.id) },
-    })));
+  return Promise.all(boards.map(async (board) => {
+    const entries = await getCollection(board.id as BoardId);
+    return { params: { board: board.id }, props: { board, entries } };
+  }));
 }
 
 const { board, entries } = Astro.props;
@@ -36,8 +28,6 @@ const items = entries.map((entry) => ({
 }));
 ---
 
-<Layout title={board.name} currentBoard={board.id}>
-  <h2 class="view-title">{board.name}</h2>
-  <p class="view-sub">{board.subtitle}</p>
-  <ListExplorer entries={items} />
+<Layout title={board.name} currentBoard={board.id} immersive wide>
+  <NoteWall entries={items} board={board} boards={boards} base={base} />
 </Layout>
