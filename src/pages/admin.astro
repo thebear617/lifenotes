@@ -938,8 +938,9 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       </div>
     </section>
   </div>
-  <script define:vars={{ boardCategories, contentPathSegments }}>
+  <script define:vars={{ boardCategories, contentPathSegments, base }}>
     const $ = (id) => document.getElementById(id);
+    const MAX_NOTE_IMAGE_BYTES = 2 * 1024 * 1024;
     function articleFilenameFromTitle(value) {
       const normalized = String(value || '')
         .trim()
@@ -982,6 +983,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     let autoSaveTimer = 0;
     let savePromise = null;
     let draftVersion = 0;
+    const pendingImageUploads = new Set();
     const EDITOR_SESSION_KEY = 'lifenotes-admin-editor-state-v1';
     const EDITOR_DRAFT_KEY = 'lifenotes-admin-editor-draft-v1';
     const IMMERSIVE_SESSION_KEY = 'lifenotes-admin-immersive-v1';
@@ -993,6 +995,8 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     let editorTocScrollFrame = 0;
     const editorHistoryLimit = 100;
     const AUTO_SAVE_DELAY = 900;
+    const newDraftAssetKey = () => `draft-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
+    let draftAssetKey = newDraftAssetKey();
     const fields = ['title', 'description', 'category', 'subcategory', 'date', 'updated', 'slug'];
     const sortLabels = {
       'title-asc': '标题 A → Z',
@@ -1002,10 +1006,20 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     };
     const escapeHtml = (text) => String(text ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const setStatus = (message, kind = 'neutral') => { $('status').textContent = message; $('status').className = `save-state ${kind}`; };
+    function hasIncompleteManagedImageReference(source) {
+      const matches = String(source || '').match(/\/images\/(?:notes|timeline)\/[^\s)"'<>]*/g) || [];
+      return matches.some((pathname) => {
+        const separator = pathname.lastIndexOf('/');
+        if (separator < 0) return false;
+        let fileName = pathname.slice(separator + 1);
+        try { fileName = decodeURIComponent(fileName); } catch { return true; }
+        return !/^[\p{L}\p{N}][\p{L}\p{N}._-]*\.(?:jpg|jpeg|png|webp|gif)$/iu.test(fileName);
+      });
+    }
     function scheduleAutoSave() {
       window.clearTimeout(autoSaveTimer);
       autoSaveTimer = 0;
-      if (!isDirty) return;
+      if (!isDirty || pendingImageUploads.size || hasIncompleteManagedImageReference($('body').value)) return;
       autoSaveTimer = window.setTimeout(() => {
         autoSaveTimer = 0;
         void saveArticle();
@@ -1014,7 +1028,8 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     const markDirty = () => {
       isDirty = true;
       draftVersion += 1;
-      setStatus('等待自动保存', 'saving');
+      const hasIncompleteImage = hasIncompleteManagedImageReference($('body').value);
+      setStatus(hasIncompleteImage ? '图片文件名不能为空，请完成后再保存' : '等待自动保存', hasIncompleteImage ? 'error' : 'saving');
       rememberEditorDraft();
       scheduleAutoSave();
     };
@@ -1378,6 +1393,16 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       if (!source.trim()) {
         previewFootnoteCleanup();
         $('preview').innerHTML = '';
+        selectedPreviewNode = null;
+        selectedPreviewSourceRange = null;
+        pendingScrollRestore = null;
+        $('preview').classList.remove('is-loading');
+        renderEditorToc();
+        return;
+      }
+      if (hasIncompleteManagedImageReference(source)) {
+        previewFootnoteCleanup();
+        $('preview').innerHTML = '<p class="preview-placeholder">图片文件名不能为空，请完成后再保存</p>';
         selectedPreviewNode = null;
         selectedPreviewSourceRange = null;
         pendingScrollRestore = null;
@@ -2180,6 +2205,89 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       editorState = next;
       handleBodyChange();
     }
+
+    function clipboardImageFile(event) {
+      return [...(event.clipboardData?.items || [])]
+        .filter((item) => item.kind === 'file' && item.type.startsWith('image/'))
+        .map((item) => item.getAsFile())
+        .find(Boolean) || null;
+    }
+
+    function imageAltFromFile(file) {
+      const name = String(file.name || '')
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[\[\]\\\r\n]/g, ' ')
+        .trim();
+      return name || '粘贴图片';
+    }
+
+    function imageAssetContext() {
+      const collection = $('board')?.value.trim() || 'notes';
+      const slug = $('slug')?.value.trim();
+      return { collection, assetKey: slug || draftAssetKey };
+    }
+
+    async function uploadPastedImage(file) {
+      if (file.size > MAX_NOTE_IMAGE_BYTES) throw new Error('大于这个尺寸，请进行压缩处理');
+      const context = imageAssetContext();
+      const query = new URLSearchParams(context);
+      const response = await fetch(`${base}admin/api/asset?${query}`, {
+        method: 'POST',
+        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        body: file,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || '图片上传失败');
+      if (!data.path) throw new Error('图片上传成功，但服务器没有返回图片地址');
+      return data.path;
+    }
+
+    function handleBodyPaste(event) {
+      const file = clipboardImageFile(event);
+      if (!file) return;
+      event.preventDefault();
+
+      const body = $('body');
+      const marker = `<!-- cms-image-upload-${Date.now()}-${Math.random().toString(36).slice(2)} -->`;
+      const task = { promise: null };
+      pendingImageUploads.add(task);
+      const start = body.selectionStart;
+      const end = body.selectionEnd;
+      runEditorEdit(() => {
+        body.focus();
+        body.setRangeText(marker, start, end, 'end');
+      });
+
+      task.promise = (async () => {
+        try {
+          const imagePath = await uploadPastedImage(file);
+          const markerStart = body.value.indexOf(marker);
+          if (markerStart < 0) {
+            setStatus('图片已上传，但插入位置已被修改', 'error');
+            return;
+          }
+          const markdown = `![${imageAltFromFile(file)}](${imagePath})`;
+          runEditorEdit(() => {
+            body.focus();
+            body.setRangeText(markdown, markerStart, markerStart + marker.length, 'end');
+          });
+        } catch (error) {
+          const markerStart = body.value.indexOf(marker);
+          if (markerStart >= 0) {
+            runEditorEdit(() => {
+              body.focus();
+              body.setRangeText('', markerStart, markerStart + marker.length, 'end');
+            });
+          }
+          setStatus(error.message === '大于这个尺寸，请进行压缩处理' ? error.message : `图片上传失败：${error.message}`, 'error');
+        } finally {
+          pendingImageUploads.delete(task);
+          if (isDirty) scheduleAutoSave();
+        }
+      })();
+      void task.promise;
+    }
+
     function articleBoard(article) {
       return String(article.path || '').split('/')[0];
     }
@@ -2323,6 +2431,9 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       } catch (error) { setStatus(error.message, 'error'); }
     }
     async function saveArticle({ force = false } = {}) {
+      if (pendingImageUploads.size) {
+        await Promise.all([...pendingImageUploads].map((task) => task.promise).filter(Boolean));
+      }
       if (savePromise) return savePromise;
       if (!isDirty && !force) return true;
       window.clearTimeout(autoSaveTimer);
@@ -2332,6 +2443,10 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
       const previousPath = selectedPath;
       const frontmatter = Object.fromEntries(fields.map((field) => [field, $(field).value]));
       const body = $('body').value;
+      if (hasIncompleteManagedImageReference(body)) {
+        setStatus('图片文件名不能为空，请完成后再保存', 'error');
+        return false;
+      }
       const currentDraftVersion = draftVersion;
       $('save').disabled = true;
       setStatus('自动保存中…', 'saving');
@@ -2374,6 +2489,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     $('new').onclick = async () => {
       if (!(await ensureEditorSaved())) return;
       selectedPath = '';
+      draftAssetKey = newDraftAssetKey();
       fill();
       renderList();
       setStatus('新建模式', 'neutral');
@@ -2494,6 +2610,7 @@ const base = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.r
     $('title').addEventListener('input', updateFileLabel);
     $('body').oninput = handleBodyInput;
     $('body').addEventListener('keydown', handleBodyKeydown);
+    $('body').addEventListener('paste', handleBodyPaste);
     $('body').addEventListener('scroll', () => scheduleEditorTocUpdate(updateEditorTocFromSource), { passive: true });
     $('preview').addEventListener('scroll', () => scheduleEditorTocUpdate(updateEditorTocFromPreview), { passive: true });
     function scrollBodyToEdge(edge) {

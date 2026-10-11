@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
 import { execFile } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -18,9 +19,17 @@ import { canonicalArticlePath } from '../data/content-paths.js';
 
 const ROOT = process.env.CMS_CONTENT_ROOT ? path.resolve(process.env.CMS_CONTENT_ROOT) : path.resolve(process.cwd(), 'src/content');
 const DEV_SERVER_LOCK = path.resolve(process.cwd(), '.astro', 'lifenotes-dev-server.lock');
+const CMS_PUBLIC_ROOT = path.resolve(process.env.CMS_ASSET_ROOT || path.join(process.cwd(), 'public'));
+const NOTE_IMAGE_DIRECTORY = path.resolve(CMS_PUBLIC_ROOT, 'images/notes');
+const NOTE_IMAGE_URL_PREFIX = '/images/notes/';
+const MAX_NOTE_IMAGE_BYTES = 2 * 1024 * 1024;
 const execFileAsync = promisify(execFile);
 const BOARDS = ['life', 'service', 'industry', 'humanities', 'notes'];
 const FIELDS = ['title', 'date', 'updated', 'category', 'subcategory', 'description', 'slug'];
+const NOTE_IMAGE_COLLECTIONS = Object.fromEntries(BOARDS.map((board) => [
+  board,
+  { directory: path.join(NOTE_IMAGE_DIRECTORY, board), urlPrefix: `/images/notes/${board}/` },
+]));
 const markdownProcessor = createMarkdownProcessor({
   remarkPlugins: [remarkFootnoteIndent, remarkBreaks, remarkMath],
   rehypePlugins: [rehypeKatex, rehypeMark, rehypeTableWrap, rehypePopover, rehypeSourcePosition],
@@ -247,6 +256,374 @@ async function readBody(request) {
   return JSON.parse(raw || '{}');
 }
 
+async function readBinaryBody(request) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of request) {
+    const buffer = Buffer.from(chunk);
+    size += buffer.length;
+    if (size > MAX_NOTE_IMAGE_BYTES) throw new Error('大于这个尺寸，请进行压缩处理');
+    chunks.push(buffer);
+  }
+  return Buffer.concat(chunks);
+}
+
+function imageExtension(mimeType) {
+  return {
+    'image/jpeg': 'jpg',
+    'image/jpg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+  }[mimeType] || null;
+}
+
+function hasImageSignature(buffer, mimeType) {
+  if (mimeType === 'image/png') return buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') return buffer.subarray(0, 3).equals(Buffer.from([255, 216, 255]));
+  if (mimeType === 'image/gif') return buffer.subarray(0, 6).toString('ascii') === 'GIF87a' || buffer.subarray(0, 6).toString('ascii') === 'GIF89a';
+  if (mimeType === 'image/webp') return buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP';
+  return false;
+}
+
+async function saveNoteImage(request) {
+  const url = new URL(request.url || '/', 'http://localhost');
+  const mimeType = String(request.headers['content-type'] || '').split(';', 1)[0].trim().toLowerCase();
+  const extension = imageExtension(mimeType);
+  if (!extension) throw new Error('仅支持 JPG、PNG、WebP 或 GIF 图片');
+
+  const buffer = await readBinaryBody(request);
+  if (!buffer.length) throw new Error('图片内容为空');
+  if (!hasImageSignature(buffer, mimeType)) throw new Error('图片内容无法识别');
+
+  const collection = url.searchParams.get('collection');
+  const assetKey = normalizeImageAssetKey(url.searchParams.get('assetKey'));
+  const target = collection && assetKey
+    ? noteImageTarget(collection, assetKey)
+    : !collection && !url.searchParams.has('assetKey')
+      ? { directory: NOTE_IMAGE_DIRECTORY, urlPrefix: NOTE_IMAGE_URL_PREFIX }
+      : null;
+  if (!target) throw new Error('图片所属文章信息无效');
+
+  await fs.mkdir(target.directory, { recursive: true });
+  const fileName = `${randomUUID()}.${extension}`;
+  const targetPath = path.join(target.directory, fileName);
+  const temporaryPath = `${targetPath}.uploading`;
+  await fs.writeFile(temporaryPath, buffer, { flag: 'wx' });
+  try {
+    await fs.rename(temporaryPath, targetPath);
+  } catch (error) {
+    await fs.rm(temporaryPath, { force: true }).catch(() => {});
+    throw error;
+  }
+  return { path: `${target.urlPrefix}${fileName}`, mimeType, bytes: buffer.length };
+}
+
+function normalizeImageAssetKey(value) {
+  const normalized = String(value || '')
+    .trim()
+    .normalize('NFKC')
+    .replace(/[\\/]+/g, '-')
+    .replace(/[^\p{L}\p{N}._-]+/gu, '-')
+    .replace(/^-+|-+$/g, '');
+  return normalized && normalized !== '.' && normalized !== '..' ? normalized : null;
+}
+
+function normalizeImageFileName(value) {
+  const normalized = String(value || '').trim().normalize('NFKC');
+  return /^[\p{L}\p{N}][\p{L}\p{N}._-]*\.(?:jpg|jpeg|png|webp|gif)$/iu.test(normalized)
+    ? normalized
+    : null;
+}
+
+function noteImageTarget(collection, assetKey) {
+  const config = NOTE_IMAGE_COLLECTIONS[collection];
+  const normalizedKey = normalizeImageAssetKey(assetKey);
+  if (!config || !normalizedKey) return null;
+  return {
+    directory: path.resolve(config.directory, normalizedKey),
+    urlPrefix: `${config.urlPrefix}${normalizedKey}/`,
+  };
+}
+
+function noteImageFilePath(pathname) {
+  let decodedPathname;
+  try {
+    decodedPathname = decodeURIComponent(pathname);
+  } catch {
+    return null;
+  }
+
+  if (decodedPathname.startsWith(NOTE_IMAGE_URL_PREFIX)) {
+    const fileName = decodedPathname.slice(NOTE_IMAGE_URL_PREFIX.length);
+    const normalizedFileName = !fileName.includes('/') && normalizeImageFileName(fileName);
+    if (normalizedFileName) {
+      return {
+        directory: NOTE_IMAGE_DIRECTORY,
+        filePath: path.resolve(NOTE_IMAGE_DIRECTORY, normalizedFileName),
+        fileName: normalizedFileName,
+      };
+    }
+  }
+
+  for (const config of Object.values(NOTE_IMAGE_COLLECTIONS)) {
+    if (!decodedPathname.startsWith(config.urlPrefix)) continue;
+    const [assetKey, fileName, ...rest] = decodedPathname.slice(config.urlPrefix.length).split('/');
+    const normalizedAssetKey = normalizeImageAssetKey(assetKey);
+    const normalizedFileName = normalizeImageFileName(fileName);
+    if (rest.length || !normalizedAssetKey || !normalizedFileName) return null;
+    const directory = path.resolve(config.directory, normalizedAssetKey);
+    return {
+      directory,
+      filePath: path.resolve(directory, normalizedFileName),
+      fileName: normalizedFileName,
+    };
+  }
+
+  return null;
+}
+
+function extractManagedImagePaths(body) {
+  const paths = [];
+  const seen = new Set();
+  const matches = String(body || '').match(/\/images\/(?:notes|timeline)\/[^\s)"'<>]+/g) || [];
+  for (const pathname of matches) {
+    const image = noteImageFilePath(pathname);
+    if (!image || seen.has(image.filePath)) continue;
+    seen.add(image.filePath);
+    paths.push({ pathname, ...image });
+  }
+  return paths;
+}
+
+async function collectReferencedManagedImagePaths() {
+  const referencedPaths = new Set();
+
+  async function scan(directory) {
+    let entries;
+    try {
+      entries = await fs.readdir(directory, { withFileTypes: true });
+    } catch (error) {
+      if (error.code === 'ENOENT') return;
+      throw error;
+    }
+
+    for (const entry of entries) {
+      const filePath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        await scan(filePath);
+        continue;
+      }
+      if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
+      const source = await fs.readFile(filePath, 'utf8');
+      for (const image of extractManagedImagePaths(source)) referencedPaths.add(image.filePath);
+    }
+  }
+
+  await scan(ROOT);
+  return referencedPaths;
+}
+
+async function removeUnreferencedManagedImages(previousBody, nextBody) {
+  const nextPaths = new Set(extractManagedImagePaths(nextBody).map((image) => image.filePath));
+  const candidates = extractManagedImagePaths(previousBody)
+    .map((image) => image.filePath)
+    .filter((filePath) => !nextPaths.has(filePath));
+  if (!candidates.length) return;
+
+  let referencedPaths;
+  try {
+    referencedPaths = await collectReferencedManagedImagePaths();
+  } catch (error) {
+    console.warn('[local-cms] 图片引用扫描失败，跳过本次图片清理', error);
+    return;
+  }
+  for (const filePath of candidates) {
+    if (referencedPaths.has(filePath) || !(await fileExists(filePath))) continue;
+    try {
+      await moveToTrash(filePath);
+    } catch (error) {
+      console.warn(`[local-cms] 图片清理失败：${filePath}`, error);
+    }
+  }
+}
+
+function extractManagedImageDirectories(body) {
+  const directories = [];
+  const seen = new Set();
+  const matches = String(body || '').match(/\/images\/(?:notes|timeline)\/[^\s)"'<>]*/g) || [];
+  for (const pathname of matches) {
+    const separator = pathname.lastIndexOf('/');
+    if (separator < 0) continue;
+    const directoryImage = noteImageFilePath(`${pathname.slice(0, separator + 1)}placeholder.png`);
+    if (!directoryImage || seen.has(directoryImage.directory)) continue;
+    seen.add(directoryImage.directory);
+    directories.push(directoryImage.directory);
+  }
+  return directories;
+}
+
+function findIncompleteManagedImageReference(body) {
+  const matches = String(body || '').match(/\/images\/(?:notes|timeline)\/[^\s)"'<>]*/g) || [];
+  for (const pathname of matches) {
+    const separator = pathname.lastIndexOf('/');
+    if (separator < 0) continue;
+    const directoryImage = noteImageFilePath(`${pathname.slice(0, separator + 1)}placeholder.png`);
+    if (!directoryImage) continue;
+    let fileName = pathname.slice(separator + 1);
+    try {
+      fileName = decodeURIComponent(fileName);
+    } catch {
+      return pathname;
+    }
+    if (!normalizeImageFileName(fileName)) return pathname;
+  }
+  return null;
+}
+
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
+}
+
+async function unreferencedImageFiles(directory, referencedPaths) {
+  let entries;
+  try {
+    entries = await fs.readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  }
+  return entries
+    .filter((entry) => entry.isFile())
+    .map((entry) => normalizeImageFileName(entry.name))
+    .filter(Boolean)
+    .map((fileName) => path.join(directory, fileName))
+    .filter((filePath) => !referencedPaths.has(filePath));
+}
+
+async function syncRenamedImages(previousBody, nextBody) {
+  const previousImages = extractManagedImagePaths(previousBody);
+  const nextImages = extractManagedImagePaths(nextBody);
+  const previousDirectories = extractManagedImageDirectories(previousBody);
+  const previousPaths = new Set(previousImages.map((image) => image.filePath));
+  const nextPaths = new Set(nextImages.map((image) => image.filePath));
+  const removedImages = previousImages.filter((image) => !nextPaths.has(image.filePath));
+  const addedImages = nextImages.filter((image) => !previousPaths.has(image.filePath));
+  const renames = [];
+  const plannedRenames = [];
+  const missingPairs = [];
+
+  const directories = new Set(removedImages.map((image) => image.directory));
+  for (const directory of directories) {
+    const oldImages = removedImages.filter((image) => image.directory === directory);
+    const newImages = [];
+    for (const image of addedImages.filter((item) => item.directory === directory)) {
+      if (!(await fileExists(image.filePath))) newImages.push(image);
+    }
+    if (oldImages.length !== newImages.length || oldImages.length === 0) continue;
+
+    for (let index = 0; index < oldImages.length; index += 1) {
+      const oldImage = oldImages[index];
+      const newImage = newImages[index];
+      const oldExtension = path.extname(oldImage.fileName).toLowerCase();
+      const newExtension = path.extname(newImage.fileName).toLowerCase();
+      if (oldExtension !== newExtension) throw new Error('图片改名不能更改文件类型');
+      if (await fileExists(oldImage.filePath)) plannedRenames.push({ from: oldImage.filePath, to: newImage.filePath });
+      else missingPairs.push({ oldImage, newImage });
+    }
+  }
+
+  if (removedImages.length === 1 && addedImages.length === 1) {
+    const oldImage = removedImages[0];
+    const newImage = addedImages[0];
+    if (oldImage.directory !== newImage.directory && !(await fileExists(newImage.filePath))) {
+      throw new Error('图片改名只能修改文件名，不能修改图片目录');
+    }
+  }
+
+  const plannedTargets = new Set(plannedRenames.map((rename) => rename.to));
+  const reservedSources = new Set(plannedRenames.map((rename) => rename.from));
+  const recoveryRequests = [];
+  for (const image of addedImages) {
+    if (plannedTargets.has(image.filePath) || await fileExists(image.filePath)) continue;
+    if (previousDirectories.includes(image.directory)) recoveryRequests.push(image);
+  }
+  for (const image of recoveryRequests) {
+    const referencedPaths = new Set([...previousPaths, ...nextPaths, ...reservedSources]);
+    const candidates = await unreferencedImageFiles(image.directory, referencedPaths);
+    if (candidates.length !== 1) throw new Error('原图片文件不存在，无法同步改名');
+    const candidate = candidates[0];
+    if (path.extname(candidate).toLowerCase() !== path.extname(image.fileName).toLowerCase()) {
+      throw new Error('图片改名不能更改文件类型');
+    }
+    plannedRenames.push({ from: candidate, to: image.filePath });
+    plannedTargets.add(image.filePath);
+    reservedSources.add(candidate);
+  }
+
+  for (const { newImage } of missingPairs) {
+    if (!plannedTargets.has(newImage.filePath)) throw new Error('原图片文件不存在，无法同步改名');
+  }
+
+  try {
+    for (const rename of plannedRenames) {
+      await fs.rename(rename.from, rename.to);
+      renames.push(rename);
+    }
+  } catch (error) {
+    await rollbackImageRenames(renames);
+    throw error;
+  }
+
+  return renames;
+}
+
+async function rollbackImageRenames(renames) {
+  for (const rename of [...renames].reverse()) {
+    try {
+      if (await fileExists(rename.to)) await fs.rename(rename.to, rename.from);
+    } catch {
+      // Keep the original save error. The rollback is best effort for local development.
+    }
+  }
+}
+
+async function serveNoteImage(request, response, next) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return next();
+
+  const pathname = new URL(request.url || '/', 'http://localhost').pathname;
+  const image = noteImageFilePath(pathname);
+  if (!image) return next();
+
+  try {
+    const buffer = await fs.readFile(image.filePath);
+    const extension = path.extname(image.fileName).toLowerCase();
+    const contentType = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.webp': 'image/webp',
+      '.gif': 'image/gif',
+    }[extension] || 'application/octet-stream';
+    response.statusCode = 200;
+    response.setHeader('Content-Type', contentType);
+    response.setHeader('Content-Length', buffer.length);
+    response.setHeader('Cache-Control', 'no-cache');
+    if (request.method === 'HEAD') return response.end();
+    return response.end(buffer);
+  } catch (error) {
+    if (error.code === 'ENOENT') return next();
+    response.statusCode = 500;
+    return response.end('图片读取失败');
+  }
+}
+
 export default function localCms() {
   return {
     name: 'lifenotes-local-cms',
@@ -262,7 +639,11 @@ export default function localCms() {
       const markContentWrite = (filePath) => {
         if (!filePath) return;
         const resolved = path.resolve(filePath);
-        if (resolved === ROOT || resolved.startsWith(`${ROOT}${path.sep}`)) lastContentWriteAt = Date.now();
+        const isWatchedContent = resolved === ROOT
+          || resolved.startsWith(`${ROOT}${path.sep}`)
+          || resolved === NOTE_IMAGE_DIRECTORY
+          || resolved.startsWith(`${NOTE_IMAGE_DIRECTORY}${path.sep}`)
+        if (isWatchedContent) lastContentWriteAt = Date.now();
       };
       server.watcher.on('add', markContentWrite);
       server.watcher.on('change', markContentWrite);
@@ -299,9 +680,19 @@ export default function localCms() {
         next();
       });
 
+      // Vite's public-file middleware can miss directories created after the
+      // dev server starts. Serve CMS note images directly so a fresh paste is
+      // immediately renderable without restarting Astro.
+      server.middlewares.use(serveNoteImage);
+
       server.middlewares.use('/admin/api', async (request, response) => {
         try {
           const url = new URL(request.url, 'http://localhost');
+          if (request.method === 'POST' && url.pathname === '/asset') {
+            const asset = await saveNoteImage(request);
+            lastContentWriteAt = Date.now();
+            return json(response, 200, { ok: true, ...asset });
+          }
           if (request.method === 'GET' && url.pathname === '/articles') {
             const articles = (await Promise.all(BOARDS.map((board) => walk(board)))).flat();
             return json(response, 200, { articles: articles.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN')) });
@@ -325,6 +716,13 @@ export default function localCms() {
           }
           if (request.method === 'DELETE' && url.pathname === '/article' && safePath(articlePath)) {
             const absolutePath = safePath(articlePath);
+            let previousBody = '';
+            try {
+              previousBody = await fs.readFile(absolutePath, 'utf8');
+            } catch (error) {
+              if (error.code !== 'ENOENT') throw error;
+              return json(response, 404, { error: '文章不存在' });
+            }
             try {
               await fs.access(absolutePath);
             } catch (error) {
@@ -332,17 +730,28 @@ export default function localCms() {
               throw error;
             }
             await moveToTrash(absolutePath);
+            await removeUnreferencedManagedImages(previousBody, '');
             lastContentWriteAt = Date.now();
             return json(response, 200, { ok: true, path: articlePath });
           }
           if (request.method === 'POST' && url.pathname === '/article') {
             const data = await readBody(request);
+            if (findIncompleteManagedImageReference(data.body || '')) {
+              return json(response, 400, { error: '图片文件名不能为空，请完成后再保存' });
+            }
             const target = safePath(data.path);
             const previous = data.previousPath ? safePath(data.previousPath) : null;
             if (data.previousPath && !previous) return json(response, 400, { error: '原文章路径不在允许的内容目录内' });
             const frontmatter = { ...(data.frontmatter || {}), updated: currentLocalDateTime() };
             const errors = validate(frontmatter, data.path);
             if (errors.length) return json(response, 400, { errors });
+            const sourceFile = previous || target;
+            let previousBody = '';
+            try {
+              previousBody = await fs.readFile(sourceFile, 'utf8');
+            } catch (error) {
+              if (error.code !== 'ENOENT') throw error;
+            }
             if (previous && previous !== target) {
               try {
                 await fs.access(previous);
@@ -356,12 +765,29 @@ export default function localCms() {
               } catch (error) {
                 if (error.code !== 'ENOENT') throw error;
               }
-              await fs.mkdir(path.dirname(target), { recursive: true });
-              await fs.rename(previous, target);
-            } else {
-              await fs.mkdir(path.dirname(target), { recursive: true });
             }
-            await fs.writeFile(target, serializeMarkdown(frontmatter, data.body || ''), 'utf8');
+            let renamedImages = [];
+            let articleMoved = false;
+            try {
+              renamedImages = await syncRenamedImages(previousBody, data.body || '');
+              await fs.mkdir(path.dirname(target), { recursive: true });
+              if (previous && previous !== target) {
+                await fs.rename(previous, target);
+                articleMoved = true;
+              }
+              await fs.writeFile(target, serializeMarkdown(frontmatter, data.body || ''), 'utf8');
+            } catch (error) {
+              await rollbackImageRenames(renamedImages);
+              if (articleMoved) {
+                try {
+                  await fs.rename(target, previous);
+                } catch {
+                  // Keep the original save error. The article rollback is best effort.
+                }
+              }
+              throw error;
+            }
+            await removeUnreferencedManagedImages(previousBody, data.body || '');
             lastContentWriteAt = Date.now();
             return json(response, 200, { ok: true, path: data.path, frontmatter });
           }

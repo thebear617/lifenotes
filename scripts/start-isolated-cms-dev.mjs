@@ -13,7 +13,8 @@ for (const name of ['astro.config.mjs', 'public', 'node_modules', 'package.json'
   const source = path.join(projectRoot, name);
   try {
     await lstat(source);
-    await symlink(source, path.join(verificationRoot, name));
+    if (name === 'public') await cp(source, path.join(verificationRoot, name), { recursive: true });
+    else await symlink(source, path.join(verificationRoot, name));
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
@@ -26,6 +27,7 @@ const child = spawn(astro, ['dev', '--root', verificationRoot, ...process.argv.s
   env: {
     ...process.env,
     CMS_CONTENT_ROOT: path.join(verificationRoot, 'src', 'content'),
+    CMS_ASSET_ROOT: path.join(verificationRoot, 'public'),
     CMS_TRASH_ROOT: path.join(verificationRoot, '.trash'),
     CMS_ISOLATED_DEV: '1',
   },
