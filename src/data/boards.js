@@ -5,6 +5,7 @@ const boards = [
   { id: 'life', name: '生活与美食', icon: '🍚', desc: '健康、厨房、外食、居家、校园、家庭财务与日常速查', subtitle: '健康 · 厨房 · 外食 · 居家 · 校园 · 家庭财务', accent: '#f08c00' },
   { id: 'service', name: '服务业', icon: '🧳', desc: '酒店住宿与宏观经济等服务产业观察', subtitle: '酒店 · 宏观经济', accent: '#ae3ec9' },
   { id: 'notes', name: '随笔', icon: '📓', desc: '随想与草稿箱：未整理想法与摘录的中转站', subtitle: '随想 · 草稿箱', accent: '#868e96' },
+  { id: 'gallery', name: '灵感画廊', icon: '🖼️', desc: '外部链接图片与视频的灵感收藏', subtitle: '图片 · 视频 · 外部链接', accent: '#d97745' },
 ];
 
 export default boards;

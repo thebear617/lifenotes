@@ -1,7 +1,9 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import NoteWall from '../../components/NoteWall.astro';
+import GalleryWall from '../../components/GalleryWall.astro';
 import boards from '../../data/boards.js';
+import galleryNotes from '../../data/gallery-notes.js';
 import { getCollection } from 'astro:content';
 import { categoryForEntry } from '../../data/content.js';
 
@@ -9,25 +11,33 @@ type BoardId = 'life' | 'service' | 'humanities' | 'industry' | 'notes';
 
 export async function getStaticPaths() {
   return Promise.all(boards.map(async (board) => {
+    if (board.id === 'gallery') {
+      return { params: { board: board.id }, props: { board, entries: [], galleryNotes } };
+    }
     const entries = await getCollection(board.id as BoardId);
     return { params: { board: board.id }, props: { board, entries } };
   }));
 }
 
-const { board, entries } = Astro.props;
+const { board, entries, galleryNotes: boardGalleryNotes = [] } = Astro.props;
 const base = import.meta.env.BASE_URL;
-const items = entries.map((entry) => ({
-  slug: entry.data.slug || entry.id,
-  title: entry.data.title,
-  description: entry.data.description,
-  date: entry.data.date,
-  updated: entry.data.updated,
-  category: categoryForEntry(entry),
-  subcategory: entry.data.subcategory,
-  href: `${base}${board.id}/${entry.data.slug || entry.id}/`,
-}));
 ---
 
-<Layout title={board.name} currentBoard={board.id} immersive wide>
-  <NoteWall entries={items} board={board} boards={boards} base={base} />
-</Layout>
+{board.id === 'gallery' ? (
+  <Layout title={board.name} currentBoard={board.id} immersive wide>
+    <GalleryWall records={boardGalleryNotes} board={board} boards={boards} base={base} />
+  </Layout>
+) : (
+  <Layout title={board.name} currentBoard={board.id} immersive wide>
+    <NoteWall entries={entries.map((entry) => ({
+      slug: entry.data.slug || entry.id,
+      title: entry.data.title,
+      description: entry.data.description,
+      date: entry.data.date,
+      updated: entry.data.updated,
+      category: categoryForEntry(entry),
+      subcategory: entry.data.subcategory,
+      href: `${base}${board.id}/${entry.data.slug || entry.id}/`,
+    }))} board={board} boards={boards} base={base} />
+  </Layout>
+)}

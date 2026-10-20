@@ -1,0 +1,747 @@
+---
+import { dateTimestamp, formatDate } from '../data/content.js';
+import galleryCategories from '../data/gallery-categories.js';
+
+interface GalleryRecord {
+  slug: string;
+  type: 'image' | 'video';
+  title: string;
+  category: string;
+  subcategory: string;
+  date: string;
+  cover: string;
+  sourceUrl: string;
+}
+
+interface NavBoard {
+  id: string;
+  name: string;
+  icon?: string;
+}
+
+interface Props {
+  records: GalleryRecord[];
+  board: NavBoard;
+  boards: NavBoard[];
+  base: string;
+}
+
+const { records, board, boards, base } = Astro.props;
+const localCmsEnabled = import.meta.env.DEV;
+const visibleRecords = [...records].sort((a, b) => dateTimestamp(b.date) - dateTimestamp(a.date) || a.title.localeCompare(b.title, 'zh-CN'));
+const categoryCounts = new Map<string, number>();
+for (const record of visibleRecords) categoryCounts.set(record.category, (categoryCounts.get(record.category) || 0) + 1);
+const categories = Object.keys(galleryCategories).filter((category) => categoryCounts.has(category));
+const assetHref = (path: string) => `${base}${path.replace(/^\/+/, '')}`;
+const hrefFor = (item: NavBoard) => `${base}${item.id}/`;
+const mobileBoardLabels: Record<string, string> = {
+  humanities: '人文',
+  industry: '工业',
+  life: '生活',
+  service: '服务',
+  notes: '随笔',
+  gallery: '灵感',
+};
+---
+
+<section class="note-wall-page gallery-page" data-gallery-wall>
+  <header class="note-wall-header">
+    <div class="wall-mobile-topbar">
+      <a class="wall-mobile-home" href={base} aria-label="返回常识笔记首页">
+        <svg class="wall-mobile-home-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M5 4.5h6.2a3 3 0 0 1 2.8 3v12a3.7 3.7 0 0 0-3-1.5H5a2 2 0 0 1-2-2v-9.5a2 2 0 0 1 2-2Z"></path>
+          <path d="M19 4.5h-3.2a3 3 0 0 0-2.8 3v12a3.7 3.7 0 0 1 3-1.5H19a2 2 0 0 0 2-2v-9.5a2 2 0 0 0-2-2Z"></path>
+        </svg>
+      </a>
+
+      <nav class="wall-tabs" aria-label="笔记领域">
+        {boards.map((item) => (
+          <a
+            class:list={['wall-tab', { 'is-active': item.id === board.id }]}
+            href={hrefFor(item)}
+            data-mobile-label={mobileBoardLabels[item.id] || item.name}
+            aria-current={item.id === board.id ? 'page' : undefined}
+          >
+            {item.name}
+          </a>
+        ))}
+      </nav>
+
+      <button class="wall-mobile-search-toggle" type="button" aria-label="打开搜索" aria-expanded="false" aria-controls="gallery-search-panel" data-mobile-search-toggle>
+        <svg class="wall-mobile-search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.7" cy="10.7" r="6.4"></circle><path d="m15.6 15.6 4.1 4.1"></path></svg>
+        <span class="wall-mobile-search-label">取消</span>
+      </button>
+      <div class="wall-search-frame" id="gallery-search-panel">
+        <div class="wall-search-main">
+          <svg class="wall-search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.7" cy="10.7" r="6.4"></circle><path d="m15.6 15.6 4.1 4.1"></path></svg>
+          <input type="search" class="wall-search-input" placeholder="搜索标题、分类或类型" autocomplete="off" aria-label="搜索灵感画廊" data-list-search-input />
+          <button class="wall-search-action" type="button" aria-label="搜索" data-list-search-action>
+            <svg class="wall-search-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.7" cy="10.7" r="6.4"></circle><path d="m15.6 15.6 4.1 4.1"></path></svg>
+            <span class="wall-search-action-clear" aria-hidden="true">✕</span>
+          </button>
+        </div>
+        <div class="wall-search-footer">
+          <span class="wall-search-divider" aria-hidden="true"></span>
+          <span class="wall-search-chip">{board.name}</span>
+          <span class="wall-search-hit" data-wall-hit>当前命中 {visibleRecords.length} 条灵感</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="wall-filter-row">
+      {categories.length > 0 && (
+        <div class="wall-pills" role="group" aria-label="一级分类">
+          <button class="wall-pill is-active" type="button" data-pill="" aria-pressed="true">全部<small>{visibleRecords.length}</small></button>
+          {categories.map((category) => (
+            <button class="wall-pill" type="button" data-pill={category} aria-pressed="false">
+              {category}<small>{categoryCounts.get(category)}</small>
+            </button>
+          ))}
+        </div>
+      )}
+      <button class="wall-pill wall-pill--sort" type="button" data-float-toggle="sort" aria-label="排序">
+        <span class="wall-pill-sort-icon" aria-hidden="true">↕</span><span class="wall-pill-sort-label">排序</span>
+      </button>
+      {localCmsEnabled && (
+        <button class="wall-pill wall-pill--add" type="button" data-gallery-add>＋ 新增</button>
+      )}
+    </div>
+  </header>
+
+  <div class="gallery-wall" data-record-list>
+    {visibleRecords.map((record) => (
+      <button
+        class:list={['gallery-card', { 'gallery-card--video': record.type === 'video' }]}
+        type="button"
+        data-title={record.title}
+        data-category={record.category}
+        data-subcategory={record.subcategory}
+        data-type={record.type}
+        data-slug={record.slug}
+        data-date={record.date}
+        data-date-ts={dateTimestamp(record.date)}
+        data-cover-url={assetHref(record.cover)}
+        data-source-url={record.sourceUrl}
+        aria-label={`查看${record.title}`}
+      >
+        <span class="gallery-card-media">
+          <img src={assetHref(record.cover)} alt={record.title} loading="lazy" decoding="async" />
+          {record.type === 'video' && (
+            <span class="gallery-card-media-badge" aria-label="视频笔记">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6V6Z"></path></svg>
+            </span>
+          )}
+        </span>
+        <span class="gallery-card-body">
+          <strong class="gallery-card-title">{record.title}</strong>
+          <span class="gallery-card-meta">{record.subcategory}</span>
+          <span class="gallery-card-date">{formatDate(record.date)}</span>
+        </span>
+      </button>
+    ))}
+  </div>
+
+  <section class="empty-state" data-empty-state style="display:none">没有匹配的灵感</section>
+
+  <div class="float-panel" data-float-panel="sort" hidden>
+    <div class="float-panel-header">
+      <span class="float-panel-title">排序</span>
+      <button class="float-panel-close" type="button" data-float-close="sort" aria-label="关闭排序">✕</button>
+    </div>
+    <div class="float-panel-body">
+      <div class="sort-options" data-sort-options>
+        <button class="sort-option on" type="button" data-sort="date-desc"><span class="sort-option-icon">↓</span><span class="sort-option-label">最新优先</span></button>
+        <button class="sort-option" type="button" data-sort="date-asc"><span class="sort-option-icon">↑</span><span class="sort-option-label">最早优先</span></button>
+        <button class="sort-option" type="button" data-sort="title-az"><span class="sort-option-icon">A→Z</span><span class="sort-option-label">标题 A→Z</span></button>
+        <button class="sort-option" type="button" data-sort="title-za"><span class="sort-option-icon">Z→A</span><span class="sort-option-label">标题 Z→A</span></button>
+      </div>
+    </div>
+  </div>
+
+  {localCmsEnabled && (
+    <div class="gallery-editor" data-gallery-editor hidden aria-hidden="true">
+      <div class="gallery-editor-backdrop" data-gallery-editor-close></div>
+      <section class="gallery-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="gallery-editor-heading">
+        <div class="gallery-editor-layout">
+          <aside class="gallery-editor-preview-pane" aria-label="封面预览">
+            <div class="gallery-editor-preview is-empty" data-gallery-editor-preview>
+              <img data-gallery-editor-preview-image alt="" hidden />
+              <button class="gallery-editor-preview-add" type="button" data-gallery-editor-cover-trigger aria-label="选择封面图" title="选择封面图">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+              </button>
+            </div>
+            <input class="gallery-editor-cover-input" id="gallery-editor-cover-input" type="file" name="cover" form="gallery-editor-form" data-gallery-editor-cover aria-hidden="true" tabindex="-1" accept="image/jpeg,image/png,image/webp,image/gif" />
+          </aside>
+          <form class="gallery-editor-form" id="gallery-editor-form" data-gallery-editor-form>
+            <header class="gallery-editor-header">
+              <div>
+                <span class="gallery-editor-kicker">灵感画廊</span>
+                <h2 id="gallery-editor-heading" data-gallery-editor-heading>新增灵感</h2>
+              </div>
+            </header>
+            <div class="gallery-editor-grid">
+              <label>
+                <span>标题</span>
+                <input type="text" name="title" data-gallery-editor-title-input required />
+              </label>
+              <label>
+                <span>slug</span>
+                <input type="text" name="slug" data-gallery-editor-slug required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" />
+              </label>
+              <label>
+                <span>类型</span>
+                <select name="type" data-gallery-editor-type required>
+                  <option value="image">图片</option>
+                  <option value="video">视频</option>
+                </select>
+              </label>
+              <label>
+                <span>日期</span>
+                <input type="date" name="date" data-gallery-editor-date required />
+              </label>
+              <label>
+                <span>一级分类</span>
+                <select name="category" data-gallery-editor-category required>
+                  {Object.keys(galleryCategories).map((category) => <option value={category}>{category}</option>)}
+                </select>
+              </label>
+              <label>
+                <span>二级分类</span>
+                <select name="subcategory" data-gallery-editor-subcategory required>
+                  {Object.entries(galleryCategories).flatMap(([category, subcategories], categoryIndex) => subcategories.map((subcategory, subcategoryIndex) => <option value={subcategory} data-gallery-parent-category={category} selected={categoryIndex === 0 && subcategoryIndex === 0}>{subcategory}</option>))}
+                </select>
+              </label>
+              <label class="gallery-editor-full">
+                <span>外部链接</span>
+                <div class="gallery-editor-source-row">
+                  <input type="url" name="sourceUrl" data-gallery-editor-source required />
+                  <button class="gallery-editor-extract" type="button" data-gallery-editor-extract disabled>提取</button>
+                </div>
+                <span class="gallery-editor-source-status" data-gallery-editor-source-status aria-live="polite"></span>
+              </label>
+            </div>
+            <footer class="gallery-editor-footer">
+              <span class="gallery-editor-status" data-gallery-editor-status aria-live="polite"></span>
+              <div class="gallery-editor-actions">
+                <button type="submit" class="gallery-editor-save" data-gallery-editor-save>保存</button>
+              </div>
+            </footer>
+          </form>
+        </div>
+      </section>
+    </div>
+  )}
+</section>
+
+<script>
+  function initGalleryWall(root: HTMLElement) {
+    const list = root.querySelector<HTMLElement>('[data-record-list]');
+    const emptyState = root.querySelector<HTMLElement>('[data-empty-state]');
+    const input = root.querySelector<HTMLInputElement>('[data-list-search-input]');
+    const actionButton = root.querySelector<HTMLButtonElement>('[data-list-search-action]');
+    const mobileSearchToggle = root.querySelector<HTMLButtonElement>('[data-mobile-search-toggle]');
+    const hitElement = root.querySelector<HTMLElement>('[data-wall-hit]');
+    const cards = [...root.querySelectorAll<HTMLElement>('.gallery-card')];
+    if (!list) return;
+
+    const collator = new Intl.Collator('zh-CN', { numeric: true, sensitivity: 'base' });
+    let searchTerm = '';
+    let activeCategory = '';
+    let currentSort = 'date-desc';
+
+    function setMobileSearchOpen(open: boolean) {
+      root.classList.toggle('is-mobile-search-open', open);
+      mobileSearchToggle?.setAttribute('aria-expanded', String(open));
+      mobileSearchToggle?.setAttribute('aria-label', open ? '收起搜索' : '打开搜索');
+      if (open) window.setTimeout(() => input?.focus(), 0);
+      else input?.blur();
+    }
+
+    mobileSearchToggle?.addEventListener('click', () => setMobileSearchOpen(!root.classList.contains('is-mobile-search-open')));
+
+    function dateValue(card: HTMLElement) {
+      return Number(card.dataset.dateTs) || 0;
+    }
+
+    function sortCards(items: HTMLElement[]) {
+      return [...items].sort((a, b) => {
+        if (currentSort === 'date-asc') return dateValue(a) - dateValue(b) || collator.compare(a.dataset.title || '', b.dataset.title || '');
+        if (currentSort === 'title-az') return collator.compare(a.dataset.title || '', b.dataset.title || '');
+        if (currentSort === 'title-za') return collator.compare(b.dataset.title || '', a.dataset.title || '');
+        return dateValue(b) - dateValue(a) || collator.compare(a.dataset.title || '', b.dataset.title || '');
+      });
+    }
+
+    function apply({ scroll = false } = {}) {
+      const matched = cards.filter((card) => {
+        if (activeCategory && card.dataset.category !== activeCategory) return false;
+        if (!searchTerm) return true;
+        const haystack = [card.dataset.title, card.dataset.category, card.dataset.subcategory, card.dataset.type].filter(Boolean).join(' ').toLowerCase();
+        return haystack.includes(searchTerm);
+      });
+      for (const card of cards) card.style.display = 'none';
+      for (const card of sortCards(matched)) {
+        list.append(card);
+        card.style.display = '';
+      }
+      if (emptyState) emptyState.style.display = matched.length ? 'none' : '';
+      if (hitElement) hitElement.textContent = `当前命中 ${matched.length} 条灵感`;
+      if (scroll && matched.length) list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    const panel = root.querySelector<HTMLElement>('[data-float-panel="sort"]');
+    const sortToggle = root.querySelector<HTMLElement>('[data-float-toggle="sort"]');
+    function closePanel() {
+      if (!panel) return;
+      panel.classList.remove('open');
+      sortToggle?.classList.remove('is-active');
+      window.setTimeout(() => { panel.hidden = true; }, 180);
+    }
+    sortToggle?.addEventListener('click', () => {
+      if (!panel) return;
+      if (!panel.hidden) return closePanel();
+      panel.hidden = false;
+      sortToggle.classList.add('is-active');
+      requestAnimationFrame(() => panel.classList.add('open'));
+    });
+    root.querySelector('[data-float-close="sort"]')?.addEventListener('click', closePanel);
+    document.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      if (target.closest('[data-float-panel]') || target.closest('[data-float-toggle]')) return;
+      closePanel();
+    });
+
+    root.querySelectorAll<HTMLElement>('[data-sort]').forEach((button) => {
+      button.addEventListener('click', () => {
+        root.querySelectorAll('[data-sort]').forEach((item) => item.classList.remove('on'));
+        button.classList.add('on');
+        currentSort = button.dataset.sort || 'date-desc';
+        closePanel();
+        apply({ scroll: true });
+      });
+    });
+    root.querySelectorAll<HTMLElement>('[data-pill]').forEach((pill) => {
+      pill.addEventListener('click', () => {
+        root.querySelectorAll('[data-pill]').forEach((item) => {
+          item.classList.remove('is-active');
+          item.setAttribute('aria-pressed', 'false');
+        });
+        pill.classList.add('is-active');
+        pill.setAttribute('aria-pressed', 'true');
+        activeCategory = pill.dataset.pill || '';
+        apply({ scroll: true });
+      });
+    });
+    input?.addEventListener('input', () => {
+      searchTerm = input.value.trim().toLowerCase();
+      actionButton?.classList.toggle('has-term', Boolean(searchTerm));
+      actionButton?.setAttribute('aria-label', searchTerm ? '清除搜索' : '搜索');
+      apply();
+    });
+    actionButton?.addEventListener('click', () => {
+      if (!input) return;
+      if (!searchTerm) return input.focus();
+      input.value = '';
+      searchTerm = '';
+      actionButton.classList.remove('has-term');
+      actionButton.setAttribute('aria-label', '搜索');
+      input.focus();
+      apply();
+    });
+
+    const localCmsEnabled = import.meta.env.DEV;
+    const editor = root.querySelector<HTMLElement>('[data-gallery-editor]');
+    const editorForm = root.querySelector<HTMLFormElement>('[data-gallery-editor-form]');
+    const editorHeading = root.querySelector<HTMLElement>('[data-gallery-editor-heading]');
+    const editorTitleInput = root.querySelector<HTMLInputElement>('[data-gallery-editor-title-input]');
+    const editorSlugInput = root.querySelector<HTMLInputElement>('[data-gallery-editor-slug]');
+    const editorTypeInput = root.querySelector<HTMLSelectElement>('[data-gallery-editor-type]');
+    const editorDateInput = root.querySelector<HTMLInputElement>('[data-gallery-editor-date]');
+    const editorCategoryInput = root.querySelector<HTMLSelectElement>('[data-gallery-editor-category]');
+    const editorSubcategoryInput = root.querySelector<HTMLSelectElement>('[data-gallery-editor-subcategory]');
+    const editorSourceInput = root.querySelector<HTMLInputElement>('[data-gallery-editor-source]');
+    const editorCoverInput = root.querySelector<HTMLInputElement>('[data-gallery-editor-cover]');
+    const editorPreviewImage = root.querySelector<HTMLImageElement>('[data-gallery-editor-preview-image]');
+    const editorPreview = root.querySelector<HTMLElement>('[data-gallery-editor-preview]');
+    const editorCoverTrigger = root.querySelector<HTMLButtonElement>('[data-gallery-editor-cover-trigger]');
+    const editorExtractButton = root.querySelector<HTMLButtonElement>('[data-gallery-editor-extract]');
+    const editorSourceStatus = root.querySelector<HTMLElement>('[data-gallery-editor-source-status]');
+    const editorStatus = root.querySelector<HTMLElement>('[data-gallery-editor-status]');
+    const editorSave = root.querySelector<HTMLButtonElement>('[data-gallery-editor-save]');
+    let editingSlug = '';
+    let editingCoverUrl = '';
+    let selectedCoverFile: File | null = null;
+    let previewObjectUrl = '';
+    let extractionInFlight = false;
+    let editorReturnFocus: HTMLElement | null = null;
+    let editorPreviousOverflow = '';
+
+    function syncSubcategories(selected = '') {
+      if (!editorCategoryInput || !editorSubcategoryInput) return;
+      const options = [...editorSubcategoryInput.options];
+      const matchingOptions = options.filter((option) => option.dataset.galleryParentCategory === editorCategoryInput.value);
+      const nextOption = matchingOptions.find((option) => option.value === selected) || matchingOptions[0];
+      if (nextOption) editorSubcategoryInput.value = nextOption.value;
+    }
+
+    function setEditorPreview(url = '', alt = '') {
+      if (!editorPreviewImage || !editorPreview) return;
+      if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = '';
+      }
+      if (!url) {
+        editorPreviewImage.hidden = true;
+        editorPreviewImage.removeAttribute('src');
+        editorPreviewImage.alt = '';
+        editorPreview.classList.add('is-empty');
+        return;
+      }
+      if (url.startsWith('blob:')) previewObjectUrl = url;
+      editorPreviewImage.src = url;
+      editorPreviewImage.alt = alt || '封面预览';
+      editorPreviewImage.hidden = false;
+      editorPreview.classList.remove('is-empty');
+    }
+
+    function setEditorStatus(message = '', kind = '') {
+      if (!editorStatus) return;
+      editorStatus.textContent = message;
+      editorStatus.dataset.kind = kind;
+    }
+
+    function setEditorSourceStatus(message = '', kind = '') {
+      if (!editorSourceStatus) return;
+      editorSourceStatus.textContent = message;
+      editorSourceStatus.dataset.kind = kind;
+    }
+
+    function syncExtractButton() {
+      if (!editorExtractButton) return;
+      editorExtractButton.disabled = extractionInFlight || !editorSourceInput?.value.trim();
+      editorExtractButton.textContent = extractionInFlight ? '提取中…' : '提取';
+    }
+
+    function cardRecord(card: HTMLElement) {
+      return {
+        slug: card.dataset.slug || '',
+        type: card.dataset.type || 'image',
+        title: card.dataset.title || '',
+        category: card.dataset.category || '',
+        subcategory: card.dataset.subcategory || '',
+        date: card.dataset.date || '',
+        sourceUrl: card.dataset.sourceUrl || '',
+        coverUrl: card.dataset.coverUrl || '',
+      };
+    }
+
+    function openEditor(record: Record<string, string> | null = null, trigger: HTMLElement | null = null) {
+      if (!localCmsEnabled || !editor || !editorForm || !editorHeading || !editorTitleInput || !editorSlugInput || !editorTypeInput || !editorDateInput || !editorCategoryInput || !editorSubcategoryInput || !editorSourceInput || !editorCoverInput) return;
+      editingSlug = record?.slug || '';
+      editingCoverUrl = record?.coverUrl || '';
+      editorReturnFocus = trigger || (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+      editorHeading.textContent = editingSlug ? '编辑灵感' : '新增灵感';
+      editorTitleInput.value = record?.title || '';
+      editorSlugInput.value = record?.slug || '';
+      editorTypeInput.value = record?.type || 'image';
+      editorDateInput.value = record?.date || new Date().toISOString().slice(0, 10);
+      editorCategoryInput.value = record?.category || editorCategoryInput.options[0]?.value || '';
+      syncSubcategories(record?.subcategory || '');
+      editorSourceInput.value = record?.sourceUrl || '';
+      editorCoverInput.value = '';
+      editorCoverInput.required = !editingSlug;
+      selectedCoverFile = null;
+      setEditorPreview(editingCoverUrl, record?.title || '');
+      setEditorSourceStatus('');
+      syncExtractButton();
+      setEditorStatus('');
+      editorPreviousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      editor.hidden = false;
+      editor.setAttribute('aria-hidden', 'false');
+      window.requestAnimationFrame(() => editorTitleInput.focus());
+    }
+
+    function closeEditor({ restoreFocus = true } = {}) {
+      if (!editor) return;
+      editor.hidden = true;
+      editor.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = editorPreviousOverflow;
+      if (restoreFocus && editorReturnFocus?.isConnected) editorReturnFocus.focus({ preventScroll: true });
+      editorReturnFocus = null;
+      editingSlug = '';
+      editingCoverUrl = '';
+      selectedCoverFile = null;
+      extractionInFlight = false;
+      setEditorPreview('');
+      setEditorSourceStatus('');
+      syncExtractButton();
+      setEditorStatus('');
+    }
+
+    function readFileAsDataUrl(file: File) {
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener('load', () => resolve(String(reader.result || '')));
+        reader.addEventListener('error', () => reject(new Error('封面图读取失败')));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function dataUrlToFile(dataUrl: string, fileName = 'xhs-cover.jpg') {
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      return new File([blob], fileName, { type: blob.type || 'image/jpeg', lastModified: Date.now() });
+    }
+
+    function setCoverFile(file: File | null) {
+      if (!file || !file.type.startsWith('image/')) return;
+      selectedCoverFile = file;
+      try {
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        editorCoverInput!.files = transfer.files;
+      } catch {
+        // 某些嵌入式浏览器不允许直接写入 input.files，但仍可通过 selectedCoverFile 提交。
+      }
+      setEditorPreview(URL.createObjectURL(file), editorTitleInput?.value || '');
+    }
+
+    async function extractGalleryMetadata() {
+      if (!editorSourceInput || !editorExtractButton || !editorCoverInput) return;
+      const sourceUrl = editorSourceInput.value.trim();
+      if (!sourceUrl) {
+        setEditorSourceStatus('请先填写外部链接', 'error');
+        editorSourceInput.focus();
+        return;
+      }
+      extractionInFlight = true;
+      setEditorSourceStatus('');
+      syncExtractButton();
+      try {
+        const response = await fetch('/admin/api/gallery-notes/resolve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sourceUrl }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || '提取失败');
+        const file = await dataUrlToFile(result.coverDataUrl, result.type === 'video' ? 'xhs-video-cover.jpg' : 'xhs-cover.jpg');
+        setCoverFile(file);
+        if (!editorTitleInput?.value.trim() && result.title) editorTitleInput.value = result.title;
+        if (editorTypeInput) editorTypeInput.value = result.type === 'video' ? 'video' : 'image';
+      } catch (error) {
+        setEditorSourceStatus(error instanceof Error ? error.message : '提取失败，请手动选择封面图', 'error');
+      } finally {
+        extractionInFlight = false;
+        syncExtractButton();
+      }
+    }
+
+    root.querySelector<HTMLElement>('[data-gallery-add]')?.addEventListener('click', () => openEditor());
+    editorCategoryInput?.addEventListener('change', () => syncSubcategories());
+    editorSourceInput?.addEventListener('input', () => {
+      setEditorSourceStatus('');
+      syncExtractButton();
+    });
+    editorExtractButton?.addEventListener('click', extractGalleryMetadata);
+    editorCoverTrigger?.addEventListener('click', () => editorCoverInput?.click());
+    editorCoverInput?.addEventListener('change', () => {
+      const file = editorCoverInput.files?.[0];
+      selectedCoverFile = file || null;
+      if (file) {
+        setEditorPreview(URL.createObjectURL(file), editorTitleInput?.value || '');
+      } else {
+        setEditorPreview(editingCoverUrl, editorTitleInput?.value || '');
+      }
+    });
+    root.querySelectorAll<HTMLElement>('[data-gallery-editor-close]').forEach((element) => element.addEventListener('click', () => closeEditor()));
+    editor?.addEventListener('pointerdown', (event) => {
+      const target = event.target as HTMLElement;
+      if (target === editor || target.classList.contains('gallery-editor-backdrop')) closeEditor();
+    });
+    editor?.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      if (target === editor || target.classList.contains('gallery-editor-backdrop')) closeEditor();
+    });
+    editor?.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !editor.hidden) closeEditor();
+    });
+    editorForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!editorForm.reportValidity() || !editorSave) return;
+      editorSave.disabled = true;
+      setEditorStatus('');
+      try {
+        const coverFile = selectedCoverFile || editorCoverInput?.files?.[0];
+        const payload: Record<string, string> = {
+          title: editorTitleInput?.value.trim() || '',
+          slug: editorSlugInput?.value.trim() || '',
+          type: editorTypeInput?.value || 'image',
+          date: editorDateInput?.value || '',
+          category: editorCategoryInput?.value || '',
+          subcategory: editorSubcategoryInput?.value || '',
+          sourceUrl: editorSourceInput?.value.trim() || '',
+        };
+        if (coverFile) payload.coverDataUrl = await readFileAsDataUrl(coverFile);
+        const endpoint = editingSlug ? `/admin/api/gallery-notes?slug=${encodeURIComponent(editingSlug)}` : '/admin/api/gallery-notes';
+        const response = await fetch(endpoint, {
+          method: editingSlug ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const message = Array.isArray(result.errors) ? result.errors.join('；') : result.error;
+          throw new Error(message || '保存失败');
+        }
+        window.setTimeout(() => window.location.reload(), 220);
+      } catch (error) {
+        setEditorStatus(error instanceof Error ? error.message : '保存失败，请稍后再试', 'error');
+        editorSave.disabled = false;
+      }
+    });
+
+    function escapeHtml(value: string) {
+      return value.replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[character] || character);
+    }
+
+    function getFileExtension(value: string) {
+      return value.split('?')[0].match(/\.[a-z0-9]+$/i)?.[0] || '.jpg';
+    }
+
+    function openPreview(card: HTMLElement) {
+      const type = card.dataset.type === 'video' ? '视频' : '图片';
+      const title = card.dataset.title || '灵感画廊';
+      const slug = card.dataset.slug || 'gallery-cover';
+      const coverUrl = card.dataset.coverUrl || '';
+      const sourceUrl = card.dataset.sourceUrl || '';
+      const category = [card.dataset.category, card.dataset.subcategory].filter(Boolean).join(' · ');
+      const previousOverflow = document.body.style.overflow;
+      const returnFocus = card;
+      const overlay = document.createElement('div');
+      overlay.className = 'gallery-photo-viewer';
+      overlay.tabIndex = -1;
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-modal', 'true');
+      overlay.setAttribute('aria-label', `${title}，${type}${category ? `，${category}` : ''}`);
+      overlay.innerHTML = [
+        '<div class="gallery-photo-viewer-actions">',
+        '<button class="gallery-photo-viewer-close" type="button" aria-label="关闭图片预览">×</button>',
+        '</div>',
+        '<figure class="gallery-photo-viewer-stage"><img data-gallery-viewer-image alt=""></figure>',
+        '<div class="gallery-photo-viewer-toolbar" role="toolbar" aria-label="灵感图片工具栏">',
+        '<button class="gallery-photo-viewer-toolbar-button" type="button" aria-label="上一张" disabled><span aria-hidden="true">‹</span></button>',
+        '<span class="gallery-photo-viewer-counter" aria-live="polite"><strong>1</strong><span aria-hidden="true">/</span><span>1</span></span>',
+        '<button class="gallery-photo-viewer-toolbar-button" type="button" aria-label="下一张" disabled><span aria-hidden="true">›</span></button>',
+        '<span class="gallery-photo-viewer-toolbar-divider" aria-hidden="true"></span>',
+        '<button class="gallery-photo-viewer-toolbar-icon" data-gallery-viewer-rotate type="button" aria-label="旋转图片" title="旋转图片">',
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 9.2A7.3 7.3 0 0 1 18 6.5l1.5 1.5"></path><path d="M19.5 4.5v3.8h-3.8"></path><path d="M18.8 14.8A7.3 7.3 0 0 1 6 17.5l-1.5-1.5"></path><path d="M4.5 19.5v-3.8h3.8"></path></svg>',
+        '</button>',
+        `<a class="gallery-photo-viewer-toolbar-download" data-gallery-viewer-download href="${escapeHtml(coverUrl)}" download aria-label="下载原图" title="下载原图">`,
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v10"></path><path d="m8 10 4 4 4-4"></path><path d="M5 16.5v3h14v-3"></path></svg>',
+        '</a>',
+        sourceUrl
+          ? `<a class="gallery-photo-viewer-toolbar-icon gallery-photo-viewer-toolbar-external" data-gallery-viewer-source href="${escapeHtml(sourceUrl)}" target="_blank" rel="noreferrer noopener" aria-label="打开外部链接" title="打开外部链接"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 5h6v6"></path><path d="m19 5-8 8"></path><path d="M18 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path></svg></a>`
+          : '',
+        localCmsEnabled ? '<span class="gallery-photo-viewer-toolbar-divider" aria-hidden="true"></span><button class="gallery-photo-viewer-toolbar-icon" data-gallery-viewer-edit type="button" aria-label="编辑灵感记录" title="编辑灵感记录"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4.5 16.8-.8 3.5 3.5-.8L18.7 7.9a2.2 2.2 0 0 0-3.1-3.1L4.5 16.8Z"></path><path d="m13.9 6.1 4 4"></path></svg></button><button class="gallery-photo-viewer-toolbar-icon gallery-photo-viewer-toolbar-danger" data-gallery-viewer-delete type="button" aria-label="删除灵感记录" title="删除灵感记录"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14"></path><path d="M9 7V4.5h6V7"></path><path d="m7 7 .7 13h8.6L17 7"></path><path d="M10 11v5M14 11v5"></path></svg></button>' : '',
+        '</div>',
+      ].join('');
+
+      const image = overlay.querySelector<HTMLImageElement>('[data-gallery-viewer-image]');
+      const rotate = overlay.querySelector<HTMLButtonElement>('[data-gallery-viewer-rotate]');
+      const download = overlay.querySelector<HTMLAnchorElement>('[data-gallery-viewer-download]');
+      const source = overlay.querySelector<HTMLAnchorElement>('[data-gallery-viewer-source]');
+      const edit = overlay.querySelector<HTMLButtonElement>('[data-gallery-viewer-edit]');
+      const remove = overlay.querySelector<HTMLButtonElement>('[data-gallery-viewer-delete]');
+      const close = overlay.querySelector<HTMLButtonElement>('.gallery-photo-viewer-close');
+      if (!image || !rotate || !download || !close) return;
+
+      let rotation = 0;
+      const removeViewer = () => {
+        document.body.style.overflow = previousOverflow;
+        overlay.remove();
+        returnFocus.focus({ preventScroll: true });
+      };
+
+      image.src = coverUrl;
+      image.alt = title;
+      download.download = `${slug}${getFileExtension(coverUrl)}`;
+      rotate.addEventListener('click', (event) => {
+        event.stopPropagation();
+        rotation = (rotation + 90) % 360;
+        image.style.transform = `rotate(${rotation}deg)`;
+      });
+      download.addEventListener('click', (event) => event.stopPropagation());
+      source?.addEventListener('click', (event) => event.stopPropagation());
+      edit?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        removeViewer();
+        openEditor(cardRecord(card), card);
+      });
+      remove?.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        if (remove.disabled) return;
+        const confirmed = window.confirm(`确定删除“${title}”吗？\n这会同时删除本地记录和封面图。`);
+        if (!confirmed) return;
+        remove.disabled = true;
+        try {
+          const response = await fetch(`/admin/api/gallery-notes?slug=${encodeURIComponent(slug)}`, { method: 'DELETE' });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            const message = Array.isArray(result.errors) ? result.errors.join('；') : result.error;
+            throw new Error(message || '删除失败');
+          }
+          removeViewer();
+          window.location.reload();
+        } catch (error) {
+          remove.disabled = false;
+          window.alert(error instanceof Error ? error.message : '删除失败，请稍后再试');
+        }
+      });
+      close.addEventListener('click', (event) => {
+        event.stopPropagation();
+        removeViewer();
+      });
+      overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) removeViewer();
+      });
+      overlay.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          removeViewer();
+        }
+      });
+
+      document.body.style.overflow = 'hidden';
+      document.body.appendChild(overlay);
+      overlay.focus({ preventScroll: true });
+    }
+    cards.forEach((card) => card.addEventListener('click', () => openPreview(card)));
+
+    apply();
+    const SCROLL_ENTER = 180;
+    const SCROLL_EXIT = 6;
+    let scrollFrame = 0;
+    const syncScrolled = () => {
+      if (scrollFrame) return;
+      scrollFrame = window.requestAnimationFrame(() => {
+        scrollFrame = 0;
+        const isScrolled = root.classList.contains('is-scrolled');
+        const threshold = isScrolled ? SCROLL_EXIT : SCROLL_ENTER;
+        const next = window.scrollY > threshold;
+        if (next !== isScrolled) root.classList.toggle('is-scrolled', next);
+      });
+    };
+    window.addEventListener('scroll', syncScrolled, { passive: true });
+    syncScrolled();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-gallery-wall]').forEach(initGalleryWall);
+</script>

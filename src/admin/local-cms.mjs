@@ -16,6 +16,7 @@ import rehypeTableWrap from '../plugins/rehype-table-wrap.mjs';
 import rehypeSourcePosition from '../plugins/rehype-source-position.mjs';
 import footnoteReferenceWithLabel from '../plugins/footnote-reference-with-label.mjs';
 import { canonicalArticlePath } from '../data/content-paths.js';
+import galleryCategories from '../data/gallery-categories.js';
 
 const ROOT = process.env.CMS_CONTENT_ROOT ? path.resolve(process.env.CMS_CONTENT_ROOT) : path.resolve(process.cwd(), 'src/content');
 const DEV_SERVER_LOCK = path.resolve(process.cwd(), '.astro', 'lifenotes-dev-server.lock');
@@ -23,6 +24,12 @@ const CMS_PUBLIC_ROOT = path.resolve(process.env.CMS_ASSET_ROOT || path.join(pro
 const NOTE_IMAGE_DIRECTORY = path.resolve(CMS_PUBLIC_ROOT, 'images/notes');
 const NOTE_IMAGE_URL_PREFIX = '/images/notes/';
 const MAX_NOTE_IMAGE_BYTES = 2 * 1024 * 1024;
+const GALLERY_DATA_FILE = path.resolve(process.cwd(), 'src/data/gallery-notes.js');
+const GALLERY_ASSET_DIRECTORY = path.resolve(process.cwd(), 'public/images/gallery/inspiration');
+const GALLERY_COVER_PREFIX = 'images/gallery/inspiration/';
+const XHS_NOTE_SKILL_SCRIPT = process.env.XHS_NOTE_SKILL_SCRIPT
+  ? path.resolve(process.env.XHS_NOTE_SKILL_SCRIPT)
+  : path.join(os.homedir(), '.claude', 'skills', 'xhs-image-note', 'scripts', 'fetch_xhs_note.py');
 const execFileAsync = promisify(execFile);
 const BOARDS = ['life', 'service', 'industry', 'humanities', 'notes'];
 const FIELDS = ['title', 'date', 'updated', 'category', 'subcategory', 'description', 'slug'];
@@ -242,6 +249,154 @@ async function walk(board, relative = '') {
     }
   }
   return result;
+}
+
+async function readGalleryNotes() {
+  const moduleUrl = new URL('../data/gallery-notes.js', import.meta.url);
+  moduleUrl.search = `?cms=${Date.now()}`;
+  const module = await import(moduleUrl.href);
+  return Array.isArray(module.default) ? module.default : [];
+}
+
+function serializeGalleryNotes(records) {
+  return `import galleryCategories from './gallery-categories.js';
+
+const galleryNotes = ${JSON.stringify(records, null, 2)};
+
+const validTypes = new Set(['image', 'video']);
+const categoryEntries = Object.entries(galleryCategories);
+
+for (const note of galleryNotes) {
+  if (!note.slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(note.slug)) {
+    throw new Error(\`灵感画廊 slug 无效：\${note.slug}\`);
+  }
+  if (!validTypes.has(note.type)) throw new Error(\`灵感画廊类型无效：\${note.type}\`);
+  if (!note.title || !note.date || !note.cover || !note.sourceUrl) {
+    throw new Error(\`灵感画廊记录字段不完整：\${note.slug}\`);
+  }
+  const subcategories = Object.fromEntries(categoryEntries)[note.category] || [];
+  if (!subcategories.includes(note.subcategory)) {
+    throw new Error(\`灵感画廊分类无效：\${note.category} / \${note.subcategory}\`);
+  }
+}
+
+const slugs = galleryNotes.map((note) => note.slug);
+if (new Set(slugs).size !== slugs.length) throw new Error('灵感画廊 slug 必须唯一');
+
+export default galleryNotes;
+`;
+}
+
+async function saveGalleryNotes(records) {
+  await fs.mkdir(path.dirname(GALLERY_DATA_FILE), { recursive: true });
+  await fs.writeFile(GALLERY_DATA_FILE, serializeGalleryNotes(records), 'utf8');
+}
+
+function decodeImageDataUrl(value) {
+  const match = String(value || '').match(/^data:(image\/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+/=\s]+)$/);
+  if (!match) return null;
+  const mime = match[1];
+  const buffer = Buffer.from(match[2].replace(/\s+/g, ''), 'base64');
+  if (!buffer.length || buffer.length > 12 * 1024 * 1024) return null;
+  return {
+    buffer,
+    extension: mime === 'image/jpeg' ? 'jpg' : mime.slice('image/'.length),
+  };
+}
+
+function isXhsSourceUrl(value) {
+  try {
+    const hostname = new URL(String(value || '')).hostname.toLowerCase();
+    return hostname === 'xiaohongshu.com'
+      || hostname.endsWith('.xiaohongshu.com')
+      || hostname === 'xhslink.com'
+      || hostname.endsWith('.xhslink.com');
+  } catch {
+    return false;
+  }
+}
+
+async function resolveXhsCover(sourceUrl) {
+  try {
+    await fs.access(XHS_NOTE_SKILL_SCRIPT);
+  } catch {
+    throw new Error('本机未找到小红书解析 skill，请改用左侧加号手动选择封面图');
+  }
+
+  const outputDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'lifenotes-xhs-cover-'));
+  try {
+    await execFileAsync('python3', [
+      XHS_NOTE_SKILL_SCRIPT,
+      sourceUrl,
+      '--out',
+      outputDirectory,
+      '--cover-only',
+    ], { timeout: 60000, maxBuffer: 2 * 1024 * 1024 });
+    const metadata = JSON.parse(await fs.readFile(path.join(outputDirectory, 'meta.json'), 'utf8'));
+    const imagePath = Array.isArray(metadata.image_paths) ? metadata.image_paths[0] : null;
+    if (!imagePath) throw new Error('页面没有公开可用的封面图');
+    const buffer = await fs.readFile(imagePath);
+    if (!buffer.length || buffer.length > 12 * 1024 * 1024) throw new Error('封面图超过 12 MB');
+    return {
+      buffer,
+      mime: 'image/jpeg',
+      title: String(metadata.title || '').trim(),
+      type: metadata.media_type === 'video' ? 'video' : 'image',
+      coverUrl: String(metadata.cover_url || '').trim(),
+    };
+  } catch (error) {
+    const detail = String(error?.stderr || error?.message || '').trim();
+    throw new Error(detail ? `小红书封面提取失败：${detail}` : '小红书封面提取失败');
+  } finally {
+    await fs.rm(outputDirectory, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+function galleryAssetPath(cover) {
+  const normalized = String(cover || '').replace(/^\/+/, '');
+  const fileName = normalized.startsWith(GALLERY_COVER_PREFIX) ? normalized.slice(GALLERY_COVER_PREFIX.length) : '';
+  if (!fileName || fileName.includes('/') || !/^[a-z0-9_-]+\.(?:jpg|jpeg|png|webp|gif)$/i.test(fileName)) return null;
+  return path.join(GALLERY_ASSET_DIRECTORY, fileName);
+}
+
+function isHttpUrl(value) {
+  try {
+    const parsed = new URL(String(value || '').trim());
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function galleryRecordFromInput(data, current = null) {
+  return {
+    slug: String(data.slug ?? current?.slug ?? '').trim(),
+    type: data.type === 'video' ? 'video' : data.type === 'image' ? 'image' : String(data.type || current?.type || '').trim(),
+    title: String(data.title ?? current?.title ?? '').trim(),
+    category: String(data.category ?? current?.category ?? '').trim(),
+    subcategory: String(data.subcategory ?? current?.subcategory ?? '').trim(),
+    date: String(data.date ?? current?.date ?? '').trim(),
+    cover: String(current?.cover || '').trim(),
+    sourceUrl: String(data.sourceUrl ?? current?.sourceUrl ?? '').trim(),
+  };
+}
+
+function validateGalleryRecord(record, records, currentSlug = '') {
+  const errors = [];
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(record.slug)) errors.push('slug 只能使用小写字母、数字和连字符');
+  if (!['image', 'video'].includes(record.type)) errors.push('type 必须是 image 或 video');
+  if (!record.title) errors.push('标题不能为空');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(record.date)) errors.push('日期必须使用 YYYY-MM-DD');
+  if (!Object.prototype.hasOwnProperty.call(galleryCategories, record.category)) errors.push('一级分类无效');
+  if (!(galleryCategories[record.category] || []).includes(record.subcategory)) errors.push('二级分类不属于当前一级分类');
+  if (!isHttpUrl(record.sourceUrl)) errors.push('外部链接必须是 http(s) 链接');
+  if (!record.cover) errors.push('封面不能为空');
+  if (records.some((item) => item.slug === record.slug && item.slug !== currentSlug)) errors.push('这个 slug 已经存在');
+  return errors;
+}
+
+function galleryCoverPathFor(slug, extension) {
+  return `${GALLERY_COVER_PREFIX}${slug}.${extension}`;
 }
 
 function json(response, status, data) {
@@ -643,6 +798,8 @@ export default function localCms() {
           || resolved.startsWith(`${ROOT}${path.sep}`)
           || resolved === NOTE_IMAGE_DIRECTORY
           || resolved.startsWith(`${NOTE_IMAGE_DIRECTORY}${path.sep}`)
+          || resolved === GALLERY_DATA_FILE
+          || resolved.startsWith(`${GALLERY_ASSET_DIRECTORY}${path.sep}`);
         if (isWatchedContent) lastContentWriteAt = Date.now();
       };
       server.watcher.on('add', markContentWrite);
@@ -692,6 +849,125 @@ export default function localCms() {
             const asset = await saveNoteImage(request);
             lastContentWriteAt = Date.now();
             return json(response, 200, { ok: true, ...asset });
+          }
+          if (request.method === 'POST' && url.pathname === '/gallery-notes/resolve') {
+            const data = await readBody(request);
+            const sourceUrl = String(data.sourceUrl || '').trim();
+            if (!isXhsSourceUrl(sourceUrl)) {
+              return json(response, 400, { error: '目前只能从小红书链接自动提取标题和封面，其他外链请手动填写或选择封面图' });
+            }
+            const resolved = await resolveXhsCover(sourceUrl);
+            return json(response, 200, {
+              ok: true,
+              title: resolved.title,
+              type: resolved.type,
+              coverUrl: resolved.coverUrl,
+              coverDataUrl: `data:${resolved.mime};base64,${resolved.buffer.toString('base64')}`,
+            });
+          }
+          if (url.pathname === '/gallery-notes') {
+            if (request.method === 'GET') {
+              return json(response, 200, { galleryNotes: await readGalleryNotes() });
+            }
+
+            if (request.method === 'POST') {
+              const data = await readBody(request);
+              const records = await readGalleryNotes();
+              const image = decodeImageDataUrl(data.coverDataUrl);
+              const record = galleryRecordFromInput(data);
+              if (image) record.cover = galleryCoverPathFor(record.slug, image.extension);
+              const errors = validateGalleryRecord(record, records);
+              if (!image) errors.push('请选择一张不超过 12 MB 的 JPG、PNG、WebP 或 GIF 封面图');
+              if (errors.length) return json(response, 400, { errors });
+
+              const assetPath = galleryAssetPath(record.cover);
+              await fs.mkdir(GALLERY_ASSET_DIRECTORY, { recursive: true });
+              try {
+                await fs.access(assetPath);
+                return json(response, 409, { error: '这个 slug 对应的封面文件已经存在' });
+              } catch (error) {
+                if (error.code !== 'ENOENT') throw error;
+              }
+              await fs.writeFile(assetPath, image.buffer);
+              try {
+                await saveGalleryNotes([record, ...records]);
+              } catch (error) {
+                await fs.rm(assetPath, { force: true }).catch(() => {});
+                throw error;
+              }
+              lastContentWriteAt = Date.now();
+              return json(response, 200, { ok: true, galleryNote: record });
+            }
+
+            if (request.method === 'PATCH') {
+              const data = await readBody(request);
+              const currentSlug = String(url.searchParams.get('slug') || data.currentSlug || '').trim();
+              if (!currentSlug) return json(response, 400, { errors: ['缺少要编辑的 slug'] });
+              const records = await readGalleryNotes();
+              const recordIndex = records.findIndex((item) => item.slug === currentSlug);
+              if (recordIndex < 0) return json(response, 404, { error: '灵感记录不存在' });
+
+              const current = records[recordIndex];
+              const image = data.coverDataUrl ? decodeImageDataUrl(data.coverDataUrl) : null;
+              const record = galleryRecordFromInput(data, current);
+              const oldAssetPath = galleryAssetPath(current.cover);
+              let nextCover = current.cover;
+              if (image) {
+                nextCover = galleryCoverPathFor(record.slug, image.extension);
+              } else if (record.slug !== currentSlug) {
+                const extension = current.cover.match(/\.([a-z0-9]+)$/i)?.[1] || '';
+                if (!extension) return json(response, 400, { errors: ['原封面文件名无效，请重新选择封面图'] });
+                nextCover = galleryCoverPathFor(record.slug, extension);
+              }
+              record.cover = nextCover;
+
+              const errors = validateGalleryRecord(record, records, currentSlug);
+              if (data.coverDataUrl && !image) errors.push('封面图必须是不超过 12 MB 的 JPG、PNG、WebP 或 GIF');
+              const nextAssetPath = galleryAssetPath(nextCover);
+              if (!nextAssetPath) errors.push('封面路径无效');
+              if (nextAssetPath && nextAssetPath !== oldAssetPath) {
+                try {
+                  await fs.access(nextAssetPath);
+                  errors.push('目标 slug 对应的封面文件已经存在');
+                } catch (error) {
+                  if (error.code !== 'ENOENT') throw error;
+                }
+              }
+              if (!image && record.slug !== currentSlug && !oldAssetPath) errors.push('找不到原封面文件，请重新选择封面图');
+              if (errors.length) return json(response, 400, { errors });
+
+              await fs.mkdir(GALLERY_ASSET_DIRECTORY, { recursive: true });
+              if (image) {
+                await fs.writeFile(nextAssetPath, image.buffer);
+              } else if (nextAssetPath !== oldAssetPath) {
+                await fs.copyFile(oldAssetPath, nextAssetPath);
+              }
+
+              const nextRecords = [...records];
+              nextRecords[recordIndex] = record;
+              try {
+                await saveGalleryNotes(nextRecords);
+              } catch (error) {
+                if (nextAssetPath !== oldAssetPath) await fs.rm(nextAssetPath, { force: true }).catch(() => {});
+                throw error;
+              }
+              if (nextAssetPath !== oldAssetPath) await fs.rm(oldAssetPath, { force: true }).catch(() => {});
+              lastContentWriteAt = Date.now();
+              return json(response, 200, { ok: true, galleryNote: record });
+            }
+
+            if (request.method === 'DELETE') {
+              const slug = String(url.searchParams.get('slug') || '').trim();
+              if (!slug) return json(response, 400, { errors: ['缺少要删除的 slug'] });
+              const records = await readGalleryNotes();
+              const record = records.find((item) => item.slug === slug);
+              if (!record) return json(response, 404, { error: '灵感记录不存在' });
+              await saveGalleryNotes(records.filter((item) => item.slug !== slug));
+              const assetPath = galleryAssetPath(record.cover);
+              if (assetPath) await fs.rm(assetPath, { force: true }).catch(() => {});
+              lastContentWriteAt = Date.now();
+              return json(response, 200, { ok: true, slug });
+            }
           }
           if (request.method === 'GET' && url.pathname === '/articles') {
             const articles = (await Promise.all(BOARDS.map((board) => walk(board)))).flat();
